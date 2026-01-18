@@ -88,6 +88,30 @@ services:
       api:
         condition: service_healthy
 
+  # Database Backup Service
+  backup:
+    image: postgres:15-alpine
+    container_name: jobboard-backup
+    profiles:
+      - backup
+      - full
+    environment:
+      - PGHOST=db
+      - PGUSER=${POSTGRES_USER:-postgres}
+      - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - PGDATABASE=${POSTGRES_DB:-jobboard}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./backups:/backups:rw
+      - ./scripts/backup.sh:/backup.sh:ro
+      - ./scripts/backup-crontab:/etc/crontabs/root:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["chmod +x /backup.sh && crond -f -d 8"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     name: jobboard_postgres_data

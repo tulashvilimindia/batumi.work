@@ -1,0 +1,2 @@
+# Run backup daily at 3 AM
+0 3 * * * /backup.sh >> /backups/cron.log 2>&1
