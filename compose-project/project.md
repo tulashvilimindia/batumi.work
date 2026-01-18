@@ -2856,14 +2856,14 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 
 | ID | Area | Task | Status | Priority | Notes |
 |---|---|---|---|---|---|
-| P3-02.1 | Analytics | job_views table + indexes | ⬜ | HIGH | Section 19.2 |
-| P3-02.2 | Analytics | search_analytics table | ⬜ | HIGH | Section 19.2 |
-| P3-02.3 | Analytics | Materialized views (daily stats) | ⬜ | HIGH | mv_daily_job_stats, mv_daily_views |
-| P3-02.4 | Analytics | Analytics API endpoints | ⬜ | HIGH | Section 19.3 |
-| P3-02.5 | Analytics | Main dashboard endpoint | ⬜ | HIGH | /admin/analytics/dashboard |
-| P3-02.6 | Analytics | Job market analytics endpoint | ⬜ | MEDIUM | /admin/analytics/jobs |
-| P3-02.7 | Analytics | Search analytics endpoint | ⬜ | MEDIUM | /admin/analytics/searches |
-| P3-02.8 | Analytics | Frontend tracking (analytics.js) | ⬜ | HIGH | Section 19.6 |
+| P3-02.1 | Analytics | job_views table + indexes | ✅ | HIGH | Section 19.2 |
+| P3-02.2 | Analytics | search_analytics table | ✅ | HIGH | Section 19.2 |
+| P3-02.3 | Analytics | Materialized views (daily stats) | ✅ | HIGH | mv_daily_job_stats, mv_daily_views |
+| P3-02.4 | Analytics | Analytics API endpoints | ✅ | HIGH | Section 19.3 |
+| P3-02.5 | Analytics | Main dashboard endpoint | ✅ | HIGH | /admin/analytics/dashboard |
+| P3-02.6 | Analytics | Job market analytics endpoint | ✅ | MEDIUM | /admin/analytics/jobs |
+| P3-02.7 | Analytics | Search analytics endpoint | ✅ | MEDIUM | /admin/analytics/searches |
+| P3-02.8 | Analytics | Frontend tracking (analytics.js) | ✅ | HIGH | Section 19.6 |
 | P3-02.9 | Analytics | Analytics dashboard UI | ⬜ | MEDIUM | Section 19.5 |
 | P3-02.10 | Analytics | Chart.js visualizations | ⬜ | MEDIUM | Categories, regions, salary |
 | P3-02.11 | Analytics | Scheduled view refresh | ⬜ | MEDIUM | Section 19.7 |
