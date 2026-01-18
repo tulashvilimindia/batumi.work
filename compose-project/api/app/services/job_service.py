@@ -102,9 +102,9 @@ class JobService:
 
         sort_column = sort_columns.get(field_name, Job.published_at)
         if descending:
-            query = query.order_by(desc(sort_column.nulls_last()))
+            query = query.order_by(desc(sort_column).nulls_last())
         else:
-            query = query.order_by(asc(sort_column.nulls_last()))
+            query = query.order_by(asc(sort_column).nulls_last())
 
         # Apply pagination
         offset = (params.page - 1) * params.page_size
