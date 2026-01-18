@@ -2882,7 +2882,7 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P1-04.7 | Frontend | Service worker | ⬜ | LOW | |
 | P1-04.8 | Frontend | Offline page | ⬜ | LOW | |
 | P1-04.9 | Frontend | Social share buttons | ⬜ | LOW | Section 15.1 |
-| P1-07.1 | Monitoring | Sentry integration | ⬜ | MEDIUM | Section 17.1 |
+| P1-07.1 | Monitoring | Sentry integration | ✅ | MEDIUM | Section 17.1 |
 | P1-07.2 | Monitoring | Structured logging | ⬜ | LOW | Section 17.3 |
 
 ### 20.4 Phase 2 Extended Tracker (LOW PRIORITY)
