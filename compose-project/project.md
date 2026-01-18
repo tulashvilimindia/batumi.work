@@ -1964,48 +1964,44 @@ LOG_FORMAT=json
 
 ### Last Session: 2026-01-19
 
-**Prerequisites Check:**
-| Tool | Status | Version |
-|------|--------|---------|
-| Python | ✅ | 3.14.0 |
-| pip | ✅ | 25.2 (use `python -m pip`) |
-| Docker | ✅ | 28.5.1 |
-| Docker Compose | ✅ | v2.40.2 |
-| Git | ✅ | 2.51.2 |
-| Node.js | ❌ | Not installed (needed for Playwright E2E tests) |
+**Phase 1 - COMPLETE ✅**
+- FastAPI backend with PostgreSQL
+- Static HTML5 frontend with bilingual support (GE/EN)
+- Docker Compose deployment (db + api + web)
+- All QA tests passed (API, UI, performance)
+- Demo data: 16 categories, 14 regions, 20 jobs
 
-**Next Steps:**
-1. Install Node.js if E2E tests are needed: `winget install OpenJS.NodeJS.LTS`
-2. Create the `compose-project/` directory structure
-3. Start with Phase 1 implementation (FastAPI skeleton, PostgreSQL, static frontend)
+**Phase 2 - Core Complete ✅**
+- Parser adapter interface (BaseAdapter, JobData, HTTPClient)
+- Parser runner/orchestrator with async upsert
+- Content normalization + SHA-256 hashing
+- jobs.ge adapter (initial implementation)
+- Worker container with APScheduler
+- Parser runs storage + admin endpoints
 
-**Existing Parser Data (Verified):**
-- SQLite DB: `../data/jobs.db`
-  - 301 total jobs (all active)
-  - 90 jobs with salary info
-  - 1 VIP job
-  - 103 unique companies
-  - **Currently Adjara region only** (parser filters by region)
-- Daily exports: `../data/daily/*.json`
-- Master index: `../data/daily/master_index_adjara.json` (1.5MB)
+**Running Services:**
+```bash
+# Start core services
+docker-compose up -d
 
-**SQLite Jobs Table Schema:**
-```
-id, content_hash, title_en, title_ge, company, location,
-published_en, published_ge, deadline_en, deadline_ge,
-body_en, body_ge, url_en, url_ge, has_salary, is_vip,
-region, first_seen_at, last_seen_at, status, exported, created_at
+# Start with parser worker
+docker-compose --profile parser up -d
 ```
 
-**Seed Data Strategy:**
-- Phase 1: Use existing 301 Adjara jobs as seed data (sufficient for development)
-- Phase 2: Modify parser to fetch all Georgian regions for production data
+**API Endpoints Available:**
+- Website: http://localhost/ge/ (Georgian) or http://localhost/en/ (English)
+- API Docs: http://localhost/docs
+- Health: http://localhost/health
 
-**Related Python Files:**
-- `../jobs_parser.py` - Main parser (can be adapted as Adapter A)
-- `../analytics.py` - Category classification (16 categories with keywords)
-- `../dashboard.py` - Dashboard UI
-- `../server.py` - Server
+**Admin API (requires X-API-Key header):**
+- POST /api/v1/admin/jobs - Create job
+- PUT /api/v1/admin/jobs/{id} - Update job
+- GET /api/v1/admin/parser/runs - Parser run history
+- POST /api/v1/admin/parser/trigger - Trigger parser manually
+
+**Remaining (Optional):**
+- P2-03.2: hr.ge adapter (second source)
+- P2-05: QA tests (idempotency, failure mode, load)
 
 **Working Directory:** `C:\Users\MindiaTulashvili\OneDrive\Desktop\batumi.work`
 
