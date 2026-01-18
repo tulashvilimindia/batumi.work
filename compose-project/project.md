@@ -2842,12 +2842,12 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 
 | ID | Area | Task | Status | Priority | Notes |
 |---|---|---|---|---|---|
-| P3-01.1 | Backup | Create backups directory structure | ⬜ | HIGH | daily/, weekly/, manual/ |
-| P3-01.2 | Backup | Backup shell script (backup.sh) | ⬜ | HIGH | Section 18.3 |
-| P3-01.3 | Backup | Backup container in docker-compose | ⬜ | HIGH | Section 18.2 |
-| P3-01.4 | Backup | Cron scheduling (daily 3AM) | ⬜ | HIGH | |
-| P3-01.5 | Backup | Weekly backup rotation | ⬜ | MEDIUM | Keep 4 weeks |
-| P3-01.6 | Backup | Retention cleanup (7 days daily) | ⬜ | MEDIUM | |
+| P3-01.1 | Backup | Create backups directory structure | ✅ | HIGH | daily/, weekly/, manual/ |
+| P3-01.2 | Backup | Backup shell script (backup.sh) | ✅ | HIGH | Section 18.3 |
+| P3-01.3 | Backup | Backup container in docker-compose | ✅ | HIGH | Section 18.2 |
+| P3-01.4 | Backup | Cron scheduling (daily 3AM) | ✅ | HIGH | |
+| P3-01.5 | Backup | Weekly backup rotation | ✅ | MEDIUM | Keep 4 weeks |
+| P3-01.6 | Backup | Retention cleanup (7 days daily) | ✅ | MEDIUM | |
 | P3-01.7 | Backup | Admin API endpoints for backups | ⬜ | MEDIUM | Section 18.6 |
 | P3-01.8 | Backup | Backup status monitoring | ⬜ | LOW | Health check |
 | P3-01.9 | Backup | Restore documentation | ⬜ | MEDIUM | Section 18.5 |
