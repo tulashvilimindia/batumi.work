@@ -10,6 +10,11 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from app.core.config import get_config
 from app.core.runner import ParserRunner
+from app.tasks.analytics import (
+    refresh_materialized_views,
+    cleanup_old_analytics,
+    generate_daily_summary,
+)
 
 # Configure structured logging
 structlog.configure(
@@ -120,9 +125,39 @@ class WorkerService:
             next_run_time=datetime.now(),
         )
 
+        # Schedule analytics view refresh (every 4 hours)
+        self.scheduler.add_job(
+            refresh_materialized_views,
+            trigger=IntervalTrigger(hours=4),
+            id="analytics_refresh",
+            name="Analytics View Refresh",
+            replace_existing=True,
+            max_instances=1,
+        )
+
+        # Schedule analytics cleanup (weekly on Sunday at 3 AM)
+        from apscheduler.triggers.cron import CronTrigger
+        self.scheduler.add_job(
+            cleanup_old_analytics,
+            trigger=CronTrigger(day_of_week="sun", hour=3, minute=0),
+            id="analytics_cleanup",
+            name="Analytics Data Cleanup",
+            replace_existing=True,
+        )
+
+        # Schedule daily summary (daily at 5 AM)
+        self.scheduler.add_job(
+            generate_daily_summary,
+            trigger=CronTrigger(hour=5, minute=0),
+            id="daily_summary",
+            name="Daily Summary Generation",
+            replace_existing=True,
+        )
+
         logger.info(
             "scheduler_configured",
             interval_minutes=self.config.parser_interval_minutes,
+            analytics_refresh_hours=4,
         )
 
     async def start(self):
