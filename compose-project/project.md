@@ -669,18 +669,18 @@ self.addEventListener('push', (event) => {
 ## 5) Feature Checklist (MVP-level)
 
 ### Phase 1 — Must Have
-- [ ] Home/job list page (GE default)
-- [ ] Job detail page
-- [ ] Filters: q/category/region/has_salary/is_vip
-- [ ] Pagination
-- [ ] Language switch GE/EN with fallback to GE
-- [ ] SEO tags: title/description/canonical/hreflang
-- [ ] robots.txt + sitemap.xml
-- [ ] FastAPI public endpoints for list + detail
-- [ ] Admin endpoints for jobs + categories
-- [ ] Swagger usable for admin actions
-- [ ] docker-compose up starts db+api+web
-- [ ] Seed data
+- [x] Home/job list page (GE default)
+- [x] Job detail page
+- [x] Filters: q/category/region/has_salary/is_vip
+- [x] Pagination
+- [x] Language switch GE/EN with fallback to GE
+- [x] SEO tags: title/description/canonical/hreflang
+- [x] robots.txt + sitemap.xml
+- [x] FastAPI public endpoints for list + detail
+- [x] Admin endpoints for jobs + categories
+- [x] Swagger usable for admin actions
+- [x] docker-compose up starts db+api+web
+- [x] Seed data
 
 ### Phase 2 — Must Have
 - [ ] Parser framework + adapter interface
@@ -766,24 +766,24 @@ self.addEventListener('push', (event) => {
 ### 7.1 Phase 1 Tracker
 | ID | Area | Task | Owner | Status | Start | Due | Depends On | Notes |
 |---|---|---|---|---|---|---|---|---|
-| P1-01.1 | Req/UX | Finalize features + DoD | | ⬜ | | | | |
-| P1-01.2 | Req/UX | Decide SEO URL structure | | ⬜ | | | P1-01.1 | |
-| P1-01.3 | Req/UX | Define SEO tags rules | | ⬜ | | | P1-01.2 | |
-| P1-02.1 | Backend | FastAPI skeleton | | ⬜ | | | | |
-| P1-02.2 | Backend | Admin API key security | | ⬜ | | | P1-02.1 | |
-| P1-02.3 | Backend | Public APIs (jobs+categories) | | ⬜ | | | P1-02.1 | |
-| P1-02.4 | Backend | Admin APIs (jobs+categories) | | ⬜ | | | P1-02.2 | |
-| P1-03.1 | DB | Schema + migrations | | ⬜ | | | | |
-| P1-03.2 | DB | Indexes for filters | | ⬜ | | | P1-03.1 | |
-| P1-03.3 | DB | Seed data | | ⬜ | | | P1-03.1 | |
-| P1-04.1 | Frontend | HTML layout + CSS | | ⬜ | | | P1-01.2 | |
-| P1-04.2 | Frontend | Language toggle + routing | | ⬜ | | | P1-04.1 | |
-| P1-04.3 | Frontend | List page render + filters | | ⬜ | | | P1-02.3 | |
-| P1-04.4 | Frontend | Detail page + SEO meta | | ⬜ | | | P1-02.3 | |
-| P1-04.5 | Frontend | robots.txt + sitemap.xml | | ⬜ | | | P1-01.3 | |
-| P1-05.1 | Delivery | docker-compose db+api+web | | ⬜ | | | P1-02.1,P1-03.1,P1-04.1 | |
-| P1-05.2 | Delivery | .env.example + README | | ⬜ | | | P1-05.1 | |
-| P1-05.3 | Delivery | Smoke test run | | ⬜ | | | P1-05.1 | |
+| P1-01.1 | Req/UX | Finalize features + DoD | | ✅ | | | | |
+| P1-01.2 | Req/UX | Decide SEO URL structure | | ✅ | | | P1-01.1 | /ge/ and /en/ prefix |
+| P1-01.3 | Req/UX | Define SEO tags rules | | ✅ | | | P1-01.2 | hreflang, canonical, OG |
+| P1-02.1 | Backend | FastAPI skeleton | | ✅ | | | | |
+| P1-02.2 | Backend | Admin API key security | | ✅ | | | P1-02.1 | X-API-Key header |
+| P1-02.3 | Backend | Public APIs (jobs+categories) | | ✅ | | | P1-02.1 | |
+| P1-02.4 | Backend | Admin APIs (jobs+categories) | | ✅ | | | P1-02.2 | |
+| P1-03.1 | DB | Schema + migrations | | ✅ | | | | Alembic setup |
+| P1-03.2 | DB | Indexes for filters | | ✅ | | | P1-03.1 | |
+| P1-03.3 | DB | Seed data | | ✅ | | | P1-03.1 | 16 categories, 14 regions, 20 jobs |
+| P1-04.1 | Frontend | HTML layout + CSS | | ✅ | | | P1-01.2 | |
+| P1-04.2 | Frontend | Language toggle + routing | | ✅ | | | P1-04.1 | |
+| P1-04.3 | Frontend | List page render + filters | | ✅ | | | P1-02.3 | |
+| P1-04.4 | Frontend | Detail page + SEO meta | | ✅ | | | P1-02.3 | |
+| P1-04.5 | Frontend | robots.txt + sitemap.xml | | ✅ | | | P1-01.3 | |
+| P1-05.1 | Delivery | docker-compose db+api+web | | ✅ | | | P1-02.1,P1-03.1,P1-04.1 | |
+| P1-05.2 | Delivery | .env.example + README | | ✅ | | | P1-05.1 | |
+| P1-05.3 | Delivery | Smoke test run | | ⬜ | | | P1-05.1 | Pending docker test |
 | P1-06.1 | QA | API checks | | ⬜ | | | P1-05.3 | |
 | P1-06.2 | QA | UI checks | | ⬜ | | | P1-05.3 | |
 | P1-06.3 | QA | Basic Lighthouse target | | ⬜ | | | P1-04.3,P1-04.4 | |
