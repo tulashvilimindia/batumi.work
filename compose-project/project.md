@@ -683,12 +683,12 @@ self.addEventListener('push', (event) => {
 - [x] Seed data
 
 ### Phase 2 — Must Have
-- [ ] Parser framework + adapter interface
-- [ ] At least 2 adapters
-- [ ] Worker scheduling
-- [ ] parser runs monitoring
-- [ ] Upsert/idempotency rules
-- [ ] Not-seen rule updates status
+- [x] Parser framework + adapter interface
+- [ ] At least 2 adapters (jobs.ge done, hr.ge optional)
+- [x] Worker scheduling
+- [x] parser runs monitoring
+- [x] Upsert/idempotency rules
+- [x] Not-seen rule updates status
 
 ---
 
@@ -802,9 +802,9 @@ self.addEventListener('push', (event) => {
 | P2-04.1 | Worker | Worker container | | ✅ | | | P2-01.2 | Dockerfile + docker-compose |
 | P2-04.2 | Worker | Scheduler interval | | ✅ | | | P2-04.1 | APScheduler integration |
 | P2-04.3 | Worker | Not-seen rule | | ✅ | | | P2-04.2 | deactivate_not_seen() implemented |
-| P2-05.1 | QA | Idempotency tests | | ⬜ | | | P2-03.2 | |
-| P2-05.2 | QA | Failure mode tests | | ⬜ | | | P2-03.2 | |
-| P2-05.3 | QA | Dataset load test | | ⬜ | | | P2-05.1 | |
+| P2-05.1 | QA | Idempotency tests | | ✅ | | | P2-03.2 | Tests created |
+| P2-05.2 | QA | Failure mode tests | | ✅ | | | P2-03.2 | Tests created |
+| P2-05.3 | QA | Dataset load test | | ✅ | | | P2-05.1 | Tests created |
 
 ---
 
@@ -2001,7 +2001,6 @@ docker-compose --profile parser up -d
 
 **Remaining (Optional):**
 - P2-03.2: hr.ge adapter (second source)
-- P2-05: QA tests (idempotency, failure mode, load)
 
 **Working Directory:** `C:\Users\MindiaTulashvili\OneDrive\Desktop\batumi.work`
 
