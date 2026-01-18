@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Data files (can be regenerated)
+data/*.json
+
+# Keep database
+!data/jobs.db
+
+# OS
+.DS_Store
+Thumbs.db
