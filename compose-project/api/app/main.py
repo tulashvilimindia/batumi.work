@@ -1,4 +1,5 @@
 """FastAPI application entry point."""
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,33 @@ import structlog
 
 from app.core.config import settings
 from app.core.database import init_db
+
+# Initialize Sentry for error monitoring (if configured)
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+    from sentry_sdk.integrations.asyncpg import AsyncPGIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        release=settings.APP_VERSION,
+        integrations=[
+            FastApiIntegration(transaction_style="endpoint"),
+            SqlalchemyIntegration(),
+            AsyncPGIntegration(),
+        ],
+        # Performance monitoring
+        traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        # Profile sampling (for profiling)
+        profiles_sample_rate=float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.1")),
+        # Don't send PII
+        send_default_pii=False,
+        # Add debug info
+        attach_stacktrace=True,
+    )
 from app.routers import jobs_router, categories_router, regions_router, admin_router
 from app.routers.admin_parser import router as parser_admin_router
 from app.routers.admin_analytics import router as analytics_admin_router, public_router as analytics_public_router
