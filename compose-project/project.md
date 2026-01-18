@@ -2848,7 +2848,7 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P3-01.4 | Backup | Cron scheduling (daily 3AM) | ✅ | HIGH | |
 | P3-01.5 | Backup | Weekly backup rotation | ✅ | MEDIUM | Keep 4 weeks |
 | P3-01.6 | Backup | Retention cleanup (7 days daily) | ✅ | MEDIUM | |
-| P3-01.7 | Backup | Admin API endpoints for backups | ⬜ | MEDIUM | Section 18.6 |
+| P3-01.7 | Backup | Admin API endpoints for backups | ✅ | MEDIUM | Section 18.6 |
 | P3-01.8 | Backup | Backup status monitoring | ⬜ | LOW | Health check |
 | P3-01.9 | Backup | Restore documentation | ⬜ | MEDIUM | Section 18.5 |
 
