@@ -684,7 +684,7 @@ self.addEventListener('push', (event) => {
 
 ### Phase 2 — Must Have
 - [x] Parser framework + adapter interface
-- [ ] At least 2 adapters (jobs.ge done, hr.ge optional)
+- [x] At least 2 adapters (jobs.ge done, hr.ge done)
 - [x] Worker scheduling
 - [x] parser runs monitoring
 - [x] Upsert/idempotency rules
@@ -797,7 +797,7 @@ self.addEventListener('push', (event) => {
 | P2-02.1 | Obs | parser_runs + admin endpoints | | ✅ | | | P2-01.2 | Model, migration, admin API |
 | P2-02.2 | Obs | Logging + error sampling | | ✅ | | | P2-02.1 | structlog JSON logging |
 | P2-03.1 | Adapters | Adapter A | | ✅ | | | P2-01.2 | Source: jobs.ge |
-| P2-03.2 | Adapters | Adapter B | | ⬜ | | | P2-01.2 | Source: hr.ge |
+| P2-03.2 | Adapters | Adapter B | | ✅ | | | P2-01.2 | Source: hr.ge |
 | P2-03.3 | Adapters | Mapping rules per source | | ✅ | | | P2-03.1 | Category classification |
 | P2-04.1 | Worker | Worker container | | ✅ | | | P2-01.2 | Dockerfile + docker-compose |
 | P2-04.2 | Worker | Scheduler interval | | ✅ | | | P2-04.1 | APScheduler integration |
@@ -2889,7 +2889,7 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 
 | ID | Area | Task | Status | Priority | Notes |
 |---|---|---|---|---|---|
-| P2-03.2 | Adapters | hr.ge adapter | ⬜ | MEDIUM | Second parser source |
+| P2-03.2 | Adapters | hr.ge adapter | ✅ | MEDIUM | Second parser source |
 | P2-10.1 | Social | Telegram bot setup | ⬜ | LOW | Section 15.2 |
 | P2-10.2 | Social | Bot commands (/search, /latest) | ⬜ | LOW | |
 | P2-10.3 | Social | Subscription system | ⬜ | LOW | |
