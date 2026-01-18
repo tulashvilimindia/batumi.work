@@ -131,6 +131,52 @@ class APIHandler(BaseHTTPRequestHandler):
                 export_path = parser.export_all_active()
                 self._send_json({"status": "success", "file": export_path})
 
+            elif path == '/export/daily':
+                # Export separate JSON files per day + master index
+                parser = get_parser(region)
+                result = parser.export_daily_files()
+                self._send_json({"status": "success", **result})
+
+            elif path == '/export/today':
+                # Export only today's jobs
+                parser = get_parser(region)
+                export_path = parser.export_today()
+                if export_path:
+                    self._send_json({"status": "success", "file": export_path})
+                else:
+                    self._send_json({"status": "no_data", "message": "No jobs posted today"})
+
+            elif path == '/export/master':
+                # Export master index only
+                parser = get_parser(region)
+                export_path = parser.export_master_index()
+                self._send_json({"status": "success", "file": export_path})
+
+            elif path == '/jobs/date':
+                # Get jobs for a specific date
+                date = query.get('date', [None])[0]
+                if not date:
+                    self._send_json({"status": "error", "message": "Missing 'date' parameter (YYYY-MM-DD)"}, 400)
+                    return
+                parser = get_parser(region)
+                jobs = parser.db.get_jobs_by_date(date, region)
+                self._send_json({
+                    "date": date,
+                    "region": region,
+                    "count": len(jobs),
+                    "jobs": jobs
+                })
+
+            elif path == '/jobs/dates':
+                # Get all posting dates
+                parser = get_parser(region)
+                dates = parser.db.get_all_posting_dates(region)
+                self._send_json({
+                    "region": region,
+                    "total_days": len(dates),
+                    "dates": dates
+                })
+
             elif path == '/health':
                 self._send_json({"status": "ok", "timestamp": datetime.now().isoformat()})
 
@@ -192,16 +238,21 @@ class APIHandler(BaseHTTPRequestHandler):
 
             else:
                 self._send_json({
-                    "service": "Jobs.ge Parser API v3.0 - With Analytics Dashboard",
+                    "service": "Jobs.ge Parser API v3.1 - With Daily Exports",
                     "endpoints": {
                         "GET /": "Analytics dashboard (Grafana-style)",
                         "GET /dashboard": "Analytics dashboard",
                         "GET /parse?region=adjara": "Run parser and export new jobs",
                         "GET /jobs?region=adjara": "Get all active jobs",
                         "GET /jobs/new?region=adjara": "Get unexported jobs only",
+                        "GET /jobs/date?date=YYYY-MM-DD": "Get jobs posted on specific date",
+                        "GET /jobs/dates": "List all dates with job postings",
                         "GET /stats?region=adjara": "Get job market statistics",
                         "GET /export?region=adjara": "Export new jobs to file",
                         "GET /export/all?region=adjara": "Export all active jobs",
+                        "GET /export/daily": "Export daily JSON files + master index",
+                        "GET /export/today": "Export only today's jobs",
+                        "GET /export/master": "Export master index only",
                         "GET /regions": "List available regions",
                         "GET /metrics": "Prometheus-format metrics",
                         "GET /api/dashboard": "Dashboard JSON data",

@@ -313,6 +313,48 @@ class JobsDatabase:
 
             return [dict(row) for row in cursor.fetchall()]
 
+    def get_jobs_by_date(self, date: str, region: str = None) -> list[dict]:
+        """Get jobs posted on a specific date (YYYY-MM-DD format)"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            if region:
+                cursor.execute("""
+                    SELECT * FROM jobs
+                    WHERE DATE(first_seen_at) = ? AND region = ?
+                    ORDER BY first_seen_at DESC
+                """, (date, region))
+            else:
+                cursor.execute("""
+                    SELECT * FROM jobs
+                    WHERE DATE(first_seen_at) = ?
+                    ORDER BY first_seen_at DESC
+                """, (date,))
+
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_all_posting_dates(self, region: str = None) -> list[str]:
+        """Get all unique dates that have job postings"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            if region:
+                cursor.execute("""
+                    SELECT DISTINCT DATE(first_seen_at) as post_date
+                    FROM jobs
+                    WHERE region = ?
+                    ORDER BY post_date DESC
+                """, (region,))
+            else:
+                cursor.execute("""
+                    SELECT DISTINCT DATE(first_seen_at) as post_date
+                    FROM jobs
+                    ORDER BY post_date DESC
+                """)
+
+            return [row[0] for row in cursor.fetchall() if row[0]]
+
     def get_jobs_missing_bodies(self, region: str = None) -> list[dict]:
         """Get jobs that are missing body content"""
         with sqlite3.connect(self.db_path) as conn:
@@ -764,6 +806,114 @@ class JobsGeParser:
         print(f"[EXPORT] Exported {len(jobs)} active jobs to {output_path}")
         return output_path
 
+    def export_master_index(self, output_dir: str = "data/daily") -> str:
+        """Export master index with all jobs organized by date"""
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        all_jobs = self.db.get_active_jobs(self.region)
+        all_dates = self.db.get_all_posting_dates(self.region)
+
+        # Build index with jobs grouped by date
+        jobs_by_date = {}
+        for date in all_dates:
+            date_jobs = [j for j in all_jobs if j.get('first_seen_at', '').startswith(date)]
+            if date_jobs:
+                jobs_by_date[date] = {
+                    "count": len(date_jobs),
+                    "file": f"jobs_{self.region}_{date}.json"
+                }
+
+        master_index = {
+            "generated_at": datetime.now().isoformat(),
+            "region": self.region,
+            "total_jobs": len(all_jobs),
+            "total_days": len(jobs_by_date),
+            "dates": jobs_by_date,
+            "all_jobs": all_jobs
+        }
+
+        output_path = f"{output_dir}/master_index_{self.region}.json"
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(master_index, f, ensure_ascii=False, indent=2)
+
+        print(f"[MASTER INDEX] Exported {len(all_jobs)} jobs across {len(jobs_by_date)} days to {output_path}")
+        return output_path
+
+    def export_daily_files(self, output_dir: str = "data/daily") -> dict:
+        """Export separate JSON files for each day's job postings"""
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        all_dates = self.db.get_all_posting_dates(self.region)
+        exported_files = {}
+        total_jobs = 0
+
+        print(f"[DAILY EXPORT] Found {len(all_dates)} days with job postings")
+
+        for date in all_dates:
+            jobs = self.db.get_jobs_by_date(date, self.region)
+            if not jobs:
+                continue
+
+            output_path = f"{output_dir}/jobs_{self.region}_{date}.json"
+
+            export_data = {
+                "date": date,
+                "exported_at": datetime.now().isoformat(),
+                "region": self.region,
+                "count": len(jobs),
+                "jobs": jobs
+            }
+
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, ensure_ascii=False, indent=2)
+
+            exported_files[date] = {
+                "file": output_path,
+                "count": len(jobs)
+            }
+            total_jobs += len(jobs)
+
+        # Also create/update the master index
+        master_path = self.export_master_index(output_dir)
+
+        print(f"[DAILY EXPORT] Exported {total_jobs} jobs to {len(exported_files)} daily files")
+        print(f"[DAILY EXPORT] Master index: {master_path}")
+
+        return {
+            "output_dir": output_dir,
+            "master_index": master_path,
+            "total_jobs": total_jobs,
+            "total_days": len(exported_files),
+            "daily_files": exported_files
+        }
+
+    def export_today(self, output_dir: str = "data/daily") -> str:
+        """Export only today's jobs to a daily file"""
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        today = datetime.now().strftime('%Y-%m-%d')
+        jobs = self.db.get_jobs_by_date(today, self.region)
+
+        if not jobs:
+            print(f"[DAILY EXPORT] No jobs posted today ({today})")
+            return None
+
+        output_path = f"{output_dir}/jobs_{self.region}_{today}.json"
+
+        export_data = {
+            "date": today,
+            "exported_at": datetime.now().isoformat(),
+            "region": self.region,
+            "count": len(jobs),
+            "jobs": jobs
+        }
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(export_data, f, ensure_ascii=False, indent=2)
+
+        print(f"[DAILY EXPORT] Exported {len(jobs)} jobs for {today} to {output_path}")
+        return output_path
+
     def get_analytics(self) -> dict:
         """Get job market analytics"""
         return self.db.get_statistics(self.region)
@@ -798,6 +948,8 @@ def main():
     parser.add_argument('--region', default='adjara', choices=list(JobsGeParser.REGIONS.keys()))
     parser.add_argument('--export', action='store_true', help='Export new jobs for website')
     parser.add_argument('--export-all', action='store_true', help='Export all active jobs')
+    parser.add_argument('--export-daily', action='store_true', help='Export separate JSON files per day + master index')
+    parser.add_argument('--export-today', action='store_true', help='Export only today\'s jobs')
     parser.add_argument('--stats', action='store_true', help='Show statistics')
     parser.add_argument('--no-bodies', action='store_true', help='Skip fetching job descriptions (faster)')
     parser.add_argument('--backfill-bodies', action='store_true', help='Fetch bodies for jobs missing them')
@@ -846,6 +998,12 @@ def main():
 
         if args.export_all:
             job_parser.export_all_active()
+
+        if args.export_daily:
+            job_parser.export_daily_files()
+
+        if args.export_today:
+            job_parser.export_today()
 
         # Show quick stats
         stats = job_parser.get_analytics()
