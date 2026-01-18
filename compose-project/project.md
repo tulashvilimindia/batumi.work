@@ -2864,8 +2864,8 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P3-02.6 | Analytics | Job market analytics endpoint | ✅ | MEDIUM | /admin/analytics/jobs |
 | P3-02.7 | Analytics | Search analytics endpoint | ✅ | MEDIUM | /admin/analytics/searches |
 | P3-02.8 | Analytics | Frontend tracking (analytics.js) | ✅ | HIGH | Section 19.6 |
-| P3-02.9 | Analytics | Analytics dashboard UI | ⬜ | MEDIUM | Section 19.5 |
-| P3-02.10 | Analytics | Chart.js visualizations | ⬜ | MEDIUM | Categories, regions, salary |
+| P3-02.9 | Analytics | Analytics dashboard UI | ✅ | MEDIUM | Section 19.5 |
+| P3-02.10 | Analytics | Chart.js visualizations | ✅ | MEDIUM | Categories, regions, salary |
 | P3-02.11 | Analytics | Scheduled view refresh | ⬜ | MEDIUM | Section 19.7 |
 | P3-02.12 | Analytics | Daily report generation | ⬜ | LOW | |
 | P3-02.13 | Analytics | Weekly email reports | ⬜ | LOW | Section 19.9 |
