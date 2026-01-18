@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batumi.work - Find Jobs in Batumi & Adjara</title>
+    <meta name="description" content="Discover job opportunities in Batumi and Adjara region. Browse hundreds of active job listings from top employers.">
+    <meta name="keywords" content="jobs, Batumi, Adjara, Georgia, employment, vacancies, career">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Batumi.work - Job Board">
+    <meta property="og:description" content="Find jobs in Batumi and Adjara region">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://batumi.work">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        "title": "Jobs in Batumi",
+        "description": "Job listings for Batumi and Adjara region"
+    }
+    </script>
+    
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                    <span class="logo-text">batumi.work</span>
+                </a>
+                <div class="header-actions">
+                    <button class="lang-toggle" data-lang="en">EN</button>
+                    <button class="filter-toggle mobile-only" aria-label="Filter">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title" data-en="Find Your Dream Job in Batumi" data-ge="იპოვეთ თქვენი ოცნება ბათუმში">
+                Find Your Dream Job in Batumi
+            </h1>
+            <p class="hero-subtitle" data-en="Discover opportunities in Adjara region" data-ge="აღმოაჩინეთ შესაძლებები აჭარაში">
+                Discover opportunities in Adjara region
+            </p>
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search jobs..." data-placeholder-en="Search jobs..." data-placeholder-ge="მოძებნეთ ვაკანსიები...">
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="content-grid">
+                <!-- Filters Sidebar -->
+                <aside class="filters">
+                    <div class="filters-header">
+                        <h2 class="filters-title" data-en="Filters" data-ge="ფილტრები">Filters</h2>
+                        <button class="clear-filters" id="clearFilters" data-en="Clear All" data-ge="გაასუფთავეთ ყველა">Clear All</button>
+                    </div>
+                    
+                    <!-- Sort -->
+                    <div class="filter-group">
+                        <h3 class="filter-label" data-en="Sort By" data-ge="დალაგება">Sort By</h3>
+                        <select id="sortSelect" class="select">
+                            <option value="newest" data-en="Newest First" data-ge="ჯერ ჯერ დამატებული">Newest First</option>
+                            <option value="oldest" data-en="Oldest First" data-ge="ყველაზე ძველი">Oldest First</option>
+                            <option value="company" data-en="Company Name" data-ge="კომპანიის სახელი">Company Name</option>
+                        </select>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="filter-group">
+                        <h3 class="filter-label" data-en="Category" data-ge="კატეგორია">Category</h3>
+                        <div id="categoryFilters" class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="IT/Programming">
+                                <span data-en="IT/Programming" data-ge="IT/პროგრამირება">IT/Programming</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Sales/Procurement">
+                                <span data-en="Sales/Procurement" data-ge="გაყიდვები/შესყიდვება">Sales/Procurement</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Administration/Management">
+                                <span data-en="Administration/Management" data-ge="ადმინისტრაცია/მენეჯმენტი">Administration/Management</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Finance/Statistics">
+                                <span data-en="Finance/Statistics" data-ge="ფინანსები/სტატისტიკა">Finance/Statistics</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Food/Hospitality">
+                                <span data-en="Food/Hospitality" data-ge="კვება/სტუმარება">Food/Hospitality</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Construction/Repair">
+                                <span data-en="Construction/Repair" data-ge="მშენებლობა/შეკეთება">Construction/Repair</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Education">
+                                <span data-en="Education" data-ge="განათლება">Education</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Logistics/Transport">
+                                <span data-en="Logistics/Transport" data-ge="ლოჯისტიკა/ტრანსპორტი">Logistics/Transport</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Medicine/Pharmacy">
+                                <span data-en="Medicine/Pharmacy" data-ge="მედიცინა/ფარმაცია">Medicine/Pharmacy</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="PR/Marketing">
+                                <span data-en="PR/Marketing" data-ge="PR/მარკეტინგი">PR/Marketing</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Security/Safety">
+                                <span data-en="Security/Safety" data-ge="უსაფრთხოება">Security/Safety</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Media/Publishing">
+                                <span data-en="Media/Publishing" data-ge="მედია">Media/Publishing</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Beauty/Fashion">
+                                <span data-en="Beauty/Fashion" data-ge="სილამაზე/მოდა">Beauty/Fashion</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Law">
+                                <span data-en="Law" data-ge="სამართლი">Law</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Cleaning">
+                                <span data-en="Cleaning" data-ge="დასუფთავება">Cleaning</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" value="Technical Staff">
+                                <span data-en="Technical Staff" data-ge="ტექნიკური პერსონალი">Technical Staff</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Company Filter -->
+                    <div class="filter-group">
+                        <h3 class="filter-label" data-en="Company" data-ge="კომპანია">Company</h3>
+                        <select id="companySelect" class="select">
+                            <option value="" data-en="All Companies" data-ge="ყველა კომპანია">All Companies</option>
+                        </select>
+                    </div>
+
+                    <!-- Additional Filters -->
+                    <div class="filter-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="salaryFilter">
+                            <span data-en="With Salary Info" data-ge="ანაზღაურებით">With Salary Info</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="vipFilter">
+                            <span data-en="VIP Only" data-ge="მხოლოდ VIP">VIP Only</span>
+                        </label>
+                    </div>
+                </aside>
+
+                <!-- Job Listings -->
+                <section class="jobs-section">
+                    <div class="jobs-header">
+                        <h2 class="jobs-count">
+                            <span id="jobCount">0</span>
+                            <span data-en="jobs found" data-ge="ვაკანსია ნაპოვნია">jobs found</span>
+                        </h2>
+                        <button class="close-filters mobile-only" id="closeFilters" data-en="Done" data-ge="დასრულდა">Done</button>
+                    </div>
+                    <div id="jobsGrid" class="jobs-grid">
+                        <!-- Job cards will be rendered here -->
+                    </div>
+                    <div id="noResults" class="no-results" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <p data-en="No jobs found matching your criteria" data-ge="მოცემული ვაკანსია არ მოიძებნა">No jobs found matching your criteria</p>
+                        <button id="resetFiltersBtn" class="btn btn-primary" data-en="Reset Filters" data-ge="გაასუფთავეთ ფილტრები">Reset Filters</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Job Detail Modal -->
+    <div id="jobModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div id="modalBody" class="modal-body">
+                <!-- Job details will be rendered here -->
+            </div>
+            <div class="modal-footer">
+                <a id="applyBtn" href="#" target="_blank" class="btn btn-primary btn-large" data-en="Apply on jobs.ge" data-ge="განაცხადეთ jobs.ge-ზე">
+                    Apply on jobs.ge
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-text">batumi.work</span>
+                    <p data-en="Your gateway to opportunities in Batumi & Adjara" data-ge="თქვენი გზა ბათუმისა და აჭარის შესაძლებამდე">
+                        Your gateway to opportunities in Batumi & Adjara
+                    </p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://jobs.ge" target="_blank" rel="noopener" data-en="Source: jobs.ge" data-ge="წყარო: jobs.ge">Source: jobs.ge</a>
+                </div>
+            </div>
+            <p class="footer-copy">
+                &copy; 2026 batumi.work. <span data-en="All rights reserved." data-ge="ყველა უფლისად დაცულია.">All rights reserved.</span>
+            </p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
