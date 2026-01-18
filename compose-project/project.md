@@ -784,9 +784,9 @@ self.addEventListener('push', (event) => {
 | P1-05.1 | Delivery | docker-compose db+api+web | | ✅ | | | P1-02.1,P1-03.1,P1-04.1 | |
 | P1-05.2 | Delivery | .env.example + README | | ✅ | | | P1-05.1 | |
 | P1-05.3 | Delivery | Smoke test run | | ✅ | | | P1-05.1 | All containers healthy, API + frontend working |
-| P1-06.1 | QA | API checks | | ⬜ | | | P1-05.3 | |
-| P1-06.2 | QA | UI checks | | ⬜ | | | P1-05.3 | |
-| P1-06.3 | QA | Basic Lighthouse target | | ⬜ | | | P1-04.3,P1-04.4 | |
+| P1-06.1 | QA | API checks | | ✅ | | | P1-05.3 | All endpoints tested, Swagger works |
+| P1-06.2 | QA | UI checks | | ✅ | | | P1-05.3 | SEO elements, static assets verified |
+| P1-06.3 | QA | Basic Lighthouse target | | ✅ | | | P1-04.3,P1-04.4 | CSS:3KB JS:5.7KB Total:<15KB, <15ms response |
 
 ### 7.2 Phase 2 Tracker
 | ID | Area | Task | Owner | Status | Start | Due | Depends On | Notes |
