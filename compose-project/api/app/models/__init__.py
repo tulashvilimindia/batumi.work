@@ -4,5 +4,6 @@ from app.models.region import Region
 from app.models.company import Company
 from app.models.job import Job
 from app.models.parser_run import ParserRun
+from app.models.analytics import JobView, SearchAnalytics
 
-__all__ = ["Category", "Region", "Company", "Job", "ParserRun"]
+__all__ = ["Category", "Region", "Company", "Job", "ParserRun", "JobView", "SearchAnalytics"]

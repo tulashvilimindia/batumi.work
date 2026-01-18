@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.database import init_db
 from app.routers import jobs_router, categories_router, regions_router, admin_router
 from app.routers.admin_parser import router as parser_admin_router
+from app.routers.admin_analytics import router as analytics_admin_router, public_router as analytics_public_router
 
 # Configure structured logging
 structlog.configure(
@@ -117,6 +118,18 @@ app.include_router(
 app.include_router(
     parser_admin_router,
     prefix="/api/v1/admin",
+)
+
+# Analytics admin endpoints (protected by API key)
+app.include_router(
+    analytics_admin_router,
+    prefix="/api/v1",
+)
+
+# Public analytics tracking endpoint
+app.include_router(
+    analytics_public_router,
+    prefix="/api/v1",
 )
 
 
