@@ -237,10 +237,10 @@ opencodejobs/
 **Next Milestone**: Complete Phase 8 (SEO & Analytics)
 
 ### Progress Tracking
-- Completed: 20 tasks
-- In Progress: 5 tasks
-- Pending: 36 tasks
-- Progress: 33%
+- Completed: 27 tasks
+- In Progress: 0 tasks
+- Pending: 34 tasks
+- Progress: 44%
 
 ---
 
@@ -258,6 +258,10 @@ opencodejobs/
 2. No frameworks - vanilla HTML/CSS/JS
 3. Client-side filtering (faster for user, works offline)
 4. Cloudflare Pages for free hosting and CDN
+5. Georgian language as default
+6. Mobile filter drawer visible on all screens
+7. Modern gradient design with blue color scheme
+8. Simplified filters: Company + Category + Salary only
 5. No backend required - fully static
 
 ### Future Enhancements (Out of Scope)

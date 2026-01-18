@@ -5,24 +5,14 @@ class JobBoard {
     constructor() {
         this.jobs = [];
         this.filteredJobs = [];
-        this.currentLang = this.detectLanguage();
+        this.currentLang = 'ge'; // Georgian as default
         this.filters = {
             search: '',
             categories: new Set(),
             company: '',
-            sort: 'newest',
-            hasSalary: false,
-            vipOnly: false
+            hasSalary: false
         };
         this.init();
-    }
-
-    detectLanguage() {
-        const saved = localStorage.getItem('batumi-lang');
-        if (saved) return saved;
-        
-        const browserLang = navigator.language || navigator.userLanguage;
-        return browserLang.startsWith('ka') ? 'ge' : 'en';
     }
 
     async init() {
@@ -41,7 +31,6 @@ class JobBoard {
             const data = await response.json();
             this.jobs = data.jobs || [];
             
-            // Enrich jobs with category
             this.jobs = this.jobs.map(job => ({
                 ...job,
                 category: this.classifyJob(job)
@@ -54,13 +43,12 @@ class JobBoard {
 
     classifyJob(job) {
         const titleEn = (job.title_en || '').toLowerCase();
-        const titleGe = (job.title_ge || '');
         const bodyEn = (job.body_en || '').toLowerCase();
         
         const categories = {
             'IT/Programming': ['developer', 'programmer', 'software', 'engineer', 'devops', 'frontend', 'backend', 'web', 'mobile', 'data scientist', 'qa', 'tester', 'it', 'tech', 'python', 'java', 'javascript', 'react'],
             'Sales/Procurement': ['sales', 'seller', 'procurement', 'buyer', 'purchasing', 'business development', 'account manager', 'retail', 'cashier', 'consultant', 'preseller'],
-            'Administration/Management': ['manager', 'director', 'administrator', 'supervisor', 'coordinator', 'executive', 'head of', 'chief', 'ceo', 'lead', 'team lead'],
+            'Administration/Management': ['manager', 'director', 'administrator', 'supervisor', 'coordinator', 'executive', 'head of', 'chief', 'ceo', 'coo', 'cfo', 'lead', 'team lead'],
             'Finance/Statistics': ['finance', 'accountant', 'accounting', 'auditor', 'financial', 'banker', 'bank', 'credit', 'economist', 'statistics', 'analyst'],
             'PR/Marketing': ['marketing', 'pr', 'public relations', 'brand', 'advertising', 'seo', 'smm', 'content', 'copywriter', 'social media'],
             'Food/Hospitality': ['cook', 'chef', 'waiter', 'bartender', 'restaurant', 'kitchen', 'hotel', 'hospitality', 'barista', 'food', 'cafe'],
@@ -94,12 +82,6 @@ class JobBoard {
             this.applyFilters();
         });
 
-        // Sort select
-        document.getElementById('sortSelect').addEventListener('change', (e) => {
-            this.filters.sort = e.target.value;
-            this.applyFilters();
-        });
-
         // Category checkboxes
         const categoryCheckboxes = document.querySelectorAll('#categoryFilters input[type="checkbox"]');
         categoryCheckboxes.forEach(checkbox => {
@@ -125,14 +107,8 @@ class JobBoard {
             this.applyFilters();
         });
 
-        // VIP filter
-        document.getElementById('vipFilter').addEventListener('change', (e) => {
-            this.filters.vipOnly = e.target.checked;
-            this.applyFilters();
-        });
-
-        // Clear filters
-        document.getElementById('clearFilters').addEventListener('click', () => {
+        // Clear all filters
+        document.getElementById('clearAllFilters').addEventListener('click', () => {
             this.clearFilters();
         });
 
@@ -147,6 +123,10 @@ class JobBoard {
 
         // Filter toggle (mobile)
         document.querySelector('.filter-toggle').addEventListener('click', () => {
+            document.querySelector('.filters').classList.add('active');
+        });
+
+        document.getElementById('mobileFilterToggle').addEventListener('click', () => {
             document.querySelector('.filters').classList.add('active');
         });
 
@@ -179,17 +159,13 @@ class JobBoard {
             search: '',
             categories: new Set(),
             company: '',
-            sort: 'newest',
-            hasSalary: false,
-            vipOnly: false
+            hasSalary: false
         };
 
         // Reset UI
         document.getElementById('searchInput').value = '';
-        document.getElementById('sortSelect').value = 'newest';
         document.getElementById('companySelect').value = '';
         document.getElementById('salaryFilter').checked = false;
-        document.getElementById('vipFilter').checked = false;
 
         const categoryCheckboxes = document.querySelectorAll('#categoryFilters input[type="checkbox"]');
         categoryCheckboxes.forEach(cb => cb.checked = false);
@@ -233,39 +209,15 @@ class JobBoard {
                 }
             }
 
-            // VIP filter
-            if (this.filters.vipOnly) {
-                if (!job.is_vip) {
-                    return false;
-                }
-            }
-
             return true;
         });
 
-        // Sort
-        this.sortJobs();
-        this.renderJobs();
-    }
+        // Sort by newest first (default)
+        this.filteredJobs.sort((a, b) => 
+            new Date(b.first_seen_at) - new Date(a.first_seen_at)
+        );
 
-    sortJobs() {
-        switch (this.filters.sort) {
-            case 'newest':
-                this.filteredJobs.sort((a, b) => 
-                    new Date(b.first_seen_at) - new Date(a.first_seen_at)
-                );
-                break;
-            case 'oldest':
-                this.filteredJobs.sort((a, b) => 
-                    new Date(a.first_seen_at) - new Date(b.first_seen_at)
-                );
-                break;
-            case 'company':
-                this.filteredJobs.sort((a, b) => 
-                    (a.company || '').localeCompare(b.company || '')
-                );
-                break;
-        }
+        this.renderJobs();
     }
 
     renderCompanies() {
@@ -299,26 +251,22 @@ class JobBoard {
 
     createJobCard(job) {
         const title = this.currentLang === 'en' ? job.title_en : job.title_ge;
-        const company = job.company || 'Not specified';
+        const company = job.company || 'არ მიშნებული';
         const isNew = this.isNewJob(job.first_seen_at);
         const hasSalary = job.has_salary;
-        const isVip = job.is_vip;
         
         return `
             <article class="job-card" data-job-id="${job.id}">
-                <div class="job-card-header">
-                    <div class="job-card-badges">
-                        ${isVip ? '<span class="badge vip">VIP</span>' : ''}
-                        ${isNew ? '<span class="badge new">NEW</span>' : ''}
-                        ${hasSalary ? '<span class="badge salary">$</span>' : ''}
-                    </div>
+                <div class="job-card-badges">
+                    ${isNew ? '<span class="badge new">ახალი</span>' : ''}
+                    ${hasSalary ? '<span class="badge salary">ანაზღაურება</span>' : ''}
                 </div>
                 <h3 class="job-title">${this.escapeHtml(title)}</h3>
                 <div class="job-company">
                     ${this.escapeHtml(company)}
                 </div>
                 <button class="view-details" data-job-id="${job.id}">
-                    ${this.getText('viewDetails')}
+                    დეტალების ნახვა
                 </button>
             </article>
         `;
@@ -339,7 +287,7 @@ class JobBoard {
         const applyBtn = document.getElementById('applyBtn');
 
         const title = this.currentLang === 'en' ? job.title_en : job.title_ge;
-        const company = job.company || 'Not specified';
+        const company = job.company || 'არ მიშნებული';
         const body = this.currentLang === 'en' ? (job.body_en || '') : (job.body_ge || '');
         const url = this.currentLang === 'en' ? job.url_en : job.url_ge;
         const deadline = this.currentLang === 'en' ? job.deadline_en : job.deadline_ge;
@@ -378,7 +326,6 @@ class JobBoard {
 
     toggleLanguage() {
         this.currentLang = this.currentLang === 'en' ? 'ge' : 'en';
-        localStorage.setItem('batumi-lang', this.currentLang);
         this.updateLanguageUI();
         this.renderJobs();
     }
@@ -405,9 +352,7 @@ class JobBoard {
             viewDetails: { en: 'View Details', ge: 'დეტალების ნახვა' },
             category: { en: 'Category', ge: 'კატეგორია' },
             deadline: { en: 'Deadline', ge: 'ბოლო ვადა' },
-            description: { en: 'Description', ge: 'აღწერა' },
-            loadError: { en: 'Failed to load job data', ge: 'ვაკანსიების ჩატვირთვა ვერ მოხდა' },
-            retry: { en: 'Try Again', ge: 'სცადეთ კიდევ' }
+            description: { en: 'Description', ge: 'აღწერა' }
         };
         return translations[key][this.currentLang];
     }
