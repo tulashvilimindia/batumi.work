@@ -794,7 +794,7 @@ self.addEventListener('push', (event) => {
 | P2-01.1 | Parser | Adapter interface + utilities | | ✅ | | | Phase 1 complete | BaseAdapter, HTTPClient, JobData |
 | P2-01.2 | Parser | Runner/orchestrator | | ✅ | | | P2-01.1 | ParserRunner with async upsert |
 | P2-01.3 | Parser | Normalization + hashing | | ✅ | | | P2-01.1 | SHA-256 hashing, text normalization |
-| P2-02.1 | Obs | parser_runs + admin endpoints | | ⬜ | | | P2-01.2 | |
+| P2-02.1 | Obs | parser_runs + admin endpoints | | ✅ | | | P2-01.2 | Model, migration, admin API |
 | P2-02.2 | Obs | Logging + error sampling | | ✅ | | | P2-02.1 | structlog JSON logging |
 | P2-03.1 | Adapters | Adapter A | | ✅ | | | P2-01.2 | Source: jobs.ge |
 | P2-03.2 | Adapters | Adapter B | | ⬜ | | | P2-01.2 | Source: hr.ge |
