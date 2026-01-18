@@ -1960,6 +1960,35 @@ LOG_FORMAT=json
 
 ---
 
+## Session Notes (for continuity)
+
+### Last Session: 2026-01-19
+
+**Prerequisites Check:**
+| Tool | Status | Version |
+|------|--------|---------|
+| Python | ✅ | 3.14.0 |
+| pip | ✅ | 25.2 (use `python -m pip`) |
+| Docker | ✅ | 28.5.1 |
+| Docker Compose | ✅ | v2.40.2 |
+| Git | ✅ | 2.51.2 |
+| Node.js | ❌ | Not installed (needed for Playwright E2E tests) |
+
+**Next Steps:**
+1. Install Node.js if E2E tests are needed: `winget install OpenJS.NodeJS.LTS`
+2. Create the `compose-project/` directory structure
+3. Start with Phase 1 implementation (FastAPI skeleton, PostgreSQL, static frontend)
+
+**Existing Parser Data:**
+- SQLite DB: `../data/jobs.db` (300+ jobs)
+- Daily exports: `../data/daily/*.json`
+- Master index: `../data/daily/master_index_adjara.json`
+- Use this as seed data for the new project
+
+**Working Directory:** `C:\Users\MindiaTulashvili\OneDrive\Desktop\batumi.work`
+
+---
+
 ## 18) Updated Progress Tracker (All Features)
 
 ### 18.1 Phase 1 Extended Tracker
