@@ -1,0 +1,19 @@
+# Georgia JobBoard - robots.txt
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://jobboard.ge/sitemap.xml
+
+# Disallow admin and API docs
+Disallow: /docs
+Disallow: /openapi.json
+Disallow: /api/v1/admin/
+
+# Allow search engines to index all public pages
+Allow: /ge/
+Allow: /en/
+Allow: /api/v1/jobs
+Allow: /api/v1/categories
+Allow: /api/v1/regions

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ვაკანსიები საქართველოში | Georgia JobBoard</title>
+    <meta name="description" content="იპოვეთ სამუშაო საქართველოში. IT, მარკეტინგი, ფინანსები, ტურიზმი და სხვა სფეროების ვაკანსიები.">
+
+    <!-- SEO -->
+    <link rel="canonical" href="/ge/">
+    <link rel="alternate" hreflang="ka" href="/ge/">
+    <link rel="alternate" hreflang="en" href="/en/">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="ვაკანსიები საქართველოში | Georgia JobBoard">
+    <meta property="og:description" content="იპოვეთ სამუშაო საქართველოში. IT, მარკეტინგი, ფინანსები, ტურიზმი და სხვა სფეროების ვაკანსიები.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="/ge/">
+    <meta property="og:locale" content="ka_GE">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-content">
+            <a href="/ge/" class="logo">🇬🇪 JobBoard</a>
+            <nav class="nav">
+                <a href="/ge/">მთავარი</a>
+                <div class="lang-switch">
+                    <a href="/ge/" class="active">GE</a>
+                    <a href="/en/">EN</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Filters Section -->
+    <section class="filters-section">
+        <div class="container">
+            <form id="search-form" class="search-box">
+                <input type="text"
+                       id="search-input"
+                       class="search-input"
+                       placeholder="თანამდებობა, კომპანია..."
+                       aria-label="ძიება">
+                <button type="submit" class="btn btn-primary">ძიება</button>
+            </form>
+            <div class="filters">
+                <select id="category-filter" class="filter-select" aria-label="კატეგორია">
+                    <option value="">ყველა კატეგორია</option>
+                </select>
+                <select id="region-filter" class="filter-select" aria-label="რეგიონი">
+                    <option value="">ყველა რეგიონი</option>
+                </select>
+                <button type="button" id="salary-toggle" class="filter-toggle">
+                    💰 ხელფასით
+                </button>
+                <button type="button" id="vip-toggle" class="filter-toggle">
+                    ⭐ VIP
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Jobs Section -->
+    <main class="jobs-section">
+        <div class="container">
+            <div class="jobs-header">
+                <span id="jobs-count" class="jobs-count">იტვირთება...</span>
+            </div>
+            <div id="jobs-container" class="jobs-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <nav id="pagination" class="pagination" aria-label="პაგინაცია"></nav>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Georgia JobBoard</h4>
+                    <p>სამუშაოს ძიების პლატფორმა საქართველოში</p>
+                </div>
+                <div class="footer-section">
+                    <h4>კატეგორიები</h4>
+                    <ul class="footer-links">
+                        <li><a href="/ge/?category=it-programming">IT და პროგრამირება</a></li>
+                        <li><a href="/ge/?category=sales-marketing">გაყიდვები და მარკეტინგი</a></li>
+                        <li><a href="/ge/?category=finance-accounting">ფინანსები</a></li>
+                        <li><a href="/ge/?category=tourism-hospitality">ტურიზმი</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>რეგიონები</h4>
+                    <ul class="footer-links">
+                        <li><a href="/ge/?region=tbilisi">თბილისი</a></li>
+                        <li><a href="/ge/?region=batumi">ბათუმი</a></li>
+                        <li><a href="/ge/?region=kutaisi">ქუთაისი</a></li>
+                        <li><a href="/ge/?region=rustavi">რუსთავი</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Georgia JobBoard. ყველა უფლება დაცულია.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

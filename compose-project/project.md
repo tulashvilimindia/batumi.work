@@ -1,4 +1,4 @@
-# Job Posting Website — Features + Tech Stack + Progress Tracker (Phase 1 + Phase 2)
+# Georgia Job Posting Website — Features + Tech Stack + Progress Tracker (Phase 1 + Phase 2)
 
 ---
 
@@ -28,10 +28,10 @@ All development, configuration, and deployment happens within this `compose-proj
 
 ### 0.2 Test Data / Seed Data
 **Use existing parsed data as seed/test data:**
-- The jobs.ge parser in the parent directory (`../jobs_parser.py`) has already collected **300+ real jobs** from the Batumi/Adjara region
+- The jobs.ge parser in the parent directory (`../jobs_parser.py`) has already collected **300+ real jobs** from across Georgia
 - Data is stored in `../data/jobs.db` (SQLite) and exported to `../data/daily/*.json`
 - **Seed script must:**
-  - Read from `../data/daily/master_index_adjara.json` (or the SQLite database)
+  - Read from `../data/daily/master_index.json` (or the SQLite database)
   - Transform and insert jobs into PostgreSQL
   - Map existing categories to the new category system
   - Preserve bilingual content (title_en, title_ge, body_en, body_ge)
@@ -45,7 +45,7 @@ All development, configuration, and deployment happens within this `compose-proj
 ---
 
 ## 1) Product Summary
-Build a lightweight, SEO-first job postings website with:
+Build a lightweight, SEO-first job postings website for **all of Georgia** with:
 - **Georgian (GE) as default**, English (EN) as secondary
 - Backend: **FastAPI** with **Swagger/OpenAPI**
 - Database: **PostgreSQL**
@@ -540,9 +540,9 @@ CREATE INDEX idx_search_logs_date ON search_logs(searched_at);
 **Web App Manifest (`manifest.json`)**
 ```json
 {
-  "name": "ვაკანსიები - Batumi Jobs",
+  "name": "ვაკანსიები - Georgia Jobs",
   "short_name": "Jobs",
-  "description": "სამუშაო ადგილები ბათუმში და აჭარაში",
+  "description": "სამუშაო ადგილები საქართველოში",
   "start_url": "/ge/",
   "display": "standalone",
   "background_color": "#1a1a2e",
@@ -1979,11 +1979,33 @@ LOG_FORMAT=json
 2. Create the `compose-project/` directory structure
 3. Start with Phase 1 implementation (FastAPI skeleton, PostgreSQL, static frontend)
 
-**Existing Parser Data:**
-- SQLite DB: `../data/jobs.db` (300+ jobs)
+**Existing Parser Data (Verified):**
+- SQLite DB: `../data/jobs.db`
+  - 301 total jobs (all active)
+  - 90 jobs with salary info
+  - 1 VIP job
+  - 103 unique companies
+  - **Currently Adjara region only** (parser filters by region)
 - Daily exports: `../data/daily/*.json`
-- Master index: `../data/daily/master_index_adjara.json`
-- Use this as seed data for the new project
+- Master index: `../data/daily/master_index_adjara.json` (1.5MB)
+
+**SQLite Jobs Table Schema:**
+```
+id, content_hash, title_en, title_ge, company, location,
+published_en, published_ge, deadline_en, deadline_ge,
+body_en, body_ge, url_en, url_ge, has_salary, is_vip,
+region, first_seen_at, last_seen_at, status, exported, created_at
+```
+
+**Seed Data Strategy:**
+- Phase 1: Use existing 301 Adjara jobs as seed data (sufficient for development)
+- Phase 2: Modify parser to fetch all Georgian regions for production data
+
+**Related Python Files:**
+- `../jobs_parser.py` - Main parser (can be adapted as Adapter A)
+- `../analytics.py` - Category classification (16 categories with keywords)
+- `../dashboard.py` - Dashboard UI
+- `../server.py` - Server
 
 **Working Directory:** `C:\Users\MindiaTulashvili\OneDrive\Desktop\batumi.work`
 
