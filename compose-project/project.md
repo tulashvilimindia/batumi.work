@@ -2866,10 +2866,10 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P3-02.8 | Analytics | Frontend tracking (analytics.js) | ✅ | HIGH | Section 19.6 |
 | P3-02.9 | Analytics | Analytics dashboard UI | ✅ | MEDIUM | Section 19.5 |
 | P3-02.10 | Analytics | Chart.js visualizations | ✅ | MEDIUM | Categories, regions, salary |
-| P3-02.11 | Analytics | Scheduled view refresh | ⬜ | MEDIUM | Section 19.7 |
-| P3-02.12 | Analytics | Daily report generation | ⬜ | LOW | |
+| P3-02.11 | Analytics | Scheduled view refresh | ✅ | MEDIUM | Section 19.7 |
+| P3-02.12 | Analytics | Daily report generation | ✅ | LOW | generate_daily_summary() |
 | P3-02.13 | Analytics | Weekly email reports | ⬜ | LOW | Section 19.9 |
-| P3-02.14 | Analytics | Data retention cleanup | ⬜ | LOW | 90 days default |
+| P3-02.14 | Analytics | Data retention cleanup | ✅ | LOW | cleanup_old_analytics() |
 
 ### 20.3 Phase 1 Extended Tracker (LOW PRIORITY)
 
