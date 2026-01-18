@@ -63,6 +63,31 @@ services:
       timeout: 10s
       retries: 3
 
+  # Parser Worker (Phase 2)
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: jobboard-worker
+    restart: unless-stopped
+    profiles:
+      - parser  # Only starts with: docker-compose --profile parser up
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-jobboard}
+      - API_URL=http://api:8000
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-change-me-in-production}
+      - PARSER_INTERVAL_MINUTES=${PARSER_INTERVAL_MINUTES:-60}
+      - NOT_SEEN_DAYS_TO_INACTIVE=${NOT_SEEN_DAYS_TO_INACTIVE:-7}
+      - ENABLED_SOURCES=${ENABLED_SOURCES:-jobs.ge}
+      - PARSE_REGIONS=${PARSE_REGIONS:-batumi,tbilisi}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
 volumes:
   postgres_data:
     name: jobboard_postgres_data

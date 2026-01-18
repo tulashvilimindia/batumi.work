@@ -791,17 +791,17 @@ self.addEventListener('push', (event) => {
 ### 7.2 Phase 2 Tracker
 | ID | Area | Task | Owner | Status | Start | Due | Depends On | Notes |
 |---|---|---|---|---|---|---|---|---|
-| P2-01.1 | Parser | Adapter interface + utilities | | ⬜ | | | Phase 1 complete | |
-| P2-01.2 | Parser | Runner/orchestrator | | ⬜ | | | P2-01.1 | |
-| P2-01.3 | Parser | Normalization + hashing | | ⬜ | | | P2-01.1 | |
+| P2-01.1 | Parser | Adapter interface + utilities | | ✅ | | | Phase 1 complete | BaseAdapter, HTTPClient, JobData |
+| P2-01.2 | Parser | Runner/orchestrator | | ✅ | | | P2-01.1 | ParserRunner with async upsert |
+| P2-01.3 | Parser | Normalization + hashing | | ✅ | | | P2-01.1 | SHA-256 hashing, text normalization |
 | P2-02.1 | Obs | parser_runs + admin endpoints | | ⬜ | | | P2-01.2 | |
-| P2-02.2 | Obs | Logging + error sampling | | ⬜ | | | P2-02.1 | |
-| P2-03.1 | Adapters | Adapter A | | ⬜ | | | P2-01.2 | Source: <TBD> |
-| P2-03.2 | Adapters | Adapter B | | ⬜ | | | P2-01.2 | Source: <TBD> |
-| P2-03.3 | Adapters | Mapping rules per source | | ⬜ | | | P2-03.1 | |
-| P2-04.1 | Worker | Worker container | | ⬜ | | | P2-01.2 | |
-| P2-04.2 | Worker | Scheduler interval | | ⬜ | | | P2-04.1 | |
-| P2-04.3 | Worker | Not-seen rule | | ⬜ | | | P2-04.2 | |
+| P2-02.2 | Obs | Logging + error sampling | | ✅ | | | P2-02.1 | structlog JSON logging |
+| P2-03.1 | Adapters | Adapter A | | ✅ | | | P2-01.2 | Source: jobs.ge |
+| P2-03.2 | Adapters | Adapter B | | ⬜ | | | P2-01.2 | Source: hr.ge |
+| P2-03.3 | Adapters | Mapping rules per source | | ✅ | | | P2-03.1 | Category classification |
+| P2-04.1 | Worker | Worker container | | ✅ | | | P2-01.2 | Dockerfile + docker-compose |
+| P2-04.2 | Worker | Scheduler interval | | ✅ | | | P2-04.1 | APScheduler integration |
+| P2-04.3 | Worker | Not-seen rule | | ✅ | | | P2-04.2 | deactivate_not_seen() implemented |
 | P2-05.1 | QA | Idempotency tests | | ⬜ | | | P2-03.2 | |
 | P2-05.2 | QA | Failure mode tests | | ⬜ | | | P2-03.2 | |
 | P2-05.3 | QA | Dataset load test | | ⬜ | | | P2-05.1 | |
