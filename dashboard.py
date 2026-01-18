@@ -39,6 +39,25 @@ def generate_dashboard_html(data: dict) -> str:
     # Total jobs time series
     total_series = data['time_series'].get('total_active', [])
     salary_series = data['time_series'].get('with_salary', [])
+    posted_daily_series = data['time_series'].get('posted_daily', [])
+    posted_by_category = data['time_series'].get('posted_by_category', {})
+
+    # Build daily postings by category datasets
+    daily_posting_datasets = []
+    for category, series in posted_by_category.items():
+        if series:
+            color = category_colors.get(category, '#BDC3C7')
+            daily_posting_datasets.append({
+                "label": category,
+                "data": [{"x": p["date"], "y": p["value"]} for p in series],
+                "borderColor": color,
+                "backgroundColor": color + "33",
+                "fill": False,
+                "tension": 0.4,
+                "pointRadius": 2,
+                "borderWidth": 2
+            })
+    daily_posting_datasets.sort(key=lambda x: sum(p["y"] for p in x["data"]) / max(len(x["data"]), 1), reverse=True)
 
     html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -545,12 +564,12 @@ def generate_dashboard_html(data: dict) -> str:
 
         <!-- Main Charts Grid -->
         <div class="panels-grid">
-            <!-- Jobs by Category Over Time -->
+            <!-- Jobs by Category Over Time (Total Active) -->
             <div class="panel full-width">
                 <div class="panel-header">
                     <span class="panel-title">
                         <span class="panel-title-icon" style="background: var(--accent-blue)"></span>
-                        Jobs by Category - Time Series
+                        Total Active Jobs by Category (Cumulative)
                     </span>
                     <div class="panel-actions">
                         <button class="panel-btn active" onclick="setTimeRange(7)">7d</button>
@@ -561,6 +580,21 @@ def generate_dashboard_html(data: dict) -> str:
                 <div class="panel-body">
                     <div class="chart-container">
                         <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Jobs Posted Per Day by Category -->
+            <div class="panel full-width">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <span class="panel-title-icon" style="background: var(--accent-green)"></span>
+                        New Jobs Posted Per Day (Daily Posting Rate)
+                    </span>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-container">
+                        <canvas id="dailyPostingsChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -649,6 +683,10 @@ def generate_dashboard_html(data: dict) -> str:
         // Total jobs data
         const totalData = {json.dumps([{"x": p["date"], "y": p["value"]} for p in total_series])};
         const salaryData = {json.dumps([{"x": p["date"], "y": p["value"]} for p in salary_series])};
+        const postedDailyData = {json.dumps([{"x": p["date"], "y": p["value"]} for p in posted_daily_series])};
+
+        // Daily postings by category
+        const dailyPostingDatasets = {json.dumps(daily_posting_datasets)};
 
         // Category colors for pie chart
         const categoryColors = {json.dumps(category_colors)};
@@ -726,6 +764,98 @@ def generate_dashboard_html(data: dict) -> str:
                         }},
                         ticks: {{
                             callback: function(value) {{ return value + ' jobs'; }}
+                        }}
+                    }}
+                }}
+            }}
+        }});
+
+        // Daily Postings Chart - time series line chart like Grafana
+        const dailyPostingsCtx = document.getElementById('dailyPostingsChart').getContext('2d');
+
+        // Calculate dynamic max from all data for proper scaling
+        const allDailyValues = dailyPostingDatasets.flatMap(ds => ds.data.map(d => d.y));
+        const maxDailyValue = Math.max(...allDailyValues, 1);
+        const dynamicMax = maxDailyValue + 20; // +20 headroom for better visibility
+
+        // Prepare datasets for stacked area time series
+        const dailyTimeSeriesDatasets = dailyPostingDatasets.map((ds, idx) => ({{
+            label: ds.label,
+            data: ds.data,
+            borderColor: ds.borderColor,
+            backgroundColor: ds.borderColor + '66',
+            fill: idx === 0 ? 'origin' : '-1',
+            tension: 0.4,
+            pointRadius: 0,
+            borderWidth: 1.5
+        }}));
+
+        new Chart(dailyPostingsCtx, {{
+            type: 'line',
+            data: {{
+                datasets: dailyTimeSeriesDatasets
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {{
+                    mode: 'index',
+                    intersect: false
+                }},
+                plugins: {{
+                    legend: {{
+                        position: 'bottom',
+                        labels: {{
+                            boxWidth: 12,
+                            padding: 10,
+                            font: {{ size: 10 }},
+                            usePointStyle: true
+                        }}
+                    }},
+                    tooltip: {{
+                        backgroundColor: '#1f2229',
+                        titleColor: '#d8dee9',
+                        bodyColor: '#8b949e',
+                        borderColor: '#2a2e37',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {{
+                            title: function(items) {{
+                                return 'New Posts: ' + items[0].raw.x;
+                            }},
+                            label: function(context) {{
+                                return context.dataset.label + ': ' + context.raw.y + ' new jobs';
+                            }},
+                            footer: function(items) {{
+                                const total = items.reduce((sum, item) => sum + (item.raw.y || 0), 0);
+                                return 'Total: ' + total + ' jobs posted';
+                            }}
+                        }}
+                    }}
+                }},
+                scales: {{
+                    x: {{
+                        type: 'time',
+                        time: {{
+                            unit: 'day',
+                            displayFormats: {{
+                                day: 'MMM d'
+                            }}
+                        }},
+                        grid: {{
+                            display: false
+                        }}
+                    }},
+                    y: {{
+                        stacked: true,
+                        beginAtZero: true,
+                        max: dynamicMax,
+                        grid: {{
+                            color: '#2a2e37'
+                        }},
+                        ticks: {{
+                            callback: function(value) {{ return value + ' new'; }}
                         }}
                     }}
                 }}

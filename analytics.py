@@ -266,13 +266,26 @@ class MetricsDatabase:
             with_salary = cursor.fetchone()[0]
             self._upsert_metric(cursor, today, 'jobs_with_salary', with_salary, '{}')
 
-            # New jobs today
+            # New jobs today (posted today)
             cursor.execute("""
                 SELECT COUNT(*) FROM jobs
-                WHERE DATE(first_seen_at) = DATE('now', 'localtime') AND status = 'active'
+                WHERE DATE(first_seen_at) = DATE('now', 'localtime')
             """)
             new_today = cursor.fetchone()[0]
             self._upsert_metric(cursor, today, 'jobs_new_today', new_today, '{}')
+            self._upsert_metric(cursor, today, 'jobs_posted_daily', new_today, '{}')
+
+            # New jobs by category (posted today)
+            cursor.execute("""
+                SELECT jc.category, COUNT(*) as cnt
+                FROM job_categories jc
+                JOIN jobs j ON j.id = jc.job_id
+                WHERE DATE(j.first_seen_at) = DATE('now', 'localtime')
+                GROUP BY jc.category
+            """)
+            for row in cursor.fetchall():
+                labels = json.dumps({"category": row[0]})
+                self._upsert_metric(cursor, today, 'jobs_posted_by_category', row[1], labels)
 
             # Jobs by category
             cursor.execute("""
@@ -337,7 +350,7 @@ class MetricsDatabase:
             return [{"date": row['date'], "value": row['metric_value']} for row in cursor.fetchall()]
 
     def get_category_time_series(self, days: int = 30) -> dict:
-        """Get time series data for all categories"""
+        """Get time series data for all categories (total active)"""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
@@ -348,6 +361,32 @@ class MetricsDatabase:
                 SELECT date, metric_value, labels
                 FROM metrics_daily
                 WHERE metric_name = 'jobs_by_category' AND date >= ?
+                ORDER BY date
+            """, (start_date,))
+
+            result = defaultdict(list)
+            for row in cursor.fetchall():
+                labels = json.loads(row['labels'])
+                category = labels.get('category', 'Other')
+                result[category].append({
+                    "date": row['date'],
+                    "value": row['metric_value']
+                })
+
+            return dict(result)
+
+    def get_daily_postings_time_series(self, days: int = 30) -> dict:
+        """Get time series data for new jobs posted per day by category"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+
+            cursor.execute("""
+                SELECT date, metric_value, labels
+                FROM metrics_daily
+                WHERE metric_name = 'jobs_posted_by_category' AND date >= ?
                 ORDER BY date
             """, (start_date,))
 
@@ -468,8 +507,10 @@ class MetricsDatabase:
         """Get all data needed for the dashboard"""
         stats = self.get_current_stats()
         category_series = self.get_category_time_series(days)
+        daily_postings_series = self.get_daily_postings_time_series(days)
         total_series = self.get_time_series('jobs_total_active', days)
         salary_series = self.get_time_series('jobs_with_salary', days)
+        posted_daily_series = self.get_time_series('jobs_posted_daily', days)
 
         # Get category colors
         category_colors = {cat: data['color'] for cat, data in CATEGORIES.items()}
@@ -479,7 +520,9 @@ class MetricsDatabase:
             "time_series": {
                 "total_active": total_series,
                 "with_salary": salary_series,
-                "by_category": category_series
+                "by_category": category_series,
+                "posted_daily": posted_daily_series,
+                "posted_by_category": daily_postings_series
             },
             "category_colors": category_colors,
             "generated_at": datetime.now().isoformat()
@@ -521,14 +564,22 @@ def generate_sample_historical_data(db: MetricsDatabase, days: int = 30):
             total = int(current_total * (0.7 + 0.3 * progress) * variance)
             salary = int(current_salary * (0.7 + 0.3 * progress) * variance)
 
+            # Daily new postings (random realistic values)
+            daily_posted = random.randint(8, 35)
+
             db._upsert_metric(cursor, date, 'jobs_total_active', total, '{}')
             db._upsert_metric(cursor, date, 'jobs_with_salary', salary, '{}')
-            db._upsert_metric(cursor, date, 'jobs_new_today', random.randint(5, 25), '{}')
+            db._upsert_metric(cursor, date, 'jobs_new_today', daily_posted, '{}')
+            db._upsert_metric(cursor, date, 'jobs_posted_daily', daily_posted, '{}')
 
             for category, count in current_cats.items():
                 cat_count = int(count * (0.7 + 0.3 * progress) * random.uniform(0.8, 1.2))
                 labels = json.dumps({"category": category})
                 db._upsert_metric(cursor, date, 'jobs_by_category', cat_count, labels)
+
+                # Daily postings per category (proportional to category size)
+                cat_daily = max(0, int(daily_posted * (count / current_total) * random.uniform(0.5, 1.5)))
+                db._upsert_metric(cursor, date, 'jobs_posted_by_category', cat_daily, labels)
 
         conn.commit()
 
