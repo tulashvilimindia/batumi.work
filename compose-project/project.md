@@ -783,7 +783,7 @@ self.addEventListener('push', (event) => {
 | P1-04.5 | Frontend | robots.txt + sitemap.xml | | ✅ | | | P1-01.3 | |
 | P1-05.1 | Delivery | docker-compose db+api+web | | ✅ | | | P1-02.1,P1-03.1,P1-04.1 | |
 | P1-05.2 | Delivery | .env.example + README | | ✅ | | | P1-05.1 | |
-| P1-05.3 | Delivery | Smoke test run | | ⬜ | | | P1-05.1 | Pending docker test |
+| P1-05.3 | Delivery | Smoke test run | | ✅ | | | P1-05.1 | All containers healthy, API + frontend working |
 | P1-06.1 | QA | API checks | | ⬜ | | | P1-05.3 | |
 | P1-06.2 | QA | UI checks | | ⬜ | | | P1-05.3 | |
 | P1-06.3 | QA | Basic Lighthouse target | | ⬜ | | | P1-04.3,P1-04.4 | |
