@@ -1960,6 +1960,713 @@ LOG_FORMAT=json
 
 ---
 
+## 18) Database Backup System
+
+### 18.1 Backup Strategy Overview
+
+**Goal:** Full PostgreSQL dumps stored outside Docker volumes on host filesystem for disaster recovery and data portability.
+
+```
+compose-project/
+├── backups/                    # Host-mounted backup directory
+│   ├── daily/                  # Daily automated backups
+│   │   ├── jobboard_2026-01-19_030000.sql.gz
+│   │   ├── jobboard_2026-01-18_030000.sql.gz
+│   │   └── ...
+│   ├── weekly/                 # Weekly full backups (kept 4 weeks)
+│   │   └── jobboard_week_03_2026.sql.gz
+│   ├── manual/                 # On-demand backups
+│   │   └── jobboard_before_migration_2026-01-19.sql.gz
+│   └── latest.sql.gz           # Symlink to most recent backup
+```
+
+### 18.2 Backup Container Service
+
+**docker-compose.yml addition:**
+```yaml
+services:
+  # ... existing services ...
+
+  backup:
+    image: postgres:15-alpine
+    container_name: jobboard-backup
+    profiles:
+      - backup
+      - full
+    environment:
+      - PGHOST=db
+      - PGUSER=${POSTGRES_USER:-postgres}
+      - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - PGDATABASE=${POSTGRES_DB:-jobboard}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-7}
+      - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 3 * * *}
+    volumes:
+      - ./backups:/backups:rw
+      - ./scripts/backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["crond -f -d 8"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-f", "/backups/latest.sql.gz"]
+      interval: 1h
+      timeout: 10s
+      retries: 1
+```
+
+### 18.3 Backup Script
+
+**scripts/backup.sh:**
+```bash
+#!/bin/sh
+set -e
+
+TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
+BACKUP_FILE="/backups/daily/jobboard_${TIMESTAMP}.sql.gz"
+LATEST_LINK="/backups/latest.sql.gz"
+
+echo "[$(date)] Starting backup..."
+
+# Create directories if not exist
+mkdir -p /backups/daily /backups/weekly /backups/manual
+
+# Full database dump with compression
+pg_dump -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" \
+  --format=plain \
+  --no-owner \
+  --no-privileges \
+  --verbose \
+  2>/backups/backup.log | gzip > "$BACKUP_FILE"
+
+# Verify backup
+if [ -s "$BACKUP_FILE" ]; then
+  echo "[$(date)] Backup completed: $BACKUP_FILE ($(du -h "$BACKUP_FILE" | cut -f1))"
+
+  # Update latest symlink
+  ln -sf "$BACKUP_FILE" "$LATEST_LINK"
+
+  # Weekly backup (every Sunday)
+  if [ "$(date +%u)" = "7" ]; then
+    WEEK_NUM=$(date +%V)
+    YEAR=$(date +%Y)
+    cp "$BACKUP_FILE" "/backups/weekly/jobboard_week_${WEEK_NUM}_${YEAR}.sql.gz"
+    echo "[$(date)] Weekly backup created"
+  fi
+
+  # Cleanup old daily backups
+  find /backups/daily -name "*.sql.gz" -mtime +${BACKUP_RETENTION_DAYS:-7} -delete
+  echo "[$(date)] Cleaned up backups older than ${BACKUP_RETENTION_DAYS:-7} days"
+
+  # Cleanup old weekly backups (keep 4 weeks)
+  find /backups/weekly -name "*.sql.gz" -mtime +28 -delete
+
+else
+  echo "[$(date)] ERROR: Backup failed or empty!"
+  exit 1
+fi
+```
+
+### 18.4 Manual Backup Commands
+
+```bash
+# Create immediate backup
+docker-compose exec backup sh -c "TIMESTAMP=manual_$(date +%Y%m%d_%H%M%S) && \
+  pg_dump -h db -U postgres jobboard | gzip > /backups/manual/jobboard_\$TIMESTAMP.sql.gz"
+
+# Backup specific tables only
+docker-compose exec backup sh -c "pg_dump -h db -U postgres -t jobs -t categories jobboard | \
+  gzip > /backups/manual/jobs_categories_$(date +%Y%m%d).sql.gz"
+
+# List all backups with sizes
+docker-compose exec backup sh -c "ls -lah /backups/daily/ /backups/weekly/ /backups/manual/"
+
+# Verify backup integrity
+docker-compose exec backup sh -c "gunzip -t /backups/latest.sql.gz && echo 'Backup valid'"
+```
+
+### 18.5 Restore Procedures
+
+```bash
+# Restore from latest backup
+docker-compose exec -T db psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS jobboard;"
+docker-compose exec -T db psql -U postgres -d postgres -c "CREATE DATABASE jobboard;"
+gunzip -c ./backups/latest.sql.gz | docker-compose exec -T db psql -U postgres -d jobboard
+
+# Restore from specific backup
+gunzip -c ./backups/daily/jobboard_2026-01-19_030000.sql.gz | \
+  docker-compose exec -T db psql -U postgres -d jobboard
+
+# Restore to new database for testing
+docker-compose exec -T db psql -U postgres -c "CREATE DATABASE jobboard_restore;"
+gunzip -c ./backups/latest.sql.gz | docker-compose exec -T db psql -U postgres -d jobboard_restore
+```
+
+### 18.6 Backup Monitoring & Alerts
+
+**Admin API endpoints:**
+```
+GET /api/v1/admin/backups              # List recent backups
+GET /api/v1/admin/backups/status       # Backup health status
+POST /api/v1/admin/backups/trigger     # Trigger manual backup
+GET /api/v1/admin/backups/{filename}   # Download backup file
+```
+
+**Backup status response:**
+```json
+{
+  "last_backup": "2026-01-19T03:00:00Z",
+  "last_backup_size_mb": 12.5,
+  "backup_count_daily": 7,
+  "backup_count_weekly": 4,
+  "total_size_mb": 145.2,
+  "health": "healthy",
+  "next_scheduled": "2026-01-20T03:00:00Z"
+}
+```
+
+### 18.7 Environment Variables
+
+```bash
+# .env additions
+BACKUP_RETENTION_DAYS=7           # Keep daily backups for 7 days
+BACKUP_SCHEDULE="0 3 * * *"       # Daily at 3 AM
+BACKUP_COMPRESSION=gzip           # gzip or none
+BACKUP_NOTIFY_EMAIL=admin@example.com
+BACKUP_NOTIFY_ON_FAILURE=true
+```
+
+---
+
+## 19) Job Posting Analytics & Dashboards
+
+### 19.1 Analytics Overview
+
+**Goal:** Comprehensive insights into job market trends, user behavior, and platform performance.
+
+**Analytics Categories:**
+1. **Job Market Analytics** - Trends, categories, salaries, regions
+2. **User Behavior Analytics** - Views, searches, engagement
+3. **Parser Performance Analytics** - Source quality, success rates
+4. **Platform Health Analytics** - API performance, errors, uptime
+
+### 19.2 Database Schema for Analytics
+
+**Job Views Table (tracking):**
+```sql
+CREATE TABLE job_views (
+    id BIGSERIAL PRIMARY KEY,
+    job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+    viewed_at TIMESTAMP DEFAULT NOW(),
+
+    -- Session tracking
+    session_id VARCHAR(64),
+    user_agent TEXT,
+    ip_hash VARCHAR(64),        -- SHA-256 hashed for privacy
+
+    -- Source tracking
+    referrer VARCHAR(500),
+    utm_source VARCHAR(100),
+    utm_medium VARCHAR(100),
+    utm_campaign VARCHAR(100),
+
+    -- Device info
+    device_type VARCHAR(20),    -- mobile, tablet, desktop
+    browser VARCHAR(50),
+    os VARCHAR(50),
+
+    -- Location (from IP geolocation)
+    country_code VARCHAR(2),
+    city VARCHAR(100),
+
+    -- Language
+    language VARCHAR(2)         -- ge, en
+);
+
+CREATE INDEX idx_job_views_job ON job_views(job_id);
+CREATE INDEX idx_job_views_date ON job_views(viewed_at);
+CREATE INDEX idx_job_views_session ON job_views(session_id);
+```
+
+**Search Analytics Table:**
+```sql
+CREATE TABLE search_analytics (
+    id BIGSERIAL PRIMARY KEY,
+    searched_at TIMESTAMP DEFAULT NOW(),
+
+    -- Query info
+    query VARCHAR(255),
+    query_normalized VARCHAR(255),  -- lowercase, trimmed
+
+    -- Filters used
+    category_id UUID REFERENCES categories(id),
+    region_id UUID REFERENCES regions(id),
+    has_salary_filter BOOLEAN,
+    is_vip_filter BOOLEAN,
+
+    -- Results
+    results_count INTEGER,
+    results_shown INTEGER,
+
+    -- User action
+    clicked_job_id UUID,           -- If user clicked a result
+    time_to_click_ms INTEGER,      -- Time from search to click
+
+    -- Session
+    session_id VARCHAR(64),
+    language VARCHAR(2)
+);
+
+CREATE INDEX idx_search_date ON search_analytics(searched_at);
+CREATE INDEX idx_search_query ON search_analytics(query_normalized);
+```
+
+**Daily Aggregates (Materialized Views):**
+```sql
+-- Job statistics by day
+CREATE MATERIALIZED VIEW mv_daily_job_stats AS
+SELECT
+    DATE(created_at) as date,
+    COUNT(*) as jobs_created,
+    COUNT(*) FILTER (WHERE status = 'active') as jobs_active,
+    COUNT(*) FILTER (WHERE has_salary = true) as jobs_with_salary,
+    COUNT(DISTINCT category_id) as categories_with_jobs,
+    COUNT(DISTINCT company_name) as unique_companies,
+    AVG(salary_min) FILTER (WHERE salary_min IS NOT NULL) as avg_salary_min,
+    AVG(salary_max) FILTER (WHERE salary_max IS NOT NULL) as avg_salary_max
+FROM jobs
+GROUP BY DATE(created_at);
+
+-- Views by day
+CREATE MATERIALIZED VIEW mv_daily_views AS
+SELECT
+    DATE(viewed_at) as date,
+    COUNT(*) as total_views,
+    COUNT(DISTINCT session_id) as unique_visitors,
+    COUNT(DISTINCT job_id) as jobs_viewed,
+    COUNT(*) FILTER (WHERE device_type = 'mobile') as mobile_views,
+    COUNT(*) FILTER (WHERE device_type = 'desktop') as desktop_views
+FROM job_views
+GROUP BY DATE(viewed_at);
+
+-- Category popularity
+CREATE MATERIALIZED VIEW mv_category_stats AS
+SELECT
+    c.id as category_id,
+    c.name_ge,
+    c.slug,
+    COUNT(DISTINCT j.id) as job_count,
+    COUNT(DISTINCT jv.id) as view_count,
+    ROUND(AVG(j.salary_min)) as avg_salary_min,
+    ROUND(AVG(j.salary_max)) as avg_salary_max
+FROM categories c
+LEFT JOIN jobs j ON j.category_id = c.id AND j.status = 'active'
+LEFT JOIN job_views jv ON jv.job_id = j.id
+GROUP BY c.id, c.name_ge, c.slug;
+
+-- Search trends
+CREATE MATERIALIZED VIEW mv_search_trends AS
+SELECT
+    DATE(searched_at) as date,
+    query_normalized,
+    COUNT(*) as search_count,
+    AVG(results_count) as avg_results,
+    COUNT(*) FILTER (WHERE clicked_job_id IS NOT NULL) as searches_with_click,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE clicked_job_id IS NOT NULL) / COUNT(*), 2) as click_rate
+FROM search_analytics
+WHERE searched_at > NOW() - INTERVAL '30 days'
+GROUP BY DATE(searched_at), query_normalized
+HAVING COUNT(*) > 5;
+
+-- Refresh materialized views (scheduled daily)
+-- REFRESH MATERIALIZED VIEW CONCURRENTLY mv_daily_job_stats;
+```
+
+### 19.3 Analytics API Endpoints
+
+```
+Analytics API (Admin):
+  GET /api/v1/admin/analytics/dashboard           # Main dashboard data
+  GET /api/v1/admin/analytics/jobs                # Job market analytics
+  GET /api/v1/admin/analytics/views               # View/traffic analytics
+  GET /api/v1/admin/analytics/searches            # Search analytics
+  GET /api/v1/admin/analytics/categories          # Category performance
+  GET /api/v1/admin/analytics/regions             # Regional analytics
+  GET /api/v1/admin/analytics/sources             # Parser source analytics
+  GET /api/v1/admin/analytics/trends              # Trend analysis
+  GET /api/v1/admin/analytics/export              # Export data (CSV/JSON)
+
+Query Parameters:
+  ?from=2026-01-01&to=2026-01-19                  # Date range
+  ?granularity=day|week|month                     # Aggregation level
+  ?category=it-programming                        # Filter by category
+  ?region=tbilisi                                 # Filter by region
+```
+
+### 19.4 Dashboard Data Models
+
+**Main Dashboard Response:**
+```json
+{
+  "period": {
+    "from": "2026-01-12",
+    "to": "2026-01-19"
+  },
+  "summary": {
+    "total_jobs": 1250,
+    "active_jobs": 890,
+    "new_jobs_period": 145,
+    "total_views": 15420,
+    "unique_visitors": 4230,
+    "searches": 8900,
+    "avg_jobs_per_day": 20.7
+  },
+  "trends": {
+    "jobs_change_pct": 12.5,
+    "views_change_pct": 8.3,
+    "searches_change_pct": -2.1
+  },
+  "top_categories": [
+    {"slug": "it-programming", "name": "IT & Programming", "jobs": 234, "views": 4500},
+    {"slug": "sales", "name": "Sales", "jobs": 189, "views": 2100}
+  ],
+  "top_regions": [
+    {"slug": "tbilisi", "name": "Tbilisi", "jobs": 780, "pct": 62.4},
+    {"slug": "batumi", "name": "Batumi", "jobs": 120, "pct": 9.6}
+  ],
+  "salary_insights": {
+    "jobs_with_salary_pct": 35.2,
+    "avg_salary_min": 1800,
+    "avg_salary_max": 3200,
+    "currency": "GEL"
+  },
+  "parser_health": {
+    "sources": [
+      {"name": "jobs.ge", "status": "healthy", "last_run": "2026-01-19T14:00:00Z", "jobs_today": 45},
+      {"name": "hr.ge", "status": "pending", "last_run": null, "jobs_today": 0}
+    ],
+    "success_rate_24h": 98.5
+  }
+}
+```
+
+**Job Market Analytics Response:**
+```json
+{
+  "period": {"from": "2026-01-01", "to": "2026-01-19"},
+  "job_flow": {
+    "created": [{"date": "2026-01-19", "count": 23}, ...],
+    "expired": [{"date": "2026-01-19", "count": 12}, ...],
+    "net_change": [{"date": "2026-01-19", "count": 11}, ...]
+  },
+  "by_category": [
+    {
+      "category": "IT & Programming",
+      "total": 234,
+      "new_period": 45,
+      "avg_salary": {"min": 2500, "max": 4500},
+      "salary_coverage_pct": 48.2,
+      "top_companies": ["TBC Bank", "Bank of Georgia", "Magti"]
+    }
+  ],
+  "by_employment_type": {
+    "full_time": 720,
+    "part_time": 89,
+    "contract": 56,
+    "internship": 25
+  },
+  "salary_distribution": {
+    "ranges": [
+      {"range": "0-1000", "count": 120},
+      {"range": "1000-2000", "count": 180},
+      {"range": "2000-3000", "count": 95},
+      {"range": "3000-5000", "count": 45},
+      {"range": "5000+", "count": 20}
+    ],
+    "currency": "GEL"
+  },
+  "companies_ranking": [
+    {"name": "TBC Bank", "active_jobs": 24, "total_views": 1200},
+    {"name": "Bank of Georgia", "active_jobs": 18, "total_views": 980}
+  ]
+}
+```
+
+### 19.5 Analytics Dashboard UI
+
+**Admin Dashboard Page (`/admin/analytics.html`):**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>JobBoard Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-value { font-size: 2em; font-weight: bold; color: #2c3e50; }
+        .stat-label { color: #7f8c8d; margin-top: 5px; }
+        .stat-trend { font-size: 0.9em; }
+        .trend-up { color: #27ae60; }
+        .trend-down { color: #e74c3c; }
+        .chart-container { grid-column: span 2; }
+        .full-width { grid-column: span 4; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Summary Cards -->
+        <div class="stat-card">
+            <div class="stat-value" id="total-jobs">--</div>
+            <div class="stat-label">Total Active Jobs</div>
+            <div class="stat-trend" id="jobs-trend"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="total-views">--</div>
+            <div class="stat-label">Views (7 days)</div>
+            <div class="stat-trend" id="views-trend"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="unique-visitors">--</div>
+            <div class="stat-label">Unique Visitors</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="searches">--</div>
+            <div class="stat-label">Searches</div>
+        </div>
+
+        <!-- Charts -->
+        <div class="stat-card chart-container">
+            <h3>Jobs Created vs Views</h3>
+            <canvas id="jobs-views-chart"></canvas>
+        </div>
+        <div class="stat-card chart-container">
+            <h3>Top Categories</h3>
+            <canvas id="categories-chart"></canvas>
+        </div>
+        <div class="stat-card chart-container">
+            <h3>Regional Distribution</h3>
+            <canvas id="regions-chart"></canvas>
+        </div>
+        <div class="stat-card chart-container">
+            <h3>Salary Distribution</h3>
+            <canvas id="salary-chart"></canvas>
+        </div>
+
+        <!-- Tables -->
+        <div class="stat-card full-width">
+            <h3>Top Search Queries</h3>
+            <table id="search-table">
+                <thead><tr><th>Query</th><th>Count</th><th>Avg Results</th><th>Click Rate</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="stat-card full-width">
+            <h3>Parser Sources Status</h3>
+            <table id="sources-table">
+                <thead><tr><th>Source</th><th>Status</th><th>Last Run</th><th>Jobs Today</th><th>Success Rate</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = localStorage.getItem('admin_api_key');
+        const headers = { 'X-API-Key': API_KEY };
+
+        async function loadDashboard() {
+            const response = await fetch('/api/v1/admin/analytics/dashboard', { headers });
+            const data = await response.json();
+
+            // Update stat cards
+            document.getElementById('total-jobs').textContent = data.summary.active_jobs.toLocaleString();
+            document.getElementById('total-views').textContent = data.summary.total_views.toLocaleString();
+            document.getElementById('unique-visitors').textContent = data.summary.unique_visitors.toLocaleString();
+            document.getElementById('searches').textContent = data.summary.searches.toLocaleString();
+
+            // Update trends
+            updateTrend('jobs-trend', data.trends.jobs_change_pct);
+            updateTrend('views-trend', data.trends.views_change_pct);
+
+            // Render charts
+            renderCategoriesChart(data.top_categories);
+            renderRegionsChart(data.top_regions);
+        }
+
+        function updateTrend(elementId, pct) {
+            const el = document.getElementById(elementId);
+            const arrow = pct >= 0 ? '↑' : '↓';
+            const cls = pct >= 0 ? 'trend-up' : 'trend-down';
+            el.innerHTML = `<span class="${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span> vs last period`;
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
+```
+
+### 19.6 Real-time Analytics Tracking
+
+**Frontend tracking snippet (add to all pages):**
+```javascript
+// analytics.js - Lightweight tracking
+const Analytics = {
+    sessionId: localStorage.getItem('session_id') || (() => {
+        const id = crypto.randomUUID();
+        localStorage.setItem('session_id', id);
+        return id;
+    })(),
+
+    track(event, data = {}) {
+        const payload = {
+            event,
+            session_id: this.sessionId,
+            timestamp: new Date().toISOString(),
+            url: window.location.href,
+            referrer: document.referrer,
+            language: document.documentElement.lang,
+            ...data
+        };
+
+        // Use sendBeacon for reliability
+        navigator.sendBeacon('/api/v1/analytics/track', JSON.stringify(payload));
+    },
+
+    trackJobView(jobId) {
+        this.track('job_view', { job_id: jobId });
+    },
+
+    trackSearch(query, filters, resultsCount) {
+        this.track('search', { query, filters, results_count: resultsCount });
+    },
+
+    trackJobClick(jobId, position) {
+        this.track('job_click', { job_id: jobId, position });
+    }
+};
+
+// Auto-track page views
+Analytics.track('page_view');
+```
+
+### 19.7 Scheduled Analytics Jobs
+
+**Worker tasks for analytics:**
+```python
+# worker/app/tasks/analytics.py
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+async def refresh_materialized_views():
+    """Refresh all analytics materialized views."""
+    views = [
+        'mv_daily_job_stats',
+        'mv_daily_views',
+        'mv_category_stats',
+        'mv_search_trends'
+    ]
+    async with get_db_session() as session:
+        for view in views:
+            await session.execute(f"REFRESH MATERIALIZED VIEW CONCURRENTLY {view}")
+        await session.commit()
+    logger.info("analytics_views_refreshed", views=views)
+
+async def generate_daily_report():
+    """Generate and store daily analytics report."""
+    async with get_db_session() as session:
+        # Aggregate yesterday's data
+        report = await compile_daily_report(session)
+
+        # Store in reports table
+        await session.execute(
+            "INSERT INTO analytics_reports (date, report_type, data) VALUES ($1, $2, $3)",
+            [date.today() - timedelta(days=1), 'daily', json.dumps(report)]
+        )
+        await session.commit()
+
+    logger.info("daily_report_generated", date=str(date.today() - timedelta(days=1)))
+
+async def cleanup_old_analytics():
+    """Remove analytics data older than retention period."""
+    retention_days = int(os.getenv('ANALYTICS_RETENTION_DAYS', 90))
+    cutoff = datetime.now() - timedelta(days=retention_days)
+
+    async with get_db_session() as session:
+        # Delete old job views
+        result = await session.execute(
+            "DELETE FROM job_views WHERE viewed_at < $1", [cutoff]
+        )
+        views_deleted = result.rowcount
+
+        # Delete old search analytics
+        result = await session.execute(
+            "DELETE FROM search_analytics WHERE searched_at < $1", [cutoff]
+        )
+        searches_deleted = result.rowcount
+
+        await session.commit()
+
+    logger.info("analytics_cleanup", views_deleted=views_deleted, searches_deleted=searches_deleted)
+
+# Schedule tasks
+scheduler = AsyncIOScheduler()
+scheduler.add_job(refresh_materialized_views, 'cron', hour=4, minute=0)   # Daily 4 AM
+scheduler.add_job(generate_daily_report, 'cron', hour=5, minute=0)        # Daily 5 AM
+scheduler.add_job(cleanup_old_analytics, 'cron', day_of_week='sun', hour=3)  # Weekly Sunday 3 AM
+```
+
+### 19.8 Analytics Environment Variables
+
+```bash
+# .env additions
+ANALYTICS_ENABLED=true
+ANALYTICS_RETENTION_DAYS=90
+ANALYTICS_TRACK_IP=false              # Privacy: don't store raw IPs
+ANALYTICS_GEOIP_ENABLED=true          # Enable IP geolocation
+ANALYTICS_REPORTS_EMAIL=admin@example.com
+ANALYTICS_DAILY_REPORT_TIME=05:00
+```
+
+### 19.9 Key Insights & Reports
+
+**Automated Insights:**
+- Top growing categories (week over week)
+- Declining categories alert
+- Salary trend by category
+- Popular search queries with no results (content gap)
+- Parser source quality degradation
+- Regional job distribution changes
+- Peak traffic hours
+
+**Weekly Report Email:**
+```
+Subject: JobBoard Weekly Report - Week 3, 2026
+
+SUMMARY
+- Active jobs: 890 (+12% vs last week)
+- Total views: 45,200 (+8%)
+- Unique visitors: 12,400 (+5%)
+- New jobs posted: 145
+
+TOP CATEGORIES
+1. IT & Programming - 234 jobs (26%)
+2. Sales & Marketing - 189 jobs (21%)
+3. Finance - 145 jobs (16%)
+
+INSIGHTS
+⚠️ "accountant" searches have 0 results - consider adding Finance category
+📈 Batumi region jobs increased 34% this week
+💰 Average salary in IT increased to 3,200 GEL (+8%)
+
+PARSER STATUS
+✅ jobs.ge: 145 jobs imported, 98% success rate
+⏳ hr.ge: Not configured
+```
+
+---
+
 ## Session Notes (for continuity)
 
 ### Last Session: 2026-01-19
@@ -1999,49 +2706,81 @@ docker-compose --profile parser up -d
 - GET /api/v1/admin/parser/runs - Parser run history
 - POST /api/v1/admin/parser/trigger - Trigger parser manually
 
-**Remaining (Optional):**
-- P2-03.2: hr.ge adapter (second source)
+**Remaining Tasks:**
+- P2-03.2: hr.ge adapter (second source) - Optional
+- P3-01: Database Backup System - HIGH PRIORITY
+- P3-02: Job Posting Analytics & Dashboards - HIGH PRIORITY
 
 **Working Directory:** `C:\Users\MindiaTulashvili\OneDrive\Desktop\batumi.work`
 
 ---
 
-## 18) Updated Progress Tracker (All Features)
+## 20) Updated Progress Tracker (All Features)
 
-### 18.1 Phase 1 Extended Tracker
+### 20.1 Phase 3 - Database Backup System (HIGH PRIORITY)
 
-| ID | Area | Task | Status | Notes |
-|---|---|---|---|---|
-| P1-03.4 | DB | Extended schema (salary, employment_type) | ⬜ | Section 4.3.1 |
-| P1-03.5 | DB | Companies table | ⬜ | |
-| P1-03.6 | DB | Regions table with hierarchy | ⬜ | |
-| P1-03.7 | DB | Job views analytics table | ⬜ | |
-| P1-03.8 | DB | Search logs table | ⬜ | |
-| P1-02.5 | Backend | API versioning (/api/v1/) | ⬜ | Section 4.2.1 |
-| P1-02.6 | Backend | Query params standard | ⬜ | Pagination, filtering |
-| P1-04.6 | Frontend | PWA manifest.json | ⬜ | Section 4.4.1 |
-| P1-04.7 | Frontend | Service worker | ⬜ | |
-| P1-04.8 | Frontend | Offline page | ⬜ | |
-| P1-04.9 | Frontend | Social share buttons | ⬜ | Section 15.1 |
-| P1-06.4 | QA | Unit test setup (Pytest) | ⬜ | Section 14.2 |
-| P1-06.5 | QA | Integration test setup | ⬜ | Section 14.3 |
-| P1-06.6 | QA | E2E test setup (Playwright) | ⬜ | Section 14.4 |
-| P1-06.7 | QA | Coverage target 80% | ⬜ | |
-| P1-07.1 | Monitoring | Sentry integration | ⬜ | Section 17.1 |
-| P1-07.2 | Monitoring | Structured logging | ⬜ | Section 17.3 |
-| P1-07.3 | Monitoring | Performance metrics | ⬜ | Section 16.7 |
+| ID | Area | Task | Status | Priority | Notes |
+|---|---|---|---|---|---|
+| P3-01.1 | Backup | Create backups directory structure | ⬜ | HIGH | daily/, weekly/, manual/ |
+| P3-01.2 | Backup | Backup shell script (backup.sh) | ⬜ | HIGH | Section 18.3 |
+| P3-01.3 | Backup | Backup container in docker-compose | ⬜ | HIGH | Section 18.2 |
+| P3-01.4 | Backup | Cron scheduling (daily 3AM) | ⬜ | HIGH | |
+| P3-01.5 | Backup | Weekly backup rotation | ⬜ | MEDIUM | Keep 4 weeks |
+| P3-01.6 | Backup | Retention cleanup (7 days daily) | ⬜ | MEDIUM | |
+| P3-01.7 | Backup | Admin API endpoints for backups | ⬜ | MEDIUM | Section 18.6 |
+| P3-01.8 | Backup | Backup status monitoring | ⬜ | LOW | Health check |
+| P3-01.9 | Backup | Restore documentation | ⬜ | MEDIUM | Section 18.5 |
 
-### 18.2 Phase 2 Extended Tracker
+### 20.2 Phase 3 - Job Posting Analytics (HIGH PRIORITY)
 
-| ID | Area | Task | Status | Notes |
-|---|---|---|---|---|
-| P2-10.1 | Social | Telegram bot setup | ⬜ | Section 15.2 |
-| P2-10.2 | Social | Bot commands (/search, /latest) | ⬜ | |
-| P2-10.3 | Social | Subscription system | ⬜ | |
-| P2-10.4 | Social | Daily digest notifications | ⬜ | |
-| P2-11.1 | Performance | Lighthouse > 90 | ⬜ | Section 16.6 |
-| P2-11.2 | Performance | API p95 < 100ms | ⬜ | Section 16.2 |
-| P2-11.3 | Performance | Load testing (Locust) | ⬜ | Section 14.6 |
-| P2-12.1 | QA | Parser tests | ⬜ | Section 14.5 |
-| P2-12.2 | QA | CI test pipeline | ⬜ | Section 14.7 |
-| P2-12.3 | QA | Contract tests | ⬜ | API schema validation |
+| ID | Area | Task | Status | Priority | Notes |
+|---|---|---|---|---|---|
+| P3-02.1 | Analytics | job_views table + indexes | ⬜ | HIGH | Section 19.2 |
+| P3-02.2 | Analytics | search_analytics table | ⬜ | HIGH | Section 19.2 |
+| P3-02.3 | Analytics | Materialized views (daily stats) | ⬜ | HIGH | mv_daily_job_stats, mv_daily_views |
+| P3-02.4 | Analytics | Analytics API endpoints | ⬜ | HIGH | Section 19.3 |
+| P3-02.5 | Analytics | Main dashboard endpoint | ⬜ | HIGH | /admin/analytics/dashboard |
+| P3-02.6 | Analytics | Job market analytics endpoint | ⬜ | MEDIUM | /admin/analytics/jobs |
+| P3-02.7 | Analytics | Search analytics endpoint | ⬜ | MEDIUM | /admin/analytics/searches |
+| P3-02.8 | Analytics | Frontend tracking (analytics.js) | ⬜ | HIGH | Section 19.6 |
+| P3-02.9 | Analytics | Analytics dashboard UI | ⬜ | MEDIUM | Section 19.5 |
+| P3-02.10 | Analytics | Chart.js visualizations | ⬜ | MEDIUM | Categories, regions, salary |
+| P3-02.11 | Analytics | Scheduled view refresh | ⬜ | MEDIUM | Section 19.7 |
+| P3-02.12 | Analytics | Daily report generation | ⬜ | LOW | |
+| P3-02.13 | Analytics | Weekly email reports | ⬜ | LOW | Section 19.9 |
+| P3-02.14 | Analytics | Data retention cleanup | ⬜ | LOW | 90 days default |
+
+### 20.3 Phase 1 Extended Tracker (LOW PRIORITY)
+
+| ID | Area | Task | Status | Priority | Notes |
+|---|---|---|---|---|---|
+| P1-03.4 | DB | Extended schema (salary, employment_type) | ⬜ | LOW | Section 4.3.1 |
+| P1-03.5 | DB | Companies table | ⬜ | LOW | |
+| P1-03.6 | DB | Regions table with hierarchy | ⬜ | LOW | |
+| P1-04.6 | Frontend | PWA manifest.json | ⬜ | LOW | Section 4.4.1 |
+| P1-04.7 | Frontend | Service worker | ⬜ | LOW | |
+| P1-04.8 | Frontend | Offline page | ⬜ | LOW | |
+| P1-04.9 | Frontend | Social share buttons | ⬜ | LOW | Section 15.1 |
+| P1-07.1 | Monitoring | Sentry integration | ⬜ | MEDIUM | Section 17.1 |
+| P1-07.2 | Monitoring | Structured logging | ⬜ | LOW | Section 17.3 |
+
+### 20.4 Phase 2 Extended Tracker (LOW PRIORITY)
+
+| ID | Area | Task | Status | Priority | Notes |
+|---|---|---|---|---|---|
+| P2-03.2 | Adapters | hr.ge adapter | ⬜ | MEDIUM | Second parser source |
+| P2-10.1 | Social | Telegram bot setup | ⬜ | LOW | Section 15.2 |
+| P2-10.2 | Social | Bot commands (/search, /latest) | ⬜ | LOW | |
+| P2-10.3 | Social | Subscription system | ⬜ | LOW | |
+| P2-10.4 | Social | Daily digest notifications | ⬜ | LOW | |
+| P2-11.1 | Performance | Lighthouse > 90 | ⬜ | LOW | Section 16.6 |
+| P2-12.1 | QA | Parser tests | ⬜ | LOW | Section 14.5 |
+| P2-12.2 | QA | CI test pipeline | ⬜ | MEDIUM | Section 14.7 |
+
+### 20.5 DevOps & Infrastructure (MEDIUM PRIORITY)
+
+| ID | Area | Task | Status | Priority | Notes |
+|---|---|---|---|---|---|
+| P2-09.1 | DevOps | Multi-stage Docker builds | ⬜ | LOW | Section 12.1 |
+| P2-09.2 | DevOps | GitHub Actions CI/CD | ⬜ | MEDIUM | Section 12.2 |
+| P2-09.5 | DevOps | Uptime monitoring | ⬜ | LOW | Section 12.5 |
