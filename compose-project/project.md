@@ -2896,12 +2896,12 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P2-10.4 | Social | Daily digest notifications | ⬜ | LOW | |
 | P2-11.1 | Performance | Lighthouse > 90 | ⬜ | LOW | Section 16.6 |
 | P2-12.1 | QA | Parser tests | ⬜ | LOW | Section 14.5 |
-| P2-12.2 | QA | CI test pipeline | ⬜ | MEDIUM | Section 14.7 |
+| P2-12.2 | QA | CI test pipeline | ✅ | MEDIUM | Section 14.7 |
 
 ### 20.5 DevOps & Infrastructure (MEDIUM PRIORITY)
 
 | ID | Area | Task | Status | Priority | Notes |
 |---|---|---|---|---|---|
 | P2-09.1 | DevOps | Multi-stage Docker builds | ⬜ | LOW | Section 12.1 |
-| P2-09.2 | DevOps | GitHub Actions CI/CD | ⬜ | MEDIUM | Section 12.2 |
+| P2-09.2 | DevOps | GitHub Actions CI/CD | ✅ | MEDIUM | Section 12.2 |
 | P2-09.5 | DevOps | Uptime monitoring | ⬜ | LOW | Section 12.5 |
