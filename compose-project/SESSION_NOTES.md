@@ -1,175 +1,158 @@
 # Session Notes - batumi.work
 
 **Last Updated:** January 19, 2026
-**Status:** Ready for server deployment
+**Status:** DEPLOYED AND LIVE
 
 ---
 
-## Project Overview
+## Deployment Status
 
-Georgia JobBoard (batumi.work) - A bilingual job posting website for Georgia.
+**LIVE URL:** https://batumi.work
 
-**Repository:** https://github.com/tulashvilimindia/batumi.work
-**Live URL:** https://batumi.work (not deployed yet)
-
----
-
-## What's Been Completed
-
-### Application Features (100% Complete)
-
-- [x] FastAPI backend with PostgreSQL
-- [x] Static frontend (Georgian/English)
-- [x] Job parser (jobs.ge adapter)
-- [x] Telegram bot with subscriptions
-- [x] Analytics dashboard
-- [x] PWA support (manifest, service worker, offline page)
-- [x] Automated backups
-- [x] Docker Compose setup
-- [x] Comprehensive documentation
-
-### Documentation (100% Complete)
-
-| Document | Purpose |
-|----------|---------|
-| README.md | Project overview, quick start |
-| docs/DEPLOYMENT.md | General deployment guide |
-| docs/SERVER_DEPLOYMENT_PLAN.md | **Specific plan for 38.242.143.10** |
-| docs/ADMIN_GUIDE.md | API and admin operations |
-| docs/DEVOPS_GUIDE.md | Container management |
-| docs/TELEGRAM_BOT_SETUP.md | Bot creation guide |
-| docs/BACKUP_RESTORE.md | Backup procedures |
-| docs/USER_GUIDE.md | End-user documentation |
+| Service | Status | URL |
+|---------|--------|-----|
+| Website (Georgian) | ✅ Live | https://batumi.work/ge/ |
+| Website (English) | ✅ Live | https://batumi.work/en/ |
+| API | ✅ Live | https://batumi.work/api/v1/ |
+| API Docs | ✅ Live | https://batumi.work/docs |
+| Health Check | ✅ Live | https://batumi.work/health |
 
 ---
 
-## Next Steps: Server Deployment
+## Server Details
 
-The application needs to be deployed to the Linux VM.
+| Setting | Value |
+|---------|-------|
+| Server IP | 38.242.143.10 |
+| SSH Access | `ssh root@38.242.143.10` |
+| Project Location | `/opt/batumi-work/compose-project` |
+| Nginx Config | `/etc/nginx/sites-available/batumi.work` |
 
-### Target Server
+### Port Configuration
 
-- **IP:** 38.242.143.10
-- **SSH:** `ssh root@38.242.143.10` (passwordless configured)
-- **OS:** Ubuntu (Linux 6.8.0)
+| Port | Service | Binding |
+|------|---------|---------|
+| 8100 | Web (nginx) | 127.0.0.1 |
+| 8101 | API (FastAPI) | 127.0.0.1 |
+| 5433 | PostgreSQL | 127.0.0.1 (internal) |
 
-### Server Constraints
-
-This is a **SHARED SERVER** with existing services:
-- batumi.zone (WordPress)
-- Plausible Analytics
-- Other services on various ports
-
-**CRITICAL:** Do not modify existing nginx configs or services.
-
-### Reserved Ports for batumi.work
-
-| Port | Service |
-|------|---------|
-| 8100 | Web (nginx) |
-| 8101 | API (FastAPI) |
-| 8102 | Internal use |
-
-### Deployment Location
+### Docker Containers
 
 ```
-/opt/batumi-work/compose-project/
+NAME           IMAGE                 STATUS          PORTS
+jobboard-api   compose-project-api   Up (healthy)    127.0.0.1:8101->8000/tcp
+jobboard-db    postgres:15-alpine    Up (healthy)    127.0.0.1:5433->5432/tcp
+jobboard-web   nginx:alpine          Up (healthy)    127.0.0.1:8100->80/tcp
 ```
 
 ---
 
-## Deployment Instructions
+## SSL Configuration
 
-**Full deployment guide:** `docs/SERVER_DEPLOYMENT_PLAN.md`
+- **Public SSL:** Cloudflare (automatic)
+- **Origin SSL:** Self-signed certificate
+- **Certificate Location:** `/etc/ssl/certs/batumi.work.crt`
+- **Key Location:** `/etc/ssl/private/batumi.work.key`
 
-### Quick Summary
-
-1. SSH to server
-2. Create `/opt/batumi-work`
-3. Clone repository
-4. Create `docker-compose.override.yml` for production ports
-5. Configure `.env` with secure credentials
-6. Create nginx virtual host
-7. Get SSL certificate (Let's Encrypt or Cloudflare)
-8. Start Docker containers
-9. Verify deployment
-
-### Key Files to Create on Server
-
-1. `/opt/batumi-work/compose-project/docker-compose.override.yml` - Port overrides
-2. `/opt/batumi-work/compose-project/.env` - Environment variables
-3. `/etc/nginx/sites-available/batumi.work` - Nginx config
+Cloudflare handles public-facing SSL. Origin uses self-signed cert for encrypted connection between Cloudflare and server.
 
 ---
 
-## Important Notes
+## Database
 
-### SSL Certificate Options
+- **Seeded Data:**
+  - 16 categories
+  - 14 regions
+  - 20 sample jobs
 
-**Option A: Let's Encrypt**
-- Point DNS directly to server (38.242.143.10)
-- Run: `certbot certonly --nginx -d batumi.work -d www.batumi.work`
-
-**Option B: Cloudflare Origin Certificate**
-- Use Cloudflare proxy
-- Generate Origin Certificate in Cloudflare dashboard
-- Save to `/etc/ssl/cloudflare/`
-
-### Telegram Bot
-
-- Token needs to be obtained from @BotFather
-- See `docs/TELEGRAM_BOT_SETUP.md` for step-by-step guide
-- Add token to `.env` as `TELEGRAM_BOT_TOKEN`
-
-### Database
-
-- Uses PostgreSQL in Docker container
-- Port 5432 internal only (not exposed)
-- Credentials in `.env` file
+- **Alembic Version:** Stamped at head (20260119_000003)
 
 ---
 
-## Files Changed in This Session
+## Configuration Files Created
 
-1. `README.md` - Added repo URL, clone instructions
-2. `docs/DEPLOYMENT.md` - Created comprehensive deployment guide
-3. `docs/SERVER_DEPLOYMENT_PLAN.md` - **Created specific server deployment plan**
-4. `docs/DEVOPS_GUIDE.md` - Updated GitHub URL
-5. `docs/TELEGRAM_BOT_SETUP.md` - Added repo link
-6. `docs/ADMIN_GUIDE.md` - Added Telegram Bot and Scheduled Reports sections
-7. `SESSION_NOTES.md` - This file
+### 1. `.env` (Production credentials)
+Located at: `/opt/batumi-work/compose-project/.env`
+- Secure passwords generated
+- Telegram bot token needs to be added
 
----
-
-## For Next Agent
-
-### If Deploying to Server
-
-1. Read `docs/SERVER_DEPLOYMENT_PLAN.md` first
-2. SSH: `ssh root@38.242.143.10`
-3. Follow the step-by-step deployment checklist
-4. **Test nginx config before reloading: `nginx -t`**
-5. **Do not modify existing services**
-
-### If Making Code Changes
-
-1. Make changes locally
-2. Test with `docker compose up`
-3. Commit and push to GitHub
-4. Deploy to server: `git pull && docker compose build && docker compose up -d`
-
----
-
-## Git Status
-
-```
-Branch: main
-Remote: https://github.com/tulashvilimindia/batumi.work.git
-Status: Up to date with origin
+### 2. Port Configuration in `.env`
+```bash
+API_PORT=127.0.0.1:8101
+WEB_PORT=127.0.0.1:8100
+DB_PORT=127.0.0.1:5433
 ```
 
-All documentation changes committed and pushed.
+### 3. Nginx Virtual Host
+Located at: `/etc/nginx/sites-available/batumi.work`
+- HTTP → HTTPS redirect
+- www → non-www redirect
+- Proxy to Docker containers
+- Self-signed SSL for Cloudflare origin
 
 ---
 
-*Session ended: January 19, 2026*
+## Not Yet Configured
+
+- [ ] **Telegram Bot:** Token needs to be added to `.env`
+- [ ] **Parser Service:** Not started (use `docker compose --profile parser up -d`)
+- [ ] **Email Reports:** SMTP credentials not configured
+
+---
+
+## Common Operations
+
+### View Logs
+```bash
+ssh root@38.242.143.10
+cd /opt/batumi-work/compose-project
+docker compose logs -f
+docker compose logs -f api
+```
+
+### Restart Services
+```bash
+docker compose restart
+```
+
+### Update Application
+```bash
+cd /opt/batumi-work/compose-project
+git pull origin main
+docker compose build
+docker compose up -d
+```
+
+### Start Parser
+```bash
+docker compose --profile parser up -d
+```
+
+### Start Telegram Bot
+First add `TELEGRAM_BOT_TOKEN` to `.env`, then:
+```bash
+docker compose --profile bot up -d
+```
+
+---
+
+## DNS Configuration (Cloudflare)
+
+| Type | Name | Content | Proxy |
+|------|------|---------|-------|
+| A | @ | (Cloudflare) | Proxied |
+| A | www | (Cloudflare) | Proxied |
+
+DNS is managed through Cloudflare with proxy enabled.
+
+---
+
+## Repository
+
+- **GitHub:** https://github.com/tulashvilimindia/batumi.work
+- **Branch:** main
+- **Status:** All documentation up to date
+
+---
+
+*Deployment completed: January 19, 2026*
