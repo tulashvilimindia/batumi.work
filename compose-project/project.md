@@ -1112,7 +1112,7 @@ jobs:
 | P2-09.2 | DevOps | GitHub Actions CI/CD | ⬜ | |
 | P2-09.3 | DevOps | Database backup automation | ⬜ | |
 | P2-09.4 | DevOps | Log aggregation (Loki) | ⬜ | |
-| P2-09.5 | DevOps | Uptime monitoring | ⬜ | |
+| P2-09.5 | DevOps | Uptime monitoring | ✅ | |
 
 ---
 
@@ -2916,7 +2916,7 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P3-01.5 | Backup | Weekly backup rotation | ✅ | MEDIUM | Keep 4 weeks |
 | P3-01.6 | Backup | Retention cleanup (7 days daily) | ✅ | MEDIUM | |
 | P3-01.7 | Backup | Admin API endpoints for backups | ✅ | MEDIUM | Section 18.6 |
-| P3-01.8 | Backup | Backup status monitoring | ⬜ | LOW | Health check |
+| P3-01.8 | Backup | Backup status monitoring | ✅ | LOW | /health/detailed endpoint |
 | P3-01.9 | Backup | Restore documentation | ✅ | MEDIUM | Section 18.5 |
 
 ### 20.2 Phase 3 - Job Posting Analytics (HIGH PRIORITY)
@@ -2971,4 +2971,4 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 |---|---|---|---|---|---|
 | P2-09.1 | DevOps | Multi-stage Docker builds | ⬜ | LOW | Section 12.1 |
 | P2-09.2 | DevOps | GitHub Actions CI/CD | ✅ | MEDIUM | Section 12.2 |
-| P2-09.5 | DevOps | Uptime monitoring | ⬜ | LOW | Section 12.5 |
+| P2-09.5 | DevOps | Uptime monitoring | ✅ | LOW | Section 12.5 |
