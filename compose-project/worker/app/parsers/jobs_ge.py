@@ -46,40 +46,38 @@ class JobsGeAdapter(BaseAdapter):
     }
 
     async def discover_job_urls(self, region: Optional[str] = None) -> AsyncIterator[str]:
-        """Discover job URLs from list pages."""
-        page = 1
-        consecutive_empty = 0
+        """Discover job URLs from jobs.ge homepage.
 
-        while page <= self.max_pages and consecutive_empty < 3:
-            jobs = await self.parse_list_page(page, region)
+        jobs.ge displays all jobs on the homepage without pagination,
+        so we only need to fetch page 1.
+        """
+        jobs = await self.parse_list_page(1, region)
 
-            if not jobs:
-                consecutive_empty += 1
-                page += 1
-                continue
-
-            consecutive_empty = 0
-            for job in jobs:
-                if "url" in job:
-                    yield job["url"]
-
-            page += 1
+        for job in jobs:
+            if "url" in job:
+                yield job["url"]
 
     async def parse_list_page(self, page: int, region: Optional[str] = None) -> List[dict]:
-        """Parse a job list page from jobs.ge."""
-        # jobs.ge list URL format: /ge/?view=jobs&page=N
-        params = {
-            "view": "jobs",
-            "page": page
-        }
+        """Parse a job list page from jobs.ge.
 
-        # Add region/search filter if specified
-        if region:
-            params["q"] = region
+        Note: jobs.ge displays all jobs on the homepage without traditional pagination.
+        The 'page' parameter is ignored as the site doesn't support URL-based pagination.
+        All jobs are fetched from the main page.
+        """
+        # For page > 1, return empty as jobs.ge doesn't have pagination
+        if page > 1:
+            return []
 
         async with HTTPClient(rate_limit_delay=self.rate_limit_delay) as client:
             try:
-                url = f"{self.base_url}/ge/"
+                # jobs.ge shows all jobs on the homepage
+                url = f"{self.base_url}/"
+                params = {}
+
+                # Add region/search filter if specified
+                if region:
+                    params["q"] = region
+
                 html = await client.get_text(url, params=params)
                 return self._extract_jobs_from_list(html)
             except Exception as e:
@@ -225,14 +223,25 @@ class JobsGeAdapter(BaseAdapter):
 
             # Extract location
             location = None
-            for selector in [".location", ".city", ".address", 'td:contains("ადგილმდებარეობა")']:
+            for selector in [".location", ".city", ".address"]:
                 try:
                     elem = soup.select_one(selector)
                     if elem:
                         location = elem.get_text(strip=True)
                         break
-                except:
+                except Exception:
                     pass
+
+            # Fallback: search for location keyword in text
+            if not location:
+                for td in soup.find_all("td"):
+                    text = td.get_text(strip=True)
+                    if "ადგილმდებარეობა" in text or "მისამართი" in text:
+                        # Try to get the next sibling or cell
+                        next_td = td.find_next_sibling("td")
+                        if next_td:
+                            location = next_td.get_text(strip=True)
+                            break
 
             # Extract dates
             published_at = None
