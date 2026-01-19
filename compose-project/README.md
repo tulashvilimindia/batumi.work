@@ -324,7 +324,9 @@ compose-project/
 
 ## Documentation
 
-- [Deployment Guide](docs/DEPLOYMENT.md) - **Linux VM + Cloudflare production setup**
+- [Server Deployment Plan](docs/SERVER_DEPLOYMENT_PLAN.md) - **Specific deployment for 38.242.143.10**
+- [Deployment Guide](docs/DEPLOYMENT.md) - General Linux VM + Cloudflare setup
+- [Session Notes](SESSION_NOTES.md) - Current status and next steps
 - [User Guide](docs/USER_GUIDE.md) - End-user documentation
 - [Admin Guide](docs/ADMIN_GUIDE.md) - Administration and API usage
 - [DevOps Guide](docs/DEVOPS_GUIDE.md) - Container management and operations
