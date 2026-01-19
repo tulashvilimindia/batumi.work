@@ -1,5 +1,5 @@
 """Channel Message Queue model."""
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Index
+from sqlalchemy import Column, String, Integer, DateTime, Index
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.models.base import Base, UUIDMixin, TimestampMixin
@@ -13,12 +13,14 @@ class ChannelMessageQueue(Base, UUIDMixin, TimestampMixin):
         Index("idx_queue_status", "status"),
         Index("idx_queue_scheduled", "scheduled_at"),
         Index("idx_queue_priority", "priority", "created_at"),
+        {"extend_existing": True},
     )
 
     # Job reference (unique - one job can only be in queue once)
+    # Note: FK constraint exists in DB via migration, not defined here
+    # to avoid SQLAlchemy trying to resolve the jobs table
     job_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("jobs.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
     )

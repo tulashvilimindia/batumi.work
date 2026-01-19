@@ -1,5 +1,5 @@
 """Channel Message History model."""
-from sqlalchemy import Column, String, Integer, BigInteger, DateTime, Text, ForeignKey, Index
+from sqlalchemy import Column, String, Integer, BigInteger, DateTime, Text, Index
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.models.base import Base, UUIDMixin, TimestampMixin
@@ -14,19 +14,18 @@ class ChannelMessageHistory(Base, UUIDMixin, TimestampMixin):
         Index("idx_history_status", "status"),
         Index("idx_history_sent_at", "sent_at"),
         Index("idx_history_telegram_msg", "telegram_message_id"),
+        {"extend_existing": True},
     )
 
-    # Job reference
+    # Job reference (FK constraint exists in DB via migration)
     job_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("jobs.id", ondelete="CASCADE"),
         nullable=False,
     )
 
-    # Queue reference (nullable - for manual sends)
+    # Queue reference (FK constraint exists in DB via migration)
     queue_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("channel_message_queue.id", ondelete="SET NULL"),
         nullable=True,
     )
 
