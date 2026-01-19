@@ -77,7 +77,7 @@ This guide covers deployment, operations, monitoring, and maintenance of the Geo
 
 ```bash
 # Clone repository
-git clone https://github.com/your-repo/batumi.work.git
+git clone https://github.com/tulashvilimindia/batumi.work.git
 cd batumi.work/compose-project
 
 # Configure environment

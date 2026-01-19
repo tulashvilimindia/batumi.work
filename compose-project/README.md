@@ -3,6 +3,7 @@
 A lightweight, SEO-first job posting website for Georgia with bilingual support (Georgian/English).
 
 **Live**: [batumi.work](https://batumi.work)
+**Repository**: [github.com/tulashvilimindia/batumi.work](https://github.com/tulashvilimindia/batumi.work)
 
 ## Features
 
@@ -40,7 +41,9 @@ A lightweight, SEO-first job posting website for Georgia with bilingual support 
 ### 1. Clone and Configure
 
 ```bash
-cd compose-project
+# Clone the repository
+git clone https://github.com/tulashvilimindia/batumi.work.git
+cd batumi.work/compose-project
 
 # Copy environment file
 cp .env.example .env
@@ -321,10 +324,12 @@ compose-project/
 
 ## Documentation
 
+- [Deployment Guide](docs/DEPLOYMENT.md) - **Linux VM + Cloudflare production setup**
 - [User Guide](docs/USER_GUIDE.md) - End-user documentation
 - [Admin Guide](docs/ADMIN_GUIDE.md) - Administration and API usage
-- [DevOps Guide](docs/DEVOPS_GUIDE.md) - Deployment and operations
+- [DevOps Guide](docs/DEVOPS_GUIDE.md) - Container management and operations
 - [Backup & Restore](docs/BACKUP_RESTORE.md) - Database backup procedures
+- [Telegram Bot Setup](docs/TELEGRAM_BOT_SETUP.md) - Bot creation guide
 
 ## License
 

@@ -269,6 +269,7 @@ This creates a nice menu when users type `/` in the chat.
 
 - **BotFather Commands**: Type `/help` in BotFather chat
 - **Telegram Bot API Docs**: [core.telegram.org/bots/api](https://core.telegram.org/bots/api)
+- **Project Repository**: [github.com/tulashvilimindia/batumi.work](https://github.com/tulashvilimindia/batumi.work)
 - **Project Issues**: [github.com/tulashvilimindia/batumi.work/issues](https://github.com/tulashvilimindia/batumi.work/issues)
 
 ---
