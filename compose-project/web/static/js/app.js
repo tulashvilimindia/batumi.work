@@ -558,7 +558,30 @@ function renderJobDetail(job) {
             <strong>${t('source')}:</strong> ${job.parsed_from || 'manual'}
             ${job.source_url ? `<br><a href="${escapeHtml(job.source_url)}" target="_blank" rel="noopener">${t('viewOriginal')} ↗</a>` : ''}
         </div>
+        <div class="share-buttons" data-url="${window.location.href}" data-title="${escapeHtml(title)}">
+            <span class="share-label">${t('shareJob')}:</span>
+            <button class="share-btn share-fb" aria-label="Share on Facebook" title="Facebook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </button>
+            <button class="share-btn share-tg" aria-label="Share on Telegram" title="Telegram">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.2 4.4L2.9 11.3c-1.2.5-1.1 1.7.1 2l4.6 1.4 1.8 5.5c.2.6.9.7 1.3.3l2.6-2.1 5.1 3.8c.9.7 2.1.1 2.3-1l3.2-15.5c.3-1.2-.9-2.2-2.1-1.8zM8.6 13.1l7.5-4.6c.3-.2.6.2.4.4l-6.2 5.6-.2 2.3-1.5-3.7z"/></svg>
+            </button>
+            <button class="share-btn share-wa" aria-label="Share on WhatsApp" title="WhatsApp">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4l-2-1c-.3-.1-.6 0-.8.2l-.5.6c-.2.2-.5.3-.8.1-1-.4-2.3-1.4-3.2-2.5-.2-.3-.2-.6 0-.8l.4-.6c.2-.2.2-.5.1-.8l-1-2c-.2-.4-.6-.5-1-.4-1 .4-1.8 1.4-1.7 2.5.1 2.1 1.4 5 4.4 7.2 2.7 2 5.4 2.4 7.1 2 1.1-.3 1.9-1.3 2-2.4.1-.4-.2-.8-.6-.9l-.4-.2zM12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.4A10 10 0 1 0 12 2z"/></svg>
+            </button>
+            <button class="share-btn share-li" aria-label="Share on LinkedIn" title="LinkedIn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </button>
+            <button class="share-btn share-copy" aria-label="Copy link" title="${LANG === 'en' ? 'Copy link' : 'ლინკის კოპირება'}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+        </div>
     `;
+
+    // Re-initialize share buttons after rendering
+    if (typeof initShareButtons === 'function') {
+        initShareButtons();
+    }
 }
 
 function formatJobBody(text) {

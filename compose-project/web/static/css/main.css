@@ -615,3 +615,91 @@ a:hover {
 .mb-1 { margin-bottom: var(--space-sm); }
 .mb-2 { margin-bottom: var(--space-md); }
 .hidden { display: none !important; }
+
+/* Social Share Buttons */
+.share-buttons {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    flex-wrap: wrap;
+    padding: var(--space-md) 0;
+    margin-top: var(--space-md);
+    border-top: 1px solid var(--border);
+}
+
+.share-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-right: var(--space-sm);
+}
+
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+    color: var(--white);
+    font-size: 1.1rem;
+}
+
+.share-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.9;
+}
+
+.share-btn:active {
+    transform: scale(0.95);
+}
+
+.share-fb { background: #1877f2; }
+.share-tg { background: #0088cc; }
+.share-wa { background: #25d366; }
+.share-li { background: #0077b5; }
+.share-copy {
+    background: var(--text-light);
+}
+.share-copy.copied {
+    background: var(--success);
+}
+.share-native {
+    background: var(--primary);
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--secondary);
+    color: var(--white);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    font-size: var(--font-size-sm);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .share-buttons {
+        justify-content: center;
+    }
+
+    .share-label {
+        width: 100%;
+        text-align: center;
+        margin-bottom: var(--space-sm);
+    }
+}
