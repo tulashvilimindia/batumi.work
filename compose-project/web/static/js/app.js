@@ -594,3 +594,27 @@ if (window.location.pathname.includes('job.html')) {
         }
     });
 }
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('[App] Service Worker registered:', registration.scope);
+
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New version available
+                            console.log('[App] New version available');
+                        }
+                    });
+                });
+            })
+            .catch((error) => {
+                console.error('[App] Service Worker registration failed:', error);
+            });
+    });
+}
