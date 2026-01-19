@@ -135,6 +135,53 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Channel Sender Service
+  sender:
+    build:
+      context: ./sender
+      dockerfile: Dockerfile
+    container_name: jobboard-sender
+    restart: unless-stopped
+    profiles:
+      - sender
+      - full
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-jobboard}
+      - TELEGRAM_BOT_TOKEN=${CHANNEL_BOT_TOKEN:-}
+      - TELEGRAM_CHANNEL_ID=${TELEGRAM_CHANNEL_ID:-@batumiworkofficial}
+      - WEB_URL=${WEB_URL:-https://batumi.work}
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-false}
+    ports:
+      - "${SENDER_API_PORT:-127.0.0.1:8102}:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/sender/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # Mailpit (Email Testing)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: jobboard-mailpit
+    restart: unless-stopped
+    profiles:
+      - sender
+      - full
+      - mail
+    ports:
+      - "0.0.0.0:1025:1025"   # SMTP
+      - "0.0.0.0:8025:8025"   # Web UI
+    environment:
+      - MP_SMTP_AUTH_ACCEPT_ANY=true
+      - MP_SMTP_AUTH_ALLOW_INSECURE=true
+
 volumes:
   postgres_data:
     name: jobboard_postgres_data
