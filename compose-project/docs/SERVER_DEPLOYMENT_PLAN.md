@@ -525,7 +525,7 @@ docker compose exec db pg_dump -U jobboard jobboard > backup.sql
 - [x] Stamp database migrations (tables auto-created)
 - [x] Seed initial data (16 categories, 14 regions, 20 jobs)
 - [x] Verify https://batumi.work works
-- [ ] Start parser service (optional - not started)
+- [x] Start parser service (parses jobs.ge every 60 minutes)
 - [ ] Start Telegram bot (optional - token needed)
 
 ---

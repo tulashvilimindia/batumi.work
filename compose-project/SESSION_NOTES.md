@@ -39,10 +39,11 @@
 ### Docker Containers
 
 ```
-NAME           IMAGE                 STATUS          PORTS
-jobboard-api   compose-project-api   Up (healthy)    127.0.0.1:8101->8000/tcp
-jobboard-db    postgres:15-alpine    Up (healthy)    127.0.0.1:5433->5432/tcp
-jobboard-web   nginx:alpine          Up (healthy)    127.0.0.1:8100->80/tcp
+NAME              IMAGE                    STATUS          PORTS
+jobboard-api      compose-project-api      Up (healthy)    127.0.0.1:8101->8000/tcp
+jobboard-db       postgres:15-alpine       Up (healthy)    127.0.0.1:5433->5432/tcp
+jobboard-web      nginx:alpine             Up (healthy)    127.0.0.1:8100->80/tcp
+jobboard-worker   compose-project-worker   Up              (parser service)
 ```
 
 ---
@@ -92,10 +93,10 @@ Located at: `/etc/nginx/sites-available/batumi.work`
 
 ---
 
-## Not Yet Configured
+## Service Status
 
+- [x] **Parser Service:** Running (parses jobs.ge every 60 minutes)
 - [ ] **Telegram Bot:** Token needs to be added to `.env`
-- [ ] **Parser Service:** Not started (use `docker compose --profile parser up -d`)
 - [ ] **Email Reports:** SMTP credentials not configured
 
 ---
