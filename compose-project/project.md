@@ -2718,11 +2718,10 @@ compose-project/docs/
 
 ---
 
-### REMAINING LOW PRIORITY TASKS (12 total)
+### REMAINING LOW PRIORITY TASKS (9 total)
 
 | Group | Tasks | Description |
 |-------|-------|-------------|
-| PWA & Offline | P1-04.6, P1-04.7, P1-04.8 | manifest.json, service worker, offline page |
 | Social Features | P1-04.9, P2-10.1-4 | Share buttons, Telegram bot |
 | DevOps | P2-09.1, P1-07.2 | Multi-stage Docker, structured logging |
 | QA & Monitoring | P2-12.1, P3-02.13 | Parser tests, weekly email reports |
@@ -3006,8 +3005,8 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P1-03.5 | DB | Companies table | ✅ | LOW | Implemented in initial schema |
 | P1-03.6 | DB | Regions table with hierarchy | ✅ | LOW | Implemented in initial schema |
 | P1-04.6 | Frontend | PWA manifest.json | ✅ | LOW | Section 4.4.1 |
-| P1-04.7 | Frontend | Service worker | ⬜ | LOW | |
-| P1-04.8 | Frontend | Offline page | ⬜ | LOW | |
+| P1-04.7 | Frontend | Service worker | ✅ | LOW | sw.js with caching |
+| P1-04.8 | Frontend | Offline page | ✅ | LOW | offline.html |
 | P1-04.9 | Frontend | Social share buttons | ⬜ | LOW | Section 15.1 |
 | P1-07.1 | Monitoring | Sentry integration | ✅ | MEDIUM | Section 17.1 |
 | P1-07.2 | Monitoring | Structured logging | ⬜ | LOW | Section 17.3 |
