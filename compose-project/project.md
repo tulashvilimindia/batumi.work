@@ -3005,7 +3005,7 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P1-03.4 | DB | Extended schema (salary, employment_type) | ✅ | LOW | Section 4.3.1 (in initial schema) |
 | P1-03.5 | DB | Companies table | ✅ | LOW | Implemented in initial schema |
 | P1-03.6 | DB | Regions table with hierarchy | ✅ | LOW | Implemented in initial schema |
-| P1-04.6 | Frontend | PWA manifest.json | ⬜ | LOW | Section 4.4.1 |
+| P1-04.6 | Frontend | PWA manifest.json | ✅ | LOW | Section 4.4.1 |
 | P1-04.7 | Frontend | Service worker | ⬜ | LOW | |
 | P1-04.8 | Frontend | Offline page | ⬜ | LOW | |
 | P1-04.9 | Frontend | Social share buttons | ⬜ | LOW | Section 15.1 |
