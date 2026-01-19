@@ -2718,12 +2718,11 @@ compose-project/docs/
 
 ---
 
-### REMAINING LOW PRIORITY TASKS (15 total)
+### REMAINING LOW PRIORITY TASKS (12 total)
 
 | Group | Tasks | Description |
 |-------|-------|-------------|
 | PWA & Offline | P1-04.6, P1-04.7, P1-04.8 | manifest.json, service worker, offline page |
-| Database Extensions | P1-03.4, P1-03.5, P1-03.6 | Extended schema, Companies table, Regions hierarchy |
 | Social Features | P1-04.9, P2-10.1-4 | Share buttons, Telegram bot |
 | DevOps | P2-09.1, P1-07.2 | Multi-stage Docker, structured logging |
 | QA & Monitoring | P2-12.1, P3-02.13 | Parser tests, weekly email reports |
@@ -3003,9 +3002,9 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 
 | ID | Area | Task | Status | Priority | Notes |
 |---|---|---|---|---|---|
-| P1-03.4 | DB | Extended schema (salary, employment_type) | ⬜ | LOW | Section 4.3.1 |
-| P1-03.5 | DB | Companies table | ⬜ | LOW | |
-| P1-03.6 | DB | Regions table with hierarchy | ⬜ | LOW | |
+| P1-03.4 | DB | Extended schema (salary, employment_type) | ✅ | LOW | Section 4.3.1 (in initial schema) |
+| P1-03.5 | DB | Companies table | ✅ | LOW | Implemented in initial schema |
+| P1-03.6 | DB | Regions table with hierarchy | ✅ | LOW | Implemented in initial schema |
 | P1-04.6 | Frontend | PWA manifest.json | ⬜ | LOW | Section 4.4.1 |
 | P1-04.7 | Frontend | Service worker | ⬜ | LOW | |
 | P1-04.8 | Frontend | Offline page | ⬜ | LOW | |
