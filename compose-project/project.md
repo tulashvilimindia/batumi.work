@@ -3014,10 +3014,10 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | ID | Area | Task | Status | Priority | Notes |
 |---|---|---|---|---|---|
 | P2-03.2 | Adapters | hr.ge adapter | ✅ | MEDIUM | Second parser source |
-| P2-10.1 | Social | Telegram bot setup | ⬜ | LOW | Section 15.2 |
-| P2-10.2 | Social | Bot commands (/search, /latest) | ⬜ | LOW | |
-| P2-10.3 | Social | Subscription system | ⬜ | LOW | |
-| P2-10.4 | Social | Daily digest notifications | ⬜ | LOW | |
+| P2-10.1 | Social | Telegram bot setup | ✅ | LOW | python-telegram-bot + docker-compose |
+| P2-10.2 | Social | Bot commands (/search, /latest) | ✅ | LOW | Plus /subscribe, /unsubscribe, /help |
+| P2-10.3 | Social | Subscription system | ✅ | LOW | SQLAlchemy async DB storage |
+| P2-10.4 | Social | Daily digest notifications | ✅ | LOW | 9 AM daily scheduler |
 | P2-11.1 | Performance | Lighthouse > 90 | ✅ | LOW | Section 16.6 |
 | P2-12.1 | QA | Parser tests | ✅ | LOW | Unit tests for adapters + utils |
 | P2-12.2 | QA | CI test pipeline | ✅ | MEDIUM | Section 14.7 |
