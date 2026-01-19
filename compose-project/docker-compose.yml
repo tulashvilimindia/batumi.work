@@ -90,6 +90,27 @@ services:
       api:
         condition: service_healthy
 
+  # Telegram Bot
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: jobboard-bot
+    restart: unless-stopped
+    profiles:
+      - bot  # Only starts with: docker-compose --profile bot up
+      - full
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-jobboard}
+      - API_URL=http://api:8000
+      - WEB_URL=${WEB_URL:-https://batumi.work}
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
   # Database Backup Service
   backup:
     image: postgres:15-alpine
