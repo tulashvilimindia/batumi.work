@@ -5,7 +5,7 @@ from sqlalchemy import Column, BigInteger, String, Integer, Text, Boolean, DateT
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
-from app.models.base import Base
+from app.core.database import Base
 
 
 class JobView(Base):

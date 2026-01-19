@@ -111,8 +111,133 @@ async def health_check():
 @app.get("/ready", tags=["System"])
 async def readiness_check():
     """Readiness check - verifies database connectivity."""
-    # In production, we'd check DB connection here
-    return {"status": "ready", "database": "connected"}
+    from app.core.database import async_session_maker
+    from sqlalchemy import text
+
+    try:
+        async with async_session_maker() as session:
+            await session.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
+    return {"status": "ready" if db_status == "connected" else "degraded", "database": db_status}
+
+
+@app.get("/health/detailed", tags=["System"])
+async def detailed_health_check():
+    """Detailed health check including backup and parser status.
+
+    Returns comprehensive health information for monitoring systems.
+    Used by UptimeRobot, BetterStack, or similar services.
+    """
+    from datetime import datetime, timedelta
+    from pathlib import Path
+    from app.core.database import async_session_maker
+    from sqlalchemy import text
+
+    health = {
+        "status": "healthy",
+        "version": settings.APP_VERSION,
+        "timestamp": datetime.utcnow().isoformat(),
+        "checks": {}
+    }
+
+    issues = []
+
+    # Check 1: Database
+    try:
+        async with async_session_maker() as session:
+            result = await session.execute(text("SELECT COUNT(*) FROM jobs"))
+            job_count = result.scalar()
+        health["checks"]["database"] = {
+            "status": "healthy",
+            "job_count": job_count
+        }
+    except Exception as e:
+        health["checks"]["database"] = {"status": "error", "message": str(e)}
+        issues.append("database")
+
+    # Check 2: Backup status
+    backup_dir = Path("/backups") if Path("/backups").exists() else Path("./backups")
+    try:
+        backup_files = []
+        for subdir in ["daily", "weekly", "manual"]:
+            dir_path = backup_dir / subdir
+            if dir_path.exists():
+                backup_files.extend(dir_path.glob("*.sql.gz"))
+
+        if backup_files:
+            # Get most recent backup
+            latest = max(backup_files, key=lambda f: f.stat().st_mtime)
+            backup_age_hours = (datetime.now() - datetime.fromtimestamp(latest.stat().st_mtime)).total_seconds() / 3600
+
+            backup_status = "healthy"
+            if backup_age_hours > 48:
+                backup_status = "warning"
+                issues.append("backup_old")
+            if backup_age_hours > 72:
+                backup_status = "critical"
+
+            health["checks"]["backup"] = {
+                "status": backup_status,
+                "last_backup": datetime.fromtimestamp(latest.stat().st_mtime).isoformat(),
+                "age_hours": round(backup_age_hours, 1),
+                "file_count": len(backup_files)
+            }
+        else:
+            health["checks"]["backup"] = {
+                "status": "warning",
+                "message": "No backup files found",
+                "file_count": 0
+            }
+            issues.append("no_backups")
+    except Exception as e:
+        health["checks"]["backup"] = {"status": "error", "message": str(e)}
+        issues.append("backup_check_failed")
+
+    # Check 3: Parser status (last run)
+    try:
+        async with async_session_maker() as session:
+            result = await session.execute(
+                text("SELECT MAX(last_seen_at) FROM jobs WHERE parsed_from != 'manual'")
+            )
+            last_parsed = result.scalar()
+
+            if last_parsed:
+                parser_age_hours = (datetime.utcnow() - last_parsed.replace(tzinfo=None)).total_seconds() / 3600
+                parser_status = "healthy"
+                if parser_age_hours > 4:  # Parser should run hourly
+                    parser_status = "warning"
+                if parser_age_hours > 24:
+                    parser_status = "critical"
+                    issues.append("parser_stale")
+
+                health["checks"]["parser"] = {
+                    "status": parser_status,
+                    "last_job_seen": last_parsed.isoformat(),
+                    "age_hours": round(parser_age_hours, 1)
+                }
+            else:
+                health["checks"]["parser"] = {
+                    "status": "warning",
+                    "message": "No parsed jobs found"
+                }
+    except Exception as e:
+        health["checks"]["parser"] = {"status": "error", "message": str(e)}
+
+    # Set overall status
+    if any(health["checks"][c].get("status") == "error" for c in health["checks"]):
+        health["status"] = "error"
+    elif any(health["checks"][c].get("status") == "critical" for c in health["checks"]):
+        health["status"] = "critical"
+    elif any(health["checks"][c].get("status") == "warning" for c in health["checks"]):
+        health["status"] = "warning"
+
+    if issues:
+        health["issues"] = issues
+
+    return health
 
 
 # ============== API v1 Router ==============
