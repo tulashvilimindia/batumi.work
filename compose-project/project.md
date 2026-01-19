@@ -2718,12 +2718,12 @@ compose-project/docs/
 
 ---
 
-### REMAINING LOW PRIORITY TASKS (6 total)
+### REMAINING LOW PRIORITY TASKS (5 total)
 
 | Group | Tasks | Description |
 |-------|-------|-------------|
 | Social Features | P2-10.1-4 | Telegram bot |
-| QA & Monitoring | P2-12.1, P3-02.13 | Parser tests, weekly email reports |
+| Monitoring | P3-02.13 | Weekly email reports |
 
 ---
 
@@ -3020,7 +3020,7 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P2-10.3 | Social | Subscription system | ⬜ | LOW | |
 | P2-10.4 | Social | Daily digest notifications | ⬜ | LOW | |
 | P2-11.1 | Performance | Lighthouse > 90 | ✅ | LOW | Section 16.6 |
-| P2-12.1 | QA | Parser tests | ⬜ | LOW | Section 14.5 |
+| P2-12.1 | QA | Parser tests | ✅ | LOW | Unit tests for adapters + utils |
 | P2-12.2 | QA | CI test pipeline | ✅ | MEDIUM | Section 14.7 |
 
 ### 20.5 DevOps & Infrastructure (MEDIUM PRIORITY)
