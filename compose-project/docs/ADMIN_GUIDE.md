@@ -12,8 +12,10 @@ This guide covers all administrative functions for managing the Georgia Job Boar
 4. [Category Management](#category-management)
 5. [Parser Management](#parser-management)
 6. [Analytics Dashboard](#analytics-dashboard)
-7. [Backup Management](#backup-management)
-8. [API Reference](#api-reference)
+7. [Telegram Bot](#telegram-bot)
+8. [Scheduled Reports](#scheduled-reports)
+9. [Backup Management](#backup-management)
+10. [API Reference](#api-reference)
 
 ---
 
@@ -283,6 +285,118 @@ No authentication required for viewing (data comes from protected API).
 | `GET /api/v1/admin/analytics/jobs` | Job market analytics |
 | `GET /api/v1/admin/analytics/views` | View statistics |
 | `GET /api/v1/admin/analytics/searches` | Search analytics |
+
+---
+
+## Telegram Bot
+
+The Telegram bot provides job search and notification features for users.
+
+### Setup
+
+1. Create a bot with [@BotFather](https://t.me/botfather) (see [TELEGRAM_BOT_SETUP.md](TELEGRAM_BOT_SETUP.md))
+2. Add token to `.env`: `TELEGRAM_BOT_TOKEN=your-token`
+3. Start the bot: `docker-compose --profile bot up -d`
+
+### Bot Commands
+
+| Command | Description |
+|---------|-------------|
+| `/start` | Welcome message + language selection |
+| `/search <keyword>` | Search jobs by keyword |
+| `/latest` | Show 5 most recent jobs |
+| `/subscribe` | Subscribe to job categories |
+| `/unsubscribe` | Manage subscriptions |
+| `/help` | Show available commands |
+
+### Features
+
+- **Bilingual Support**: Users can switch between Georgian and English
+- **Category Subscriptions**: Users subscribe to specific job categories
+- **Daily Digest**: Sends new jobs at 9 AM to subscribers
+
+### Configuration
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `TELEGRAM_BOT_TOKEN` | Bot token from BotFather | Yes |
+| `API_URL` | Internal API URL | Default: `http://api:8000` |
+| `WEB_URL` | Public website URL | Default: `https://batumi.work` |
+| `DATABASE_URL` | PostgreSQL connection | Auto-configured |
+
+### Monitoring
+
+Check bot logs:
+```bash
+docker-compose logs -f bot
+```
+
+### Database Tables
+
+The bot creates these tables in the main database:
+
+**telegram_users**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | int | Primary key |
+| telegram_id | int | Telegram user ID |
+| language | string | User's language (ge/en) |
+| created_at | datetime | Registration time |
+
+**telegram_subscriptions**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | int | Primary key |
+| telegram_id | int | Telegram user ID |
+| category_slug | string | Subscribed category |
+| category_name | string | Category display name |
+| created_at | datetime | Subscription time |
+
+---
+
+## Scheduled Reports
+
+### Daily Summary
+
+Generated automatically with job market statistics.
+
+```python
+# Triggered via scheduled task
+from app.tasks.analytics import generate_daily_summary
+await generate_daily_summary()
+```
+
+### Weekly Report
+
+Comprehensive weekly analytics with optional email delivery.
+
+```python
+from app.tasks.analytics import generate_weekly_report
+await generate_weekly_report()
+```
+
+### Email Configuration
+
+To enable email delivery of reports:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SMTP_HOST` | SMTP server | `smtp.gmail.com` |
+| `SMTP_PORT` | SMTP port | `587` |
+| `SMTP_USER` | Email address | `reports@example.com` |
+| `SMTP_PASSWORD` | Email password/app key | `your-app-password` |
+| `REPORT_RECIPIENTS` | Comma-separated emails | `admin@example.com,team@example.com` |
+
+### Report Contents
+
+**Weekly Report includes:**
+- Total jobs and growth vs previous week
+- Active vs inactive job counts
+- Jobs with salary information
+- Top categories by job count
+- Top regions by job count
+- New jobs added this week
+- Jobs expiring soon
 
 ---
 

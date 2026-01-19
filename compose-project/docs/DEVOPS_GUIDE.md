@@ -18,6 +18,7 @@ This guide covers deployment, operations, monitoring, and maintenance of the Geo
 10. [Scaling](#scaling)
 11. [Troubleshooting](#troubleshooting)
 12. [Security](#security)
+13. [Progressive Web App (PWA)](#progressive-web-app-pwa)
 
 ---
 
@@ -26,18 +27,18 @@ This guide covers deployment, operations, monitoring, and maintenance of the Geo
 ### System Components
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Docker Host                          │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐   │
-│  │  nginx  │  │   api   │  │   db    │  │ worker  │   │
-│  │  :80    │──│  :8000  │──│  :5432  │──│         │   │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘   │
-│       │            │            │            │         │
-│       └────────────┴────────────┴────────────┘         │
-│                         │                              │
-│                    [volumes]                           │
-│              postgres_data, backups                    │
-└─────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│                         Docker Host                                │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
+│  │  nginx  │  │   api   │  │   db    │  │ worker  │  │   bot   │ │
+│  │  :80    │──│  :8000  │──│  :5432  │──│         │  │         │ │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘ │
+│       │            │            │            │            │       │
+│       └────────────┴────────────┴────────────┴────────────┘       │
+│                              │                                     │
+│                         [volumes]                                  │
+│                   postgres_data, backups                           │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ### Services
@@ -48,6 +49,7 @@ This guide covers deployment, operations, monitoring, and maintenance of the Geo
 | api | compose-project-api | 8000 | FastAPI backend |
 | web | nginx:alpine | 80 | Static frontend + reverse proxy |
 | worker | compose-project-worker | - | Parser worker (scheduled) |
+| bot | compose-project-bot | - | Telegram bot (optional) |
 | backup | postgres:15-alpine | - | Backup container (optional) |
 
 ### Profiles
@@ -56,6 +58,7 @@ This guide covers deployment, operations, monitoring, and maintenance of the Geo
 |---------|----------|----------|
 | (default) | db, api, web | Basic deployment |
 | parser | + worker | With job parsing |
+| bot | + bot | With Telegram bot |
 | backup | + backup | With scheduled backups |
 | full | all | Complete deployment |
 
@@ -702,6 +705,74 @@ server {
 
 ---
 
+## Progressive Web App (PWA)
+
+The frontend is configured as a Progressive Web App for better mobile experience.
+
+### PWA Files
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `manifest.json` | `/static/manifest.json` | App metadata, icons, theme |
+| `sw.js` | `/static/sw.js` | Service worker for caching |
+| `offline.html` | `/static/offline.html` | Offline fallback page |
+
+### manifest.json
+
+Defines app properties for "Add to Home Screen":
+
+```json
+{
+  "name": "ვაკანსიები - Georgia Jobs",
+  "short_name": "Jobs",
+  "start_url": "/ge/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#4ECDC4"
+}
+```
+
+### Service Worker Features
+
+- **Cache-first** for static assets (CSS, JS, images)
+- **Network-first** for API calls
+- **Offline fallback** when network unavailable
+- **Automatic cache updates** on new deployments
+
+### Cache Strategy
+
+```javascript
+// Static assets - cache first
+'/*.css', '/*.js', '/images/*'
+
+// API calls - network first, fallback to cache
+'/api/*'
+
+// Pages - network first, fallback to offline.html
+'/*.html'
+```
+
+### Updating the PWA
+
+When updating static files:
+
+1. Update the `CACHE_VERSION` in `sw.js`
+2. Deploy the changes
+3. Service worker will automatically update
+
+```javascript
+// In sw.js
+const CACHE_VERSION = 'v2';  // Increment for updates
+```
+
+### Testing PWA
+
+1. **Chrome DevTools**: Application > Service Workers
+2. **Lighthouse**: Run PWA audit
+3. **Offline test**: Enable "Offline" in DevTools Network tab
+
+---
+
 ## Quick Reference
 
 ### Useful Commands
@@ -734,10 +805,11 @@ docker-compose exec db psql -U postgres jobboard
 |------|---------|
 | `./` | Project root |
 | `./api/` | FastAPI application |
-| `./web/static/` | Frontend files |
+| `./web/static/` | Frontend files (HTML, CSS, JS, PWA) |
 | `./worker/` | Parser worker |
+| `./bot/` | Telegram bot |
 | `./backups/` | Database backups |
-| `./migrations/` | Alembic migrations |
+| `./docs/` | Documentation |
 | `./.env` | Environment config |
 
 ### Ports
