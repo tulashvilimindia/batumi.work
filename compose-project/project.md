@@ -2718,12 +2718,12 @@ compose-project/docs/
 
 ---
 
-### REMAINING LOW PRIORITY TASKS (8 total)
+### REMAINING LOW PRIORITY TASKS (7 total)
 
 | Group | Tasks | Description |
 |-------|-------|-------------|
 | Social Features | P2-10.1-4 | Telegram bot |
-| DevOps | P2-09.1, P1-07.2 | Multi-stage Docker, structured logging |
+| DevOps | P2-09.1 | Multi-stage Docker builds |
 | QA & Monitoring | P2-12.1, P3-02.13 | Parser tests, weekly email reports |
 
 ---
@@ -3009,7 +3009,7 @@ NOT_SEEN_DAYS_TO_INACTIVE=7
 | P1-04.8 | Frontend | Offline page | ✅ | LOW | offline.html |
 | P1-04.9 | Frontend | Social share buttons | ✅ | LOW | share.js (FB, TG, WA, LI, Copy) |
 | P1-07.1 | Monitoring | Sentry integration | ✅ | MEDIUM | Section 17.1 |
-| P1-07.2 | Monitoring | Structured logging | ⬜ | LOW | Section 17.3 |
+| P1-07.2 | Monitoring | Structured logging | ✅ | LOW | JSON logs + request ID |
 
 ### 20.4 Phase 2 Extended Tracker (LOW PRIORITY)
 
