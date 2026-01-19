@@ -261,8 +261,15 @@ class JobsGeAdapter(BaseAdapter):
             salary_min = salary_max = None
             salary_currency = "GEL"
 
-            salary_patterns = [r'(\d+)\s*[-–]\s*(\d+)\s*(GEL|ლარი|USD|\$|EUR|€)',
-                             r'(\d+)\s*(GEL|ლარი|USD|\$|EUR|€)']
+            # Currency normalization map
+            currency_map = {
+                "gel": "GEL", "ლარი": "GEL", "₾": "GEL",
+                "usd": "USD", "$": "USD", "დოლარი": "USD",
+                "eur": "EUR", "€": "EUR", "ევრო": "EUR",
+            }
+
+            salary_patterns = [r'(\d+)\s*[-–]\s*(\d+)\s*(GEL|ლარი|₾|USD|\$|დოლარი|EUR|€|ევრო)',
+                             r'(\d+)\s*(GEL|ლარი|₾|USD|\$|დოლარი|EUR|€|ევრო)']
             for pattern in salary_patterns:
                 match = re.search(pattern, text, re.IGNORECASE)
                 if match:
@@ -271,9 +278,11 @@ class JobsGeAdapter(BaseAdapter):
                         salary_min = int(groups[0])
                         if len(groups) >= 3:
                             salary_max = int(groups[1])
-                            salary_currency = groups[2]
+                            raw_currency = groups[2].lower()
                         else:
-                            salary_currency = groups[1]
+                            raw_currency = groups[1].lower()
+                        # Normalize currency to 3-letter code
+                        salary_currency = currency_map.get(raw_currency, "GEL")
                         has_salary = True
                         break
 

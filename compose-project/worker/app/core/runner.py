@@ -32,6 +32,8 @@ class ParserRunner:
         self.adapters = adapters
         self._engine = create_async_engine(config.database_url, echo=config.debug)
         self._session_maker = async_sessionmaker(self._engine, expire_on_commit=False)
+        self._category_cache: Dict[str, UUID] = {}
+        self._default_category_id: Optional[UUID] = None
 
     async def run_all(self, regions: Optional[List[str]] = None) -> Dict[str, ParseResult]:
         """Run all enabled parsers.
@@ -135,10 +137,16 @@ class ParserRunner:
         stats = {"new": 0, "updated": 0, "skipped": 0}
 
         async with self._session_maker() as session:
+            # Load category cache if empty
+            if not self._category_cache:
+                await self._load_categories(session)
+
             for job in jobs:
                 try:
                     result = await self._upsert_job(session, job, source_name)
                     stats[result] += 1
+                    # Flush after each successful insert to catch errors early
+                    await session.flush()
                 except Exception as e:
                     logger.warning(
                         "job_upsert_failed",
@@ -146,10 +154,36 @@ class ParserRunner:
                         error=str(e),
                     )
                     stats["skipped"] += 1
+                    # Rollback and start fresh for next job
+                    await session.rollback()
+                    # Reload categories after rollback
+                    if not self._category_cache:
+                        await self._load_categories(session)
 
             await session.commit()
 
         return stats
+
+    async def _load_categories(self, session: AsyncSession):
+        """Load category slug to ID mapping into cache."""
+        from app.models.category import Category
+
+        result = await session.execute(select(Category))
+        categories = result.scalars().all()
+
+        for cat in categories:
+            self._category_cache[cat.slug] = cat.id
+            # Use 'other' or first category as default
+            if cat.slug == "other" or self._default_category_id is None:
+                self._default_category_id = cat.id
+
+        logger.info("categories_loaded", count=len(self._category_cache))
+
+    def _get_category_id(self, slug: Optional[str]) -> UUID:
+        """Get category ID from slug, falling back to default."""
+        if slug and slug in self._category_cache:
+            return self._category_cache[slug]
+        return self._default_category_id
 
     async def _upsert_job(
         self,
@@ -215,6 +249,16 @@ class ParserRunner:
                 existing.status = "active"
                 return "updated"
         else:
+            # Get category ID (required field)
+            category_id = self._get_category_id(job.category_slug)
+            if not category_id:
+                logger.warning(
+                    "no_category_available",
+                    external_id=job.external_id,
+                    category_slug=job.category_slug,
+                )
+                return "skipped"
+
             # Create new job
             new_job = Job(
                 title_ge=job.title_ge,
@@ -238,18 +282,11 @@ class ParserRunner:
                 external_id=job.external_id,
                 source_url=job.source_url,
                 content_hash=content_hash,
+                category_id=category_id,
                 status="active",
                 first_seen_at=now,
                 last_seen_at=now,
             )
-            # Map category if provided
-            if job.category_slug:
-                # TODO: Look up category_id by slug
-                pass
-            # Map region if provided
-            if job.region_slug:
-                # TODO: Look up region_id by slug
-                pass
 
             session.add(new_job)
             return "new"
