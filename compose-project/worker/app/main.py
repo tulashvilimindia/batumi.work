@@ -4,37 +4,28 @@ import signal
 import sys
 from datetime import datetime
 
-import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from app.core.config import get_config
 from app.core.runner import ParserRunner
+from app.core.logging import configure_logging, get_logger
 from app.tasks.analytics import (
     refresh_materialized_views,
     cleanup_old_analytics,
     generate_daily_summary,
 )
 
+# Get config early to configure logging
+_config = get_config()
+
 # Configure structured logging
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer(),
-    ],
-    wrapper_class=structlog.stdlib.BoundLogger,
-    context_class=dict,
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True,
+configure_logging(
+    log_level=_config.log_level,
+    json_output=not _config.debug,  # Human-readable in debug mode
 )
 
-logger = structlog.get_logger()
+logger = get_logger(__name__)
 
 
 class WorkerService:

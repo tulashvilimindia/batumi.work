@@ -1,13 +1,20 @@
 """FastAPI application entry point."""
 import os
+import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import structlog
 
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.logging import configure_logging, get_logger, bind_request_context, clear_request_context
+
+# Configure structured logging
+configure_logging(
+    log_level=settings.LOG_LEVEL,
+    json_output=settings.LOG_JSON,
+)
 
 # Initialize Sentry for error monitoring (if configured)
 SENTRY_DSN = os.getenv("SENTRY_DSN")
@@ -40,20 +47,7 @@ from app.routers.admin_parser import router as parser_admin_router
 from app.routers.admin_analytics import router as analytics_admin_router, public_router as analytics_public_router
 from app.routers.admin_backup import router as backup_admin_router
 
-# Configure structured logging
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer(),
-    ],
-    wrapper_class=structlog.stdlib.BoundLogger,
-    context_class=dict,
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
-logger = structlog.get_logger()
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -88,6 +82,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Add request ID middleware for log correlation
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """Add request ID for log correlation."""
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
+    bind_request_context(
+        request_id=request_id,
+        path=request.url.path,
+        method=request.method,
+    )
+    try:
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+    finally:
+        clear_request_context()
 
 
 # Add API version header middleware
