@@ -14,6 +14,7 @@ from app.tasks.analytics import (
     refresh_materialized_views,
     cleanup_old_analytics,
     generate_daily_summary,
+    generate_weekly_report,
 )
 
 # Get config early to configure logging
@@ -145,10 +146,20 @@ class WorkerService:
             replace_existing=True,
         )
 
+        # Schedule weekly report (every Monday at 8 AM)
+        self.scheduler.add_job(
+            generate_weekly_report,
+            trigger=CronTrigger(day_of_week="mon", hour=8, minute=0),
+            id="weekly_report",
+            name="Weekly Report Generation",
+            replace_existing=True,
+        )
+
         logger.info(
             "scheduler_configured",
             interval_minutes=self.config.parser_interval_minutes,
             analytics_refresh_hours=4,
+            weekly_report="Monday 8 AM",
         )
 
     async def start(self):
