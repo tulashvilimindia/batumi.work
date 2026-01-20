@@ -282,14 +282,21 @@ class JobsGeAdapter(BaseAdapter):
                 return None
 
             # Extract company name
-            # Skip links that contain "ამ ორგანიზაციის ყველა განცხადება" (All announcements from this organization)
+            # Skip links that contain navigation/utility text
             company_name = None
+            skip_texts = [
+                "ამ ორგანიზაციის",  # "This organization's"
+                "ყველა განცხადება",  # "All announcements"
+                "ყველა ვაკანსია",    # "All jobs"
+                "ერთ გვერდზე",       # "On one page"
+            ]
             for company_link in soup.select('a[href*="view=client"]'):
                 text = company_link.get_text(strip=True)
-                # Skip the "all announcements" link
-                if text and "ამ ორგანიზაციის" not in text and "ყველა განცხადება" not in text and len(text) > 1:
-                    company_name = text
-                    break
+                # Skip navigation/utility links
+                if text and len(text) > 1:
+                    if not any(skip in text for skip in skip_texts):
+                        company_name = text
+                        break
 
             # Extract location
             location = None
