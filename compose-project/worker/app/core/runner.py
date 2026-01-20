@@ -91,7 +91,9 @@ class ParserRunner:
         combined_result = ParseResult()
 
         try:
-            for region in regions:
+            # If regions is empty, run once with no filter (all jobs)
+            regions_to_parse = regions if regions else [None]
+            for region in regions_to_parse:
                 adapter = adapter_class()
                 result = await adapter.run(region)
                 combined_result.jobs.extend(result.jobs)

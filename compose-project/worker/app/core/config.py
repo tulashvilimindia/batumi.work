@@ -4,6 +4,18 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 
+def _parse_regions(value: str) -> List[str]:
+    """Parse PARSE_REGIONS env var.
+
+    - Empty string or "all" returns empty list (no filter = all jobs)
+    - Otherwise returns list of region names
+    """
+    value = value.strip().lower()
+    if not value or value == "all":
+        return []
+    return [r.strip() for r in value.split(",") if r.strip()]
+
+
 @dataclass
 class ParserConfig:
     """Parser configuration settings."""
@@ -61,11 +73,9 @@ class ParserConfig:
         ]
     )
 
-    # Regions to parse
+    # Regions to parse (empty or "all" means no filter - get all jobs)
     regions: List[str] = field(
-        default_factory=lambda: [
-            r.strip() for r in os.getenv("PARSE_REGIONS", "batumi,tbilisi").split(",")
-        ]
+        default_factory=lambda: _parse_regions(os.getenv("PARSE_REGIONS", "all"))
     )
 
     # Sources to parse
