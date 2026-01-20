@@ -107,7 +107,7 @@ JOBSGE_CATEGORIES: List[CategoryConfig] = [
         cid=13,
         name_ge="მედია/გამომცემლობა",
         name_en="Media/Publishing",
-        our_slug="media-journalism"
+        our_slug="design-creative"  # Maps to existing category
     ),
     CategoryConfig(
         cid=14,
@@ -119,13 +119,13 @@ JOBSGE_CATEGORIES: List[CategoryConfig] = [
         cid=16,
         name_ge="დასუფთავება",
         name_en="Cleaning",
-        our_slug="cleaning"
+        our_slug="other"  # Maps to existing category
     ),
     CategoryConfig(
         cid=17,
         name_ge="დაცვა/უსაფრთხოება",
         name_en="Security/Safety",
-        our_slug="security"
+        our_slug="hr-admin"  # Maps to existing category (security/admin roles)
     ),
     CategoryConfig(
         cid=18,

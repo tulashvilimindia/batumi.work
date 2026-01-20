@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 
 from app.core.base_adapter import BaseAdapter, JobData, ParseResult
 from app.core.http_client import HTTPClient
-from app.core.utils import clean_html, compute_content_hash, extract_date, extract_salary
+from app.core.utils import clean_html, compute_content_hash, extract_date, extract_salary, classify_category
 from app.parsers.jobsge_config import (
     JOBSGE_CATEGORIES,
     CategoryConfig,
@@ -387,6 +387,24 @@ class JobsGeAdapter(BaseAdapter):
             # Compute content hash for change detection
             content_hash = compute_content_hash(title, body, company_name)
 
+            # Determine category: use keyword classification to verify/override filter category
+            # This handles cases where jobs appear in wrong category listings
+            filter_category_slug = category.our_slug
+            classified_category_slug = classify_category(title, body or "")
+
+            # Use classified category if it's confident (not "other") and differs from filter
+            # This prevents miscategorization from cross-listed or recommended jobs
+            final_category_slug = filter_category_slug
+            if classified_category_slug and classified_category_slug != "other":
+                if classified_category_slug != filter_category_slug:
+                    logger.debug(
+                        "category_override",
+                        title=title[:50] if title else "",
+                        filter_category=filter_category_slug,
+                        classified_category=classified_category_slug,
+                    )
+                    final_category_slug = classified_category_slug
+
             return JobData(
                 # Required fields
                 external_id=external_id,
@@ -406,10 +424,10 @@ class JobsGeAdapter(BaseAdapter):
                 location=region.name_ge,
                 region_slug=region.our_slug,
 
-                # Category - from filter parameters (known!)
-                category_slug=category.our_slug,
+                # Category - verified/overridden by keyword classification
+                category_slug=final_category_slug,
 
-                # jobs.ge original filter values
+                # jobs.ge original filter values (keep original for reference)
                 jobsge_cid=category.cid,
                 jobsge_lid=region.lid,
 

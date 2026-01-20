@@ -416,28 +416,23 @@ def classify_category(title: str, body: str) -> Optional[str]:
             "operator", "ოპერატორი",
             # Note: "კონსულტანტი" removed - too generic, causes false positives
         ],
-        "hr-admin": [
-            "recruiter", "რეკრუტერი",
-            "secretary", "მდივანი", "assistant", "ასისტენტი",
-            "administrator", "ადმინისტრატორი",
-        ],
         "legal": [
             "lawyer", "იურისტი", "attorney", "ადვოკატი",
             "legal", "იურიდიული", "notary", "ნოტარიუსი",
             "paralegal", "სამართლებრივი",
         ],
         "design-creative": [
+            # Media/journalism keywords (mapped here)
+            "journalist", "ჟურნალისტი", "editor", "რედაქტორი",
+            "reporter", "რეპორტერი", "copywriter", "კოპირაიტერი",
+            "content writer", "კონტენტ მენეჯერი", "media", "მედია",
+            "tv", "ტელე", "radio", "რადიო",
+            # Design keywords
             "designer", "დიზაინერი", "graphic designer", "გრაფიკული დიზაინერი",
             "ui/ux", "ux designer", "ui designer",
             "creative", "კრეატიული", "art director",
             "photographer", "ფოტოგრაფი", "videographer", "ვიდეოგრაფი",
             "animator", "ანიმატორი", "illustrator", "ილუსტრატორი",
-        ],
-        "media-journalism": [
-            "journalist", "ჟურნალისტი", "editor", "რედაქტორი",
-            "reporter", "რეპორტერი", "copywriter", "კოპირაიტერი",
-            "content writer", "კონტენტ მენეჯერი", "media", "მედია",
-            "tv", "ტელე", "radio", "რადიო",
         ],
         "agriculture": [
             "agriculture", "სოფლის მეურნეობა", "farming", "ფერმა",
@@ -450,14 +445,16 @@ def classify_category(title: str, body: str) -> Optional[str]:
             "quality control", "ხარისხის კონტროლი",
             "assembly", "აწყობა", "packaging", "შეფუთვა",
         ],
-        "security": [
+        "hr-admin": [
+            # Security keywords (mapped here)
             "security", "დაცვა", "guard", "მცველი",
             "უსაფრთხოება", "security officer", "დაცვის თანამშრომელი",
+            # HR/Admin keywords
+            "recruiter", "რეკრუტერი",
+            "secretary", "მდივანი", "assistant", "ასისტენტი",
+            "administrator", "ადმინისტრატორი",
         ],
-        "cleaning": [
-            "cleaner", "დამლაგებელი", "cleaning", "დასუფთავება",
-            "housekeeper", "housemaid", "janitor",
-        ],
+        # Cleaning jobs go to "other" category
     }
 
     scores = {}
