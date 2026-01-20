@@ -208,6 +208,15 @@ class ParserRunner:
         """
         from app.models.job import Job
 
+        # Debug: log jobsge values (temporary)
+        if job.jobsge_cid is not None or job.jobsge_lid is not None:
+            logger.info(
+                "upsert_job_with_jobsge",
+                external_id=job.external_id,
+                jobsge_cid=job.jobsge_cid,
+                jobsge_lid=job.jobsge_lid,
+            )
+
         # Compute content hash
         content_hash = compute_content_hash(
             job.title_ge,
