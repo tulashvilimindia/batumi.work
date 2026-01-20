@@ -103,38 +103,56 @@ Located at: `/etc/nginx/sites-available/batumi.work`
 
 ## Pending Tasks / Known Issues
 
-### 1. Category Classification Fix (IN PROGRESS)
+### 1. Category Classification Fix (NEEDS RE-PARSING)
 
 **Problem:** Jobs are being incorrectly categorized. For example, "გაყიდვების კონსულტანტი" (Sales Consultant) was classified as IT instead of Sales.
 
 **Root Cause:** The `classify_category` function in `worker/app/core/utils.py` used first-match logic with broad keywords.
 
-**Fix Applied:** Updated to use a scoring system:
-- Title matches = 3 points
-- Body matches = 1 point
-- Returns category with highest score
-- More specific keywords added
+**Fixes Applied (3 commits):**
+1. Scoring system: title matches = 3 points, body matches = 1 point
+2. Made IT keywords more specific (removed broad terms like "software", "database")
+3. Added minimum score threshold (2) - weak matches go to "other"
 
-**Status:** Code committed but needs re-parsing to apply:
+**Status:** Code committed (commit 0602fca), **NEEDS RE-PARSING**
+
+**TO COMPLETE THIS TASK, run these commands on server:**
 ```bash
-# On server
+# SSH to server
+ssh root@38.242.143.10
+
+# Go to project
 cd /opt/batumi-work/compose-project
+
+# Pull latest code
 git pull
+
+# Rebuild worker
 docker compose build worker
 
-# Clear and re-parse
-docker compose exec db psql -U jobboard -d jobboard -c 'DELETE FROM jobs;'
+# Clear database
+docker compose exec db psql -U jobboard -d jobboard -c 'DELETE FROM channel_message_history; DELETE FROM channel_message_queue; DELETE FROM jobs;'
+
+# Run parser (takes ~10-15 minutes)
 docker compose --profile parser run --rm worker python -m app.main --once
 ```
 
-**Verify fix:**
+**Verify fix after parsing completes:**
 ```bash
-# Check category distribution
+# Check category distribution (IT should have ~10-20 jobs, not 100)
 docker compose exec db psql -U jobboard -d jobboard -c "SELECT c.slug, c.name_ge, COUNT(j.id) FROM categories c LEFT JOIN jobs j ON c.id = j.category_id GROUP BY c.id ORDER BY COUNT(j.id) DESC;"
 
-# Check IT category has only IT jobs
+# Check IT category has actual IT jobs
 docker compose exec db psql -U jobboard -d jobboard -c "SELECT j.title_ge FROM jobs j JOIN categories c ON j.category_id = c.id WHERE c.slug = 'it-programming' LIMIT 10;"
+
+# Verify sales jobs are in sales category
+docker compose exec db psql -U jobboard -d jobboard -c "SELECT j.title_ge, c.slug FROM jobs j JOIN categories c ON j.category_id = c.id WHERE j.title_ge LIKE '%გაყიდვ%' LIMIT 10;"
 ```
+
+**Expected Results:**
+- IT category: ~10-20 actual IT/developer jobs
+- Sales-Marketing: ~60-80 jobs
+- "გაყიდვების კონსულტანტი" should be in sales-marketing (NOT it-programming)
 
 ### 2. Frontend Table Layout
 
