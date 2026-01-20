@@ -228,8 +228,11 @@ class ParserRunner:
         if existing:
             # Check if content changed
             if existing.content_hash == content_hash:
-                # Just update last_seen_at
+                # Just update last_seen_at and location (if provided)
                 existing.last_seen_at = now
+                # Always update location if job has one from parser
+                if job.location:
+                    existing.location = job.location
                 return "skipped"
             else:
                 # Update job with new content
