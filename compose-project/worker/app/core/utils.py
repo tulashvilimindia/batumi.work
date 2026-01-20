@@ -245,6 +245,9 @@ def detect_language(text: str) -> str:
 def classify_category(title: str, body: str) -> Optional[str]:
     """Classify job into category based on keywords.
 
+    Uses a scoring system - title matches are weighted higher than body matches.
+    Returns the category with highest score.
+
     Args:
         title: Job title
         body: Job body
@@ -252,65 +255,107 @@ def classify_category(title: str, body: str) -> Optional[str]:
     Returns:
         Category slug or None
     """
-    text = (title + " " + body).lower()
+    title_lower = title.lower() if title else ""
+    body_lower = body.lower() if body else ""
 
-    # Category keywords mapping
+    # Category keywords mapping - more specific keywords first
     categories = {
         "it-programming": [
+            # Very specific IT terms
             "developer", "programmer", "პროგრამისტი", "დეველოპერი",
-            "software", "python", "java", "javascript", "react", "node",
-            "frontend", "backend", "fullstack", "devops", "ios", "android",
-            "qa", "tester", "ტესტერი", "data", "ml", "ai",
+            "software engineer", "software", "python", "java ", "javascript",
+            "react", "node.js", "nodejs", "angular", "vue.js",
+            "frontend", "backend", "fullstack", "full-stack", "full stack",
+            "devops", "ios developer", "android developer", "mobile developer",
+            "qa engineer", "tester", "ტესტერი", "data engineer", "data scientist",
+            "machine learning", "ml engineer", "ai engineer", "დეტა", "database",
+            "web developer", "ვებ დეველოპერი", "system administrator", "სისტემური ადმინისტრატორი",
+            "it specialist", "it სპეციალისტი", "it მხარდაჭერა", "it support",
+            "cyber", "კიბერ", "network engineer", "ქსელის", "cloud",
+            ".net", "c#", "c++", "php", "ruby", "golang", "rust", "kotlin", "swift",
         ],
         "sales-marketing": [
-            "sales", "გაყიდვები", "marketing", "მარკეტინგი",
-            "seo", "smm", "digital", "brand", "pr", "პიარი",
-            "manager", "მენეჯერი", "account",
+            "გაყიდვები", "გაყიდვების", "sales manager", "sales representative",
+            "მარკეტინგი", "marketing manager", "მარკეტინგის",
+            "seo specialist", "smm manager", "digital marketing",
+            "brand manager", "pr manager", "პიარი",
+            "account manager", "ექაუნთ მენეჯერი",
+            "merchandiser", "მერჩენდაიზერი",
+            "trade marketing", "სავაჭრო",
         ],
         "finance-accounting": [
-            "finance", "ფინანსები", "accounting", "ბუღალტერია",
+            "finance", "ფინანსები", "ფინანსური", "accounting", "ბუღალტერია",
             "accountant", "ბუღალტერი", "auditor", "აუდიტორი",
-            "tax", "საგადასახადო", "bank", "ბანკი",
+            "tax specialist", "საგადასახადო", "banker", "ბანკირი",
+            "credit", "კრედიტ", "loan", "სესხ",
+            "financial analyst", "ფინანსური ანალიტიკოსი",
+            "cashier", "მოლარე",
         ],
         "medicine-healthcare": [
             "doctor", "ექიმი", "nurse", "ექთანი", "medical", "სამედიცინო",
             "hospital", "საავადმყოფო", "clinic", "კლინიკა",
-            "pharmacy", "აფთიაქი", "healthcare",
+            "pharmacy", "აფთიაქი", "pharmacist", "ფარმაცევტი",
+            "healthcare", "ჯანდაცვა", "dentist", "სტომატოლოგი",
+            "therapist", "თერაპევტი", "surgeon", "ქირურგი",
+            "psychologist", "ფსიქოლოგი", "laboratory", "ლაბორატორია",
         ],
         "education": [
             "teacher", "მასწავლებელი", "tutor", "რეპეტიტორი",
-            "professor", "პროფესორი", "education", "განათლება",
-            "school", "სკოლა", "university", "უნივერსიტეტი",
+            "professor", "პროფესორი", "lecturer", "ლექტორი",
+            "education", "განათლება", "school", "სკოლა",
+            "university", "უნივერსიტეტი", "trainer", "ტრენერი",
+            "instructor", "ინსტრუქტორი", "coach", "მწვრთნელი",
         ],
         "tourism-hospitality": [
             "hotel", "სასტუმრო", "restaurant", "რესტორანი",
-            "tourism", "ტურიზმი", "travel", "chef", "მზარეული",
-            "waiter", "მიმტანი", "receptionist", "ადმინისტრატორი",
+            "tourism", "ტურიზმი", "travel", "მოგზაურობა",
+            "chef", "მზარეული", "cook", "მზარეული",
+            "waiter", "მიმტანი", "bartender", "ბარმენი",
+            "receptionist", "რეცეფციონისტი", "housekeeping", "დამლაგებელი",
+            "cafe", "კაფე", "bar ", "ბარი",
         ],
         "construction": [
             "construction", "მშენებლობა", "builder", "მშენებელი",
-            "architect", "არქიტექტორი", "engineer", "ინჟინერი",
-            "electrician", "ელექტრიკოსი", "plumber",
+            "architect", "არქიტექტორი", "civil engineer", "სამოქალაქო ინჟინერი",
+            "electrician", "ელექტრიკოსი", "plumber", "სანტექნიკ",
+            "hvac", "კონდიციონერ", "welder", "შემდუღებელი",
+            "carpenter", "დურგალი", "painter", "მხატვარი",
         ],
         "logistics-transport": [
             "driver", "მძღოლი", "logistics", "ლოჯისტიკა",
             "transport", "ტრანსპორტი", "delivery", "მიტანა",
             "courier", "კურიერი", "warehouse", "საწყობი",
+            "forklift", "შტაბელერი", "dispatcher", "დისპეტჩერი",
+            "expeditor", "ექსპედიტორი",
         ],
         "customer-service": [
-            "customer", "მომხმარებელ", "support", "მხარდაჭერა",
+            "customer service", "მომხმარებელთა მომსახურება",
+            "support specialist", "მხარდაჭერის სპეციალისტი",
             "call center", "ქოლ ცენტრი", "operator", "ოპერატორი",
-            "consultant", "კონსულტანტი",
+            "კონსულტანტი", "consultant",
         ],
-        "administration": [
-            "admin", "ადმინისტრატორი", "office", "ოფისი",
+        "hr-admin": [
+            "hr manager", "hr specialist", "ადამიანური რესურსები",
+            "recruiter", "რეკრუტერი", "office manager", "ოფის მენეჯერი",
             "secretary", "მდივანი", "assistant", "ასისტენტი",
-            "hr", "ადამიანური რესურსები", "recruiter",
+            "administrator", "ადმინისტრატორი",
         ],
     }
 
+    # Score each category - title matches worth 3 points, body matches worth 1
+    scores = {}
     for category_slug, keywords in categories.items():
-        if any(keyword in text for keyword in keywords):
-            return category_slug
+        score = 0
+        for keyword in keywords:
+            if keyword in title_lower:
+                score += 3
+            elif keyword in body_lower:
+                score += 1
+        if score > 0:
+            scores[category_slug] = score
 
-    return None
+    if not scores:
+        return "other"
+
+    # Return category with highest score
+    return max(scores, key=scores.get)
