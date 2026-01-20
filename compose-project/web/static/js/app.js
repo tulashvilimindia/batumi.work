@@ -1,70 +1,34 @@
 /**
- * Batumi Jobs - Main JavaScript
- * Vanilla JS, no frameworks, SEO-friendly
- * Focused on Batumi & Ajara region jobs
+ * Batumi Jobs - Table Layout (jobs.ge style)
  */
 
-// API Base URL
 const API_BASE = '/api/v1';
-
-// Current language (from URL path)
 const LANG = window.location.pathname.startsWith('/en') ? 'en' : 'ge';
-
-// Region filter - only show Adjara (აჭარა) jobs
-// Jobs from Adjara are marked with location "აჭარა" by the parser
 const LOCATION_FILTER = 'აჭარა';
 
-// Translations
 const T = {
     ge: {
-        search: 'ძიება',
-        searchPlaceholder: 'თანამდებობა, კომპანია...',
-        allCategories: 'ყველა კატეგორია',
-        allRegions: 'ყველა რეგიონი',
-        hasSalary: 'ხელფასით',
-        vipOnly: 'VIP',
         jobs: 'ვაკანსია',
-        jobsFound: 'ნაპოვნია',
+        found: 'ნაპოვნია',
         noJobs: 'ვაკანსიები ვერ მოიძებნა',
-        tryAgain: 'სცადეთ სხვა ფილტრები',
-        loading: 'იტვირთება...',
         previous: 'წინა',
         next: 'შემდეგი',
-        page: 'გვერდი',
-        of: '-დან',
-        company: 'კომპანია',
         location: 'ადგილმდებარეობა',
         category: 'კატეგორია',
         published: 'გამოქვეყნდა',
-        deadline: 'დედლაინი',
+        deadline: 'ბოლო ვადა',
         salary: 'ხელფასი',
         source: 'წყარო',
         viewOriginal: 'ორიგინალის ნახვა',
-        remote: 'დისტანციური',
-        hybrid: 'ჰიბრიდული',
-        onsite: 'ოფისში',
-        perMonth: '/თვეში',
-        gel: 'ლარი',
-        applyNow: 'გაგზავნა',
-        shareJob: 'გაზიარება',
+        share: 'გაზიარება',
+        allCategories: 'ყველა კატეგორია',
     },
     en: {
-        search: 'Search',
-        searchPlaceholder: 'Job title, company...',
-        allCategories: 'All Categories',
-        allRegions: 'All Regions',
-        hasSalary: 'With Salary',
-        vipOnly: 'VIP Only',
         jobs: 'jobs',
-        jobsFound: 'found',
+        found: 'found',
         noJobs: 'No jobs found',
-        tryAgain: 'Try different filters',
-        loading: 'Loading...',
         previous: 'Previous',
         next: 'Next',
-        page: 'Page',
-        of: 'of',
-        company: 'Company',
         location: 'Location',
         category: 'Category',
         published: 'Published',
@@ -72,63 +36,34 @@ const T = {
         salary: 'Salary',
         source: 'Source',
         viewOriginal: 'View Original',
-        remote: 'Remote',
-        hybrid: 'Hybrid',
-        onsite: 'On-site',
-        perMonth: '/month',
-        gel: 'GEL',
-        applyNow: 'Apply Now',
-        shareJob: 'Share',
+        share: 'Share',
+        allCategories: 'All Categories',
     }
 };
 
 const t = (key) => T[LANG][key] || T.ge[key] || key;
 
-// State management
 const state = {
     jobs: [],
     categories: [],
-    regions: [],
     filters: {
         q: '',
         category: '',
-        region: '',
-        has_salary: null,
-        is_vip: null,
         page: 1,
-        page_size: 20,
+        page_size: 30,
     },
-    pagination: {
-        total: 0,
-        pages: 0,
-    },
-    loading: false,
+    pagination: { total: 0, pages: 0 },
 };
 
-// DOM Elements
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => document.querySelectorAll(selector);
+const $ = (sel) => document.querySelector(sel);
 
-// Initialize app
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
-    // Parse URL params
     parseUrlParams();
-
-    // Load categories and regions
-    await Promise.all([
-        loadCategories(),
-        loadRegions(),
-    ]);
-
-    // Populate filter dropdowns
+    await loadCategories();
     populateFilters();
-
-    // Load jobs
     await loadJobs();
-
-    // Setup event listeners
     setupEventListeners();
 }
 
@@ -136,9 +71,6 @@ function parseUrlParams() {
     const params = new URLSearchParams(window.location.search);
     state.filters.q = params.get('q') || '';
     state.filters.category = params.get('category') || '';
-    state.filters.region = params.get('region') || '';
-    state.filters.has_salary = params.get('has_salary') === 'true' ? true : null;
-    state.filters.is_vip = params.get('is_vip') === 'true' ? true : null;
     state.filters.page = parseInt(params.get('page')) || 1;
 }
 
@@ -146,77 +78,36 @@ function updateUrl() {
     const params = new URLSearchParams();
     if (state.filters.q) params.set('q', state.filters.q);
     if (state.filters.category) params.set('category', state.filters.category);
-    if (state.filters.region) params.set('region', state.filters.region);
-    if (state.filters.has_salary) params.set('has_salary', 'true');
-    if (state.filters.is_vip) params.set('is_vip', 'true');
     if (state.filters.page > 1) params.set('page', state.filters.page);
-
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.pushState({}, '', newUrl);
 }
 
 async function loadCategories() {
     try {
-        const response = await fetch(`${API_BASE}/categories`);
-        state.categories = await response.json();
-    } catch (error) {
-        console.error('Failed to load categories:', error);
-    }
-}
-
-async function loadRegions() {
-    try {
-        const response = await fetch(`${API_BASE}/regions`);
-        state.regions = await response.json();
-    } catch (error) {
-        console.error('Failed to load regions:', error);
+        const res = await fetch(`${API_BASE}/categories`);
+        state.categories = await res.json();
+    } catch (e) {
+        console.error('Failed to load categories:', e);
     }
 }
 
 function populateFilters() {
-    // Populate category dropdown
-    const categorySelect = $('#category-filter');
-    if (categorySelect) {
-        categorySelect.innerHTML = `<option value="">${t('allCategories')}</option>`;
+    const catSelect = $('#category-filter');
+    if (catSelect) {
+        catSelect.innerHTML = `<option value="">${t('allCategories')}</option>`;
         state.categories.forEach(cat => {
             const name = LANG === 'en' && cat.name_en ? cat.name_en : cat.name_ge;
             const selected = state.filters.category === cat.slug ? 'selected' : '';
-            categorySelect.innerHTML += `<option value="${cat.slug}" ${selected}>${name}</option>`;
+            catSelect.innerHTML += `<option value="${cat.slug}" ${selected}>${name}</option>`;
         });
     }
 
-    // Populate region dropdown (only cities - level 3)
-    const regionSelect = $('#region-filter');
-    if (regionSelect) {
-        regionSelect.innerHTML = `<option value="">${t('allRegions')}</option>`;
-        state.regions.filter(r => r.level >= 2).forEach(reg => {
-            const name = LANG === 'en' && reg.name_en ? reg.name_en : reg.name_ge;
-            const selected = state.filters.region === reg.slug ? 'selected' : '';
-            const prefix = reg.level === 3 ? '  ' : '';
-            regionSelect.innerHTML += `<option value="${reg.slug}" ${selected}>${prefix}${name}</option>`;
-        });
-    }
-
-    // Set search input
     const searchInput = $('#search-input');
-    if (searchInput) {
-        searchInput.value = state.filters.q;
-    }
-
-    // Set toggle states
-    const salaryToggle = $('#salary-toggle');
-    if (salaryToggle && state.filters.has_salary) {
-        salaryToggle.classList.add('active');
-    }
-
-    const vipToggle = $('#vip-toggle');
-    if (vipToggle && state.filters.is_vip) {
-        vipToggle.classList.add('active');
-    }
+    if (searchInput) searchInput.value = state.filters.q;
 }
 
 async function loadJobs() {
-    state.loading = true;
     renderLoading();
 
     try {
@@ -224,55 +115,36 @@ async function loadJobs() {
         params.set('page', state.filters.page);
         params.set('page_size', state.filters.page_size);
         params.set('status', 'active');
-
-        // Filter for Adjara region using location parameter
         params.set('location', LOCATION_FILTER);
 
         if (state.filters.q) params.set('q', state.filters.q);
         if (state.filters.category) params.set('category', state.filters.category);
-        if (state.filters.has_salary) params.set('has_salary', 'true');
-        if (state.filters.is_vip) params.set('is_vip', 'true');
 
-        const response = await fetch(`${API_BASE}/jobs?${params.toString()}`);
-        const data = await response.json();
+        const res = await fetch(`${API_BASE}/jobs?${params.toString()}`);
+        const data = await res.json();
 
         state.jobs = data.items;
-        state.pagination = {
-            total: data.total,
-            pages: data.pages,
-            page: data.page,
-        };
+        state.pagination = { total: data.total, pages: data.pages, page: data.page };
 
         renderJobs();
         renderPagination();
-    } catch (error) {
-        console.error('Failed to load jobs:', error);
+    } catch (e) {
+        console.error('Failed to load jobs:', e);
         renderError();
-    } finally {
-        state.loading = false;
     }
 }
 
 function renderLoading() {
     const container = $('#jobs-container');
     if (container) {
-        container.innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-            </div>
-        `;
+        container.innerHTML = `<tr><td colspan="4" class="loading-cell"><div class="spinner"></div></td></tr>`;
     }
 }
 
 function renderError() {
     const container = $('#jobs-container');
     if (container) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>${t('noJobs')}</h3>
-                <p>${t('tryAgain')}</p>
-            </div>
-        `;
+        container.innerHTML = `<tr><td colspan="4" class="empty-state">${t('noJobs')}</td></tr>`;
     }
 }
 
@@ -281,72 +153,45 @@ function renderJobs() {
     const countEl = $('#jobs-count');
 
     if (countEl) {
-        countEl.textContent = `${state.pagination.total} ${t('jobs')} ${t('jobsFound')}`;
+        countEl.textContent = `${state.pagination.total} ${t('jobs')} ${t('found')}`;
     }
 
     if (!container) return;
 
     if (state.jobs.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>${t('noJobs')}</h3>
-                <p>${t('tryAgain')}</p>
-            </div>
-        `;
+        container.innerHTML = `<tr><td colspan="4" class="empty-state">${t('noJobs')}</td></tr>`;
         return;
     }
 
-    container.innerHTML = state.jobs.map(job => renderJobCard(job)).join('');
+    container.innerHTML = state.jobs.map(job => renderJobRow(job)).join('');
 }
 
-function renderJobCard(job) {
+function renderJobRow(job) {
     const title = LANG === 'en' && job.title_en ? job.title_en : job.title_ge;
-    const categoryName = job.category ? (LANG === 'en' && job.category.name_en ? job.category.name_en : job.category.name_ge) : '';
-    const regionName = job.region ? (LANG === 'en' && job.region.name_en ? job.region.name_en : job.region.name_ge) : job.location;
     const detailUrl = `/${LANG}/job.html?id=${job.id}`;
+    const company = job.company_name || '';
+    const published = job.published_at ? formatDateShort(job.published_at) : '';
+    const deadline = job.deadline_at ? formatDateShort(job.deadline_at) : '';
 
-    let badges = '';
-    if (job.is_vip) badges += `<span class="badge badge-vip">VIP</span>`;
-    if (job.has_salary) badges += `<span class="badge badge-salary">${t('salary')}</span>`;
-    if (job.remote_type === 'remote') badges += `<span class="badge badge-remote">${t('remote')}</span>`;
-    if (job.remote_type === 'hybrid') badges += `<span class="badge badge-remote">${t('hybrid')}</span>`;
+    // Check if job is recent (within last 2 days)
+    const isNew = job.published_at && isRecent(job.published_at, 2);
 
-    let salary = '';
-    if (job.has_salary && job.salary_min) {
-        const currency = job.salary_currency || 'GEL';
-        if (job.salary_max && job.salary_max !== job.salary_min) {
-            salary = `${job.salary_min} - ${job.salary_max} ${currency}`;
-        } else {
-            salary = `${job.salary_min} ${currency}`;
-        }
-    }
+    let icons = '';
+    if (isNew) icons += `<span class="job-icon new">NEW</span>`;
+    if (job.has_salary) icons += `<span class="job-icon salary">₾</span>`;
 
-    const publishedDate = job.published_at ? formatDate(job.published_at) : '';
-    const deadlineDate = job.deadline_at ? formatDate(job.deadline_at) : '';
+    const vipClass = job.is_vip ? 'vip' : '';
 
     return `
-        <article class="job-card ${job.is_vip ? 'vip' : ''}">
-            <div class="job-card-header">
-                <h3 class="job-title">
-                    <a href="${detailUrl}">${escapeHtml(title)}</a>
-                </h3>
-                <div class="job-badges">${badges}</div>
-            </div>
-            <div class="job-meta">
-                ${job.company_name ? `<span class="job-meta-item"><strong>${escapeHtml(job.company_name)}</strong></span>` : ''}
-                ${regionName ? `<span class="job-meta-item">📍 ${escapeHtml(regionName)}</span>` : ''}
-                ${categoryName ? `<span class="job-meta-item">📁 ${escapeHtml(categoryName)}</span>` : ''}
-            </div>
-            <div class="job-footer">
-                <div>
-                    ${salary ? `<span class="job-salary">${salary}</span>` : ''}
-                </div>
-                <div class="job-date">
-                    ${publishedDate ? `${t('published')}: ${publishedDate}` : ''}
-                    ${deadlineDate ? ` | ${t('deadline')}: ${deadlineDate}` : ''}
-                </div>
-            </div>
-        </article>
+        <tr>
+            <td>
+                <a href="${detailUrl}" class="job-title-link ${vipClass}">${escapeHtml(title)}</a>
+                ${icons ? `<span class="job-icons">${icons}</span>` : ''}
+            </td>
+            <td class="job-company">${escapeHtml(company)}</td>
+            <td class="job-date">${published}</td>
+            <td class="job-date">${deadline}</td>
+        </tr>
     `;
 }
 
@@ -360,10 +205,8 @@ function renderPagination() {
     const { page, pages } = state.pagination;
     let html = '';
 
-    // Previous button
     html += `<a href="#" class="pagination-link ${page === 1 ? 'disabled' : ''}" data-page="${page - 1}">${t('previous')}</a>`;
 
-    // Page numbers
     const start = Math.max(1, page - 2);
     const end = Math.min(pages, page + 2);
 
@@ -381,14 +224,12 @@ function renderPagination() {
         html += `<a href="#" class="pagination-link" data-page="${pages}">${pages}</a>`;
     }
 
-    // Next button
     html += `<a href="#" class="pagination-link ${page === pages ? 'disabled' : ''}" data-page="${page + 1}">${t('next')}</a>`;
 
     container.innerHTML = html;
 }
 
 function setupEventListeners() {
-    // Search form
     const searchForm = $('#search-form');
     if (searchForm) {
         searchForm.addEventListener('submit', (e) => {
@@ -400,10 +241,9 @@ function setupEventListeners() {
         });
     }
 
-    // Category filter
-    const categorySelect = $('#category-filter');
-    if (categorySelect) {
-        categorySelect.addEventListener('change', (e) => {
+    const catSelect = $('#category-filter');
+    if (catSelect) {
+        catSelect.addEventListener('change', (e) => {
             state.filters.category = e.target.value;
             state.filters.page = 1;
             updateUrl();
@@ -411,42 +251,6 @@ function setupEventListeners() {
         });
     }
 
-    // Region filter
-    const regionSelect = $('#region-filter');
-    if (regionSelect) {
-        regionSelect.addEventListener('change', (e) => {
-            state.filters.region = e.target.value;
-            state.filters.page = 1;
-            updateUrl();
-            loadJobs();
-        });
-    }
-
-    // Salary toggle
-    const salaryToggle = $('#salary-toggle');
-    if (salaryToggle) {
-        salaryToggle.addEventListener('click', () => {
-            salaryToggle.classList.toggle('active');
-            state.filters.has_salary = salaryToggle.classList.contains('active') ? true : null;
-            state.filters.page = 1;
-            updateUrl();
-            loadJobs();
-        });
-    }
-
-    // VIP toggle
-    const vipToggle = $('#vip-toggle');
-    if (vipToggle) {
-        vipToggle.addEventListener('click', () => {
-            vipToggle.classList.toggle('active');
-            state.filters.is_vip = vipToggle.classList.contains('active') ? true : null;
-            state.filters.page = 1;
-            updateUrl();
-            loadJobs();
-        });
-    }
-
-    // Pagination
     const pagination = $('#pagination');
     if (pagination) {
         pagination.addEventListener('click', (e) => {
@@ -462,10 +266,26 @@ function setupEventListeners() {
 }
 
 // Utility functions
+function formatDateShort(dateString) {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const months = LANG === 'ge'
+        ? ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი', 'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი']
+        : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${day < 10 ? '0' + day : day} ${months[date.getMonth()]}`;
+}
+
 function formatDate(dateString) {
     const date = new Date(dateString);
     const options = { day: 'numeric', month: 'short', year: 'numeric' };
     return date.toLocaleDateString(LANG === 'ge' ? 'ka-GE' : 'en-US', options);
+}
+
+function isRecent(dateString, days) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = (now - date) / (1000 * 60 * 60 * 24);
+    return diff <= days;
 }
 
 function escapeHtml(text) {
@@ -475,15 +295,15 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Job Detail Page functions
+// Job Detail Page
 async function loadJobDetail(jobId) {
     try {
-        const response = await fetch(`${API_BASE}/jobs/${jobId}`);
-        if (!response.ok) throw new Error('Job not found');
-        const job = await response.json();
+        const res = await fetch(`${API_BASE}/jobs/${jobId}`);
+        if (!res.ok) throw new Error('Not found');
+        const job = await res.json();
         renderJobDetail(job);
-    } catch (error) {
-        console.error('Failed to load job:', error);
+    } catch (e) {
+        console.error('Failed to load job:', e);
         renderJobDetailError();
     }
 }
@@ -496,155 +316,96 @@ function renderJobDetail(job) {
     const body = LANG === 'en' && job.body_en ? job.body_en : job.body_ge;
     const categoryName = job.category ? (LANG === 'en' && job.category.name_en ? job.category.name_en : job.category.name_ge) : '';
 
-    // Update page title
     document.title = `${title} | Batumi Jobs`;
-
-    // Update meta description
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-        metaDesc.content = body.substring(0, 160) + '...';
-    }
 
     let badges = '';
     if (job.is_vip) badges += `<span class="badge badge-vip">VIP</span>`;
     if (job.has_salary) badges += `<span class="badge badge-salary">${t('salary')}</span>`;
-    if (job.remote_type !== 'onsite') badges += `<span class="badge badge-remote">${t(job.remote_type)}</span>`;
 
     let salary = '';
     if (job.has_salary && job.salary_min) {
         const currency = job.salary_currency || 'GEL';
-        if (job.salary_max && job.salary_max !== job.salary_min) {
-            salary = `${job.salary_min} - ${job.salary_max} ${currency}${t('perMonth')}`;
-        } else {
-            salary = `${job.salary_min} ${currency}${t('perMonth')}`;
-        }
+        salary = job.salary_max && job.salary_max !== job.salary_min
+            ? `${job.salary_min} - ${job.salary_max} ${currency}`
+            : `${job.salary_min} ${currency}`;
     }
 
     container.innerHTML = `
         <div class="job-detail-header">
-            <div class="job-badges mb-2">${badges}</div>
+            ${badges ? `<div class="job-badges mb-2">${badges}</div>` : ''}
             <h1 class="job-detail-title">${escapeHtml(title)}</h1>
             ${job.company_name ? `<div class="job-detail-company">${escapeHtml(job.company_name)}</div>` : ''}
             <div class="job-detail-meta">
-                ${job.location ? `
-                <div class="job-detail-meta-item">
-                    <span class="job-detail-meta-label">${t('location')}</span>
-                    <span class="job-detail-meta-value">${escapeHtml(job.location)}</span>
-                </div>
-                ` : ''}
-                ${categoryName ? `
-                <div class="job-detail-meta-item">
-                    <span class="job-detail-meta-label">${t('category')}</span>
-                    <span class="job-detail-meta-value">${escapeHtml(categoryName)}</span>
-                </div>
-                ` : ''}
-                ${job.published_at ? `
-                <div class="job-detail-meta-item">
-                    <span class="job-detail-meta-label">${t('published')}</span>
-                    <span class="job-detail-meta-value">${formatDate(job.published_at)}</span>
-                </div>
-                ` : ''}
-                ${job.deadline_at ? `
-                <div class="job-detail-meta-item">
-                    <span class="job-detail-meta-label">${t('deadline')}</span>
-                    <span class="job-detail-meta-value">${formatDate(job.deadline_at)}</span>
-                </div>
-                ` : ''}
-                ${salary ? `
-                <div class="job-detail-meta-item">
-                    <span class="job-detail-meta-label">${t('salary')}</span>
-                    <span class="job-detail-meta-value job-salary">${salary}</span>
-                </div>
-                ` : ''}
+                ${job.location ? `<div class="job-detail-meta-item"><span class="job-detail-meta-label">${t('location')}</span><span class="job-detail-meta-value">${escapeHtml(job.location)}</span></div>` : ''}
+                ${categoryName ? `<div class="job-detail-meta-item"><span class="job-detail-meta-label">${t('category')}</span><span class="job-detail-meta-value">${escapeHtml(categoryName)}</span></div>` : ''}
+                ${job.published_at ? `<div class="job-detail-meta-item"><span class="job-detail-meta-label">${t('published')}</span><span class="job-detail-meta-value">${formatDate(job.published_at)}</span></div>` : ''}
+                ${job.deadline_at ? `<div class="job-detail-meta-item"><span class="job-detail-meta-label">${t('deadline')}</span><span class="job-detail-meta-value">${formatDate(job.deadline_at)}</span></div>` : ''}
+                ${salary ? `<div class="job-detail-meta-item"><span class="job-detail-meta-label">${t('salary')}</span><span class="job-detail-meta-value job-salary">${salary}</span></div>` : ''}
             </div>
         </div>
-        <div class="job-body">
-            ${formatJobBody(body)}
-        </div>
+        <div class="job-body">${formatJobBody(body)}</div>
         <div class="job-source">
             <strong>${t('source')}:</strong> ${job.parsed_from || 'manual'}
             ${job.source_url ? `<br><a href="${escapeHtml(job.source_url)}" target="_blank" rel="noopener">${t('viewOriginal')} ↗</a>` : ''}
         </div>
-        <div class="share-buttons" data-url="${window.location.href}" data-title="${escapeHtml(title)}">
-            <span class="share-label">${t('shareJob')}:</span>
-            <button class="share-btn share-fb" aria-label="Share on Facebook" title="Facebook">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-            </button>
-            <button class="share-btn share-tg" aria-label="Share on Telegram" title="Telegram">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.2 4.4L2.9 11.3c-1.2.5-1.1 1.7.1 2l4.6 1.4 1.8 5.5c.2.6.9.7 1.3.3l2.6-2.1 5.1 3.8c.9.7 2.1.1 2.3-1l3.2-15.5c.3-1.2-.9-2.2-2.1-1.8zM8.6 13.1l7.5-4.6c.3-.2.6.2.4.4l-6.2 5.6-.2 2.3-1.5-3.7z"/></svg>
-            </button>
-            <button class="share-btn share-wa" aria-label="Share on WhatsApp" title="WhatsApp">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4l-2-1c-.3-.1-.6 0-.8.2l-.5.6c-.2.2-.5.3-.8.1-1-.4-2.3-1.4-3.2-2.5-.2-.3-.2-.6 0-.8l.4-.6c.2-.2.2-.5.1-.8l-1-2c-.2-.4-.6-.5-1-.4-1 .4-1.8 1.4-1.7 2.5.1 2.1 1.4 5 4.4 7.2 2.7 2 5.4 2.4 7.1 2 1.1-.3 1.9-1.3 2-2.4.1-.4-.2-.8-.6-.9l-.4-.2zM12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.4A10 10 0 1 0 12 2z"/></svg>
-            </button>
-            <button class="share-btn share-li" aria-label="Share on LinkedIn" title="LinkedIn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-            </button>
-            <button class="share-btn share-copy" aria-label="Copy link" title="${LANG === 'en' ? 'Copy link' : 'ლინკის კოპირება'}">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            </button>
+        <div class="share-buttons">
+            <span class="share-label">${t('share')}:</span>
+            <button class="share-btn share-fb" onclick="shareOn('facebook')"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></button>
+            <button class="share-btn share-tg" onclick="shareOn('telegram')"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.2 4.4L2.9 11.3c-1.2.5-1.1 1.7.1 2l4.6 1.4 1.8 5.5c.2.6.9.7 1.3.3l2.6-2.1 5.1 3.8c.9.7 2.1.1 2.3-1l3.2-15.5c.3-1.2-.9-2.2-2.1-1.8z"/></svg></button>
+            <button class="share-btn share-wa" onclick="shareOn('whatsapp')"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4l-2-1c-.3-.1-.6 0-.8.2l-.5.6c-.2.2-.5.3-.8.1-1-.4-2.3-1.4-3.2-2.5-.2-.3-.2-.6 0-.8l.4-.6c.2-.2.2-.5.1-.8l-1-2c-.2-.4-.6-.5-1-.4-1 .4-1.8 1.4-1.7 2.5.1 2.1 1.4 5 4.4 7.2 2.7 2 5.4 2.4 7.1 2 1.1-.3 1.9-1.3 2-2.4.1-.4-.2-.8-.6-.9l-.4-.2zM12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.4A10 10 0 1 0 12 2z"/></svg></button>
+            <button class="share-btn share-copy" onclick="copyLink()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
     `;
-
-    // Re-initialize share buttons after rendering
-    if (typeof initShareButtons === 'function') {
-        initShareButtons();
-    }
 }
 
 function formatJobBody(text) {
     if (!text) return '';
-    // Convert newlines to <br> and preserve paragraphs
-    return text
-        .split(/\n\n+/)
-        .map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`)
-        .join('');
+    return text.split(/\n\n+/).map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
 }
 
 function renderJobDetailError() {
     const container = $('#job-detail');
     if (container) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>${t('noJobs')}</h3>
-                <a href="/${LANG}/" class="btn btn-primary">← Back to Jobs</a>
-            </div>
-        `;
+        container.innerHTML = `<div class="empty-state"><h3>${t('noJobs')}</h3><a href="/${LANG}/">← Back</a></div>`;
     }
 }
 
-// Initialize job detail page if on job.html
+// Share functions
+function shareOn(platform) {
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent(document.title);
+    let shareUrl = '';
+
+    switch(platform) {
+        case 'facebook': shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`; break;
+        case 'telegram': shareUrl = `https://t.me/share/url?url=${url}&text=${title}`; break;
+        case 'whatsapp': shareUrl = `https://wa.me/?text=${title}%20${url}`; break;
+    }
+
+    if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        const btn = document.querySelector('.share-copy');
+        btn.classList.add('copied');
+        setTimeout(() => btn.classList.remove('copied'), 2000);
+    });
+}
+
+// Initialize job detail page
 if (window.location.pathname.includes('job.html')) {
     document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const jobId = params.get('id');
-        if (jobId) {
-            loadJobDetail(jobId);
-        } else {
-            renderJobDetailError();
-        }
+        if (jobId) loadJobDetail(jobId);
+        else renderJobDetailError();
     });
 }
 
-// Service Worker Registration
+// Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-                console.log('[App] Service Worker registered:', registration.scope);
-
-                // Check for updates
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New version available
-                            console.log('[App] New version available');
-                        }
-                    });
-                });
-            })
-            .catch((error) => {
-                console.error('[App] Service Worker registration failed:', error);
-            });
+        navigator.serviceWorker.register('/sw.js').catch(e => console.error('SW error:', e));
     });
 }
