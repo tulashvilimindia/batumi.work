@@ -12,6 +12,7 @@ A lightweight, SEO-first job posting website for Georgia with bilingual support 
 - **PWA Ready**: Installable app with offline support
 - **Job Parser**: Automatic job aggregation from jobs.ge
 - **Telegram Bot**: Job search and subscription notifications
+- **Channel Sender**: Auto-posts new jobs to @batumiworkofficial
 - **Analytics Dashboard**: Job views, searches, and market insights
 - **Automated Backups**: Daily PostgreSQL backups with retention
 
@@ -23,12 +24,12 @@ A lightweight, SEO-first job posting website for Georgia with bilingual support 
 │   (web)     │     │   (api)     │     │    (db)     │
 └─────────────┘     └─────────────┘     └─────────────┘
                            │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Worker    │     │  Telegram   │     │   Backup    │
-│  (parser)   │     │    Bot      │     │  (cron)     │
-└─────────────┘     └─────────────┘     └─────────────┘
+        ┌─────────┬────────┼────────┬─────────┐
+        ▼         ▼        ▼        ▼         ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│  Worker  │ │ Telegram │ │  Channel │ │  Backup  │
+│ (parser) │ │   Bot    │ │  Sender  │ │  (cron)  │
+└──────────┘ └──────────┘ └──────────┘ └──────────┘
 ```
 
 ## Quick Start
@@ -104,6 +105,7 @@ docker-compose exec api python -m app.seed
 |---------|----------|-------------|
 | parser | + worker | Job aggregation from external sources |
 | bot | + bot | Telegram bot for notifications |
+| sender | + sender, mailpit | Auto-post jobs to Telegram channel |
 | backup | + backup | Automated database backups |
 | full | all | All services |
 
@@ -317,6 +319,12 @@ compose-project/
 │   └── app/
 │       ├── main.py        # Bot handlers
 │       └── database.py    # Subscription storage
+├── sender/                 # Channel Sender
+│   └── app/
+│       ├── main.py        # Entry point + scheduler
+│       ├── services/      # Formatter, queue, sender
+│       ├── tasks/         # Job scanner, queue processor
+│       └── api/           # Admin endpoints
 ├── docs/                   # Documentation
 ├── backups/               # Database backups
 └── docker-compose.yml
@@ -332,6 +340,7 @@ compose-project/
 - [DevOps Guide](docs/DEVOPS_GUIDE.md) - Container management and operations
 - [Backup & Restore](docs/BACKUP_RESTORE.md) - Database backup procedures
 - [Telegram Bot Setup](docs/TELEGRAM_BOT_SETUP.md) - Bot creation guide
+- [Channel Sender](docs/CHANNEL_SENDER.md) - Auto-post jobs to Telegram channel
 
 ## License
 
