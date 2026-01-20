@@ -135,6 +135,31 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Admin Dashboard (Direct access, not through nginx)
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: jobboard-admin
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-jobboard}
+      - BACKUP_DIR=/backups
+    ports:
+      - "0.0.0.0:9000:8000"
+    volumes:
+      - ./backups:/backups:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   # Channel Sender Service
   sender:
     build:
