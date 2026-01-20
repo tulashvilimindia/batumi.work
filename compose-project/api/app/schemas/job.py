@@ -150,6 +150,10 @@ class JobResponse(BaseSchema):
     external_id: Optional[str]
     source_url: Optional[str]
 
+    # jobs.ge original filter values
+    jobsge_cid: Optional[int] = None
+    jobsge_lid: Optional[int] = None
+
     first_seen_at: Optional[datetime]
     last_seen_at: Optional[datetime]
     created_at: datetime
@@ -177,14 +181,24 @@ class JobListItem(BaseSchema):
     status: str
     parsed_from: str
     source_url: Optional[str]
+    # jobs.ge original filter values
+    jobsge_cid: Optional[int] = None
+    jobsge_lid: Optional[int] = None
 
 
 class JobSearchParams(BaseModel):
-    """Query parameters for job search."""
+    """Query parameters for job search.
+
+    Supports two filter styles:
+    - Slug-based: category, region (our internal slugs)
+    - jobs.ge style: cid, lid (original jobs.ge filter IDs)
+    """
 
     q: Optional[str] = Field(None, description="Search query for title/company")
     category: Optional[str] = Field(None, description="Category slug")
+    cid: Optional[int] = Field(None, description="jobs.ge category ID (1-18)")
     region: Optional[str] = Field(None, description="Region slug")
+    lid: Optional[int] = Field(None, description="jobs.ge location/region ID")
     location: Optional[str] = Field(None, description="Location text filter (e.g., აჭარა)")
     has_salary: Optional[bool] = Field(None, description="Filter jobs with salary info")
     is_vip: Optional[bool] = Field(None, description="Filter VIP jobs")

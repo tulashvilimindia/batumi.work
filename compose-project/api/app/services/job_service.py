@@ -58,10 +58,18 @@ class JobService:
             category_subq = select(Category.id).where(Category.slug == params.category)
             filters.append(Job.category_id.in_(category_subq))
 
+        # jobs.ge category ID filter (cid)
+        if params.cid is not None:
+            filters.append(Job.jobsge_cid == params.cid)
+
         # Region filter (by slug)
         if params.region:
             region_subq = select(Region.id).where(Region.slug == params.region)
             filters.append(Job.region_id.in_(region_subq))
+
+        # jobs.ge location/region ID filter (lid)
+        if params.lid is not None:
+            filters.append(Job.jobsge_lid == params.lid)
 
         # Location text filter (e.g., "აჭარა" for Adjara) - partial match
         if params.location:

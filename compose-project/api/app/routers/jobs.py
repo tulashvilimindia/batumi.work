@@ -20,12 +20,14 @@ router = APIRouter()
     "",
     response_model=PaginatedResponse[JobListItem],
     summary="List jobs",
-    description="Get paginated list of jobs with optional filters",
+    description="Get paginated list of jobs with optional filters. Supports jobs.ge style filters (cid/lid).",
 )
 async def list_jobs(
     q: Optional[str] = Query(None, description="Search in title/company"),
     category: Optional[str] = Query(None, description="Category slug"),
+    cid: Optional[int] = Query(None, description="jobs.ge category ID (1-18)"),
     region: Optional[str] = Query(None, description="Region slug"),
+    lid: Optional[int] = Query(None, description="jobs.ge location/region ID"),
     location: Optional[str] = Query(None, description="Location text filter (e.g., აჭარა)"),
     has_salary: Optional[bool] = Query(None, description="Filter jobs with salary"),
     is_vip: Optional[bool] = Query(None, description="Filter VIP jobs"),
@@ -37,11 +39,18 @@ async def list_jobs(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     db: AsyncSession = Depends(get_db),
 ):
-    """List jobs with pagination and filters."""
+    """List jobs with pagination and filters.
+
+    Supports two filter styles:
+    - Slug-based: category=it-programming, region=adjara
+    - jobs.ge style: cid=6 (IT), lid=14 (Adjara)
+    """
     params = JobSearchParams(
         q=q,
         category=category,
+        cid=cid,
         region=region,
+        lid=lid,
         location=location,
         has_salary=has_salary,
         is_vip=is_vip,
