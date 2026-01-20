@@ -261,18 +261,21 @@ def classify_category(title: str, body: str) -> Optional[str]:
     # Category keywords mapping - more specific keywords first
     categories = {
         "it-programming": [
-            # Very specific IT terms
+            # Very specific IT/Programming terms only
             "developer", "programmer", "პროგრამისტი", "დეველოპერი",
-            "software engineer", "software", "python", "java ", "javascript",
+            "software engineer", "python", "java developer", "javascript",
             "react", "node.js", "nodejs", "angular", "vue.js",
-            "frontend", "backend", "fullstack", "full-stack", "full stack",
+            "frontend developer", "backend developer", "fullstack", "full-stack",
             "devops", "ios developer", "android developer", "mobile developer",
-            "qa engineer", "tester", "ტესტერი", "data engineer", "data scientist",
-            "machine learning", "ml engineer", "ai engineer", "დეტა", "database",
-            "web developer", "ვებ დეველოპერი", "system administrator", "სისტემური ადმინისტრატორი",
+            "qa engineer", "ტესტერი", "data engineer", "data scientist",
+            "machine learning", "ml engineer", "ai engineer",
+            "web developer", "ვებ დეველოპერი",
+            "system administrator", "სისტემური ადმინისტრატორი",
             "it specialist", "it სპეციალისტი", "it მხარდაჭერა", "it support",
-            "cyber", "კიბერ", "network engineer", "ქსელის", "cloud",
-            ".net", "c#", "c++", "php", "ruby", "golang", "rust", "kotlin", "swift",
+            "cybersecurity", "კიბერუსაფრთხოება", "network engineer",
+            ".net developer", "c# developer", "c++ developer",
+            "php developer", "ruby developer", "golang", "rust developer",
+            "kotlin", "swift developer", "sql", "aws", "azure",
         ],
         "sales-marketing": [
             "გაყიდვები", "გაყიდვების", "sales manager", "sales representative",
@@ -357,5 +360,13 @@ def classify_category(title: str, body: str) -> Optional[str]:
     if not scores:
         return "other"
 
-    # Return category with highest score
-    return max(scores, key=scores.get)
+    # Get category with highest score
+    best_category = max(scores, key=scores.get)
+    best_score = scores[best_category]
+
+    # Require minimum score of 2 (at least one body match + something else, or a title match)
+    # Single body keyword match is not confident enough
+    if best_score < 2:
+        return "other"
+
+    return best_category
