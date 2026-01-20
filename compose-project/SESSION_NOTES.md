@@ -17,6 +17,7 @@
 | API Docs | ✅ Live | https://batumi.work/docs |
 | Health Check | ✅ Live | https://batumi.work/health |
 | Parser Stats | ✅ Live | https://batumi.work/api/v1/stats |
+| Admin Dashboard | ✅ Live | http://38.242.143.10:9000 (direct) |
 
 ---
 
@@ -31,11 +32,12 @@
 
 ### Port Configuration
 
-| Port | Service | Binding |
-|------|---------|---------|
-| 8100 | Web (nginx) | 127.0.0.1 |
-| 8101 | API (FastAPI) | 127.0.0.1 |
-| 5433 | PostgreSQL | 127.0.0.1 (internal) |
+| Port | Service | Binding | Access |
+|------|---------|---------|--------|
+| 8100 | Web (nginx) | 127.0.0.1 | Via Cloudflare |
+| 8101 | API (FastAPI) | 127.0.0.1 | Via nginx |
+| 5433 | PostgreSQL | 127.0.0.1 | Internal only |
+| 9000 | Admin Dashboard | 0.0.0.0 | Direct (UFW protected) |
 
 ### Docker Containers
 
@@ -45,6 +47,7 @@ jobboard-api      compose-project-api      Up (healthy)    127.0.0.1:8101->8000/
 jobboard-db       postgres:15-alpine       Up (healthy)    127.0.0.1:5433->5432/tcp
 jobboard-web      nginx:alpine             Up (healthy)    127.0.0.1:8100->80/tcp
 jobboard-worker   compose-project-worker   Up              (parser service)
+jobboard-admin    compose-project-admin    Up (healthy)    0.0.0.0:9000->8000/tcp
 ```
 
 ---

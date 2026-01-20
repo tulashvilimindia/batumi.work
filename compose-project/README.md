@@ -98,6 +98,7 @@ docker-compose exec api python -m app.seed
 | web | jobboard-web | 80 | Nginx static frontend |
 | api | jobboard-api | 8000 | FastAPI backend |
 | db | jobboard-db | 5432 | PostgreSQL database |
+| admin | jobboard-admin | 9000 | Admin dashboard (direct access) |
 
 ### Optional Services (Profiles)
 
@@ -108,6 +109,21 @@ docker-compose exec api python -m app.seed
 | sender | + sender, mailpit | Auto-post jobs to Telegram channel |
 | backup | + backup | Automated database backups |
 | full | all | All services |
+
+### Admin Dashboard
+
+The admin dashboard provides a web-based management interface accessible directly on port 9000 (not through nginx). Features include:
+
+- Job management (CRUD operations)
+- Parser control and statistics
+- Analytics dashboard
+- Backup management
+- Database browser
+- Log viewer
+
+Access: `http://SERVER_IP:9000` (requires UFW whitelist)
+
+See [docs/ADMIN_DASHBOARD.md](docs/ADMIN_DASHBOARD.md) for details.
 
 ## Configuration
 
@@ -346,6 +362,11 @@ compose-project/
 │   │   ├── adapters/      # Site-specific parsers
 │   │   └── tasks/         # Scheduled tasks
 │   └── tests/             # Parser tests
+├── admin/                  # Admin Dashboard
+│   └── app/
+│       ├── main.py        # FastAPI admin app
+│       ├── routers/       # API endpoints
+│       └── static/        # Web UI
 ├── bot/                    # Telegram Bot
 │   └── app/
 │       ├── main.py        # Bot handlers
@@ -368,10 +389,12 @@ compose-project/
 - [Session Notes](SESSION_NOTES.md) - Current status and next steps
 - [User Guide](docs/USER_GUIDE.md) - End-user documentation
 - [Admin Guide](docs/ADMIN_GUIDE.md) - Administration and API usage
+- [Admin Dashboard](docs/ADMIN_DASHBOARD.md) - Web-based management interface
 - [DevOps Guide](docs/DEVOPS_GUIDE.md) - Container management and operations
 - [Backup & Restore](docs/BACKUP_RESTORE.md) - Database backup procedures
 - [Telegram Bot Setup](docs/TELEGRAM_BOT_SETUP.md) - Bot creation guide
 - [Channel Sender](docs/CHANNEL_SENDER.md) - Auto-post jobs to Telegram channel
+- [jobs.ge Filters](docs/jobs.ge_Categories_and_Filters.md) - Category and region ID mappings
 
 ## License
 
