@@ -55,6 +55,10 @@ class JobData:
     # Content hash for change detection
     content_hash: Optional[str] = None
 
+    # jobs.ge original filter values
+    jobsge_cid: Optional[int] = None  # Original jobs.ge category ID
+    jobsge_lid: Optional[int] = None  # Original jobs.ge location ID
+
     # Raw data for debugging
     raw_data: dict = field(default_factory=dict)
 

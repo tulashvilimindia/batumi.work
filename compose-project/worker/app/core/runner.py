@@ -291,6 +291,9 @@ class ParserRunner:
                 status="active",
                 first_seen_at=now,
                 last_seen_at=now,
+                # jobs.ge original filter values
+                jobsge_cid=job.jobsge_cid,
+                jobsge_lid=job.jobsge_lid,
             )
 
             session.add(new_job)

@@ -91,6 +91,10 @@ class Job(Base, UUIDMixin, TimestampMixin):
     first_seen_at = Column(DateTime(timezone=True), nullable=True)
     last_seen_at = Column(DateTime(timezone=True), nullable=True)
 
+    # jobs.ge original filter values (for tracking source categorization)
+    jobsge_cid = Column(Integer, nullable=True)  # Original jobs.ge category ID
+    jobsge_lid = Column(Integer, nullable=True)  # Original jobs.ge location ID
+
     # Relationships
     category = relationship("Category", back_populates="jobs")
     region = relationship("Region", back_populates="jobs")
