@@ -233,6 +233,11 @@ class ParserRunner:
                 # Always update location if job has one from parser
                 if job.location:
                     existing.location = job.location
+                # Always update jobsge filter values if provided (backfill)
+                if job.jobsge_cid is not None:
+                    existing.jobsge_cid = job.jobsge_cid
+                if job.jobsge_lid is not None:
+                    existing.jobsge_lid = job.jobsge_lid
                 return "skipped"
             else:
                 # Update job with new content
@@ -252,6 +257,11 @@ class ParserRunner:
                 existing.content_hash = content_hash
                 existing.last_seen_at = now
                 existing.status = "active"
+                # Update jobsge filter values
+                if job.jobsge_cid is not None:
+                    existing.jobsge_cid = job.jobsge_cid
+                if job.jobsge_lid is not None:
+                    existing.jobsge_lid = job.jobsge_lid
                 return "updated"
         else:
             # Get category ID (required field)
