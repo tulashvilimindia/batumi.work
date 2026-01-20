@@ -67,6 +67,7 @@ def extract_salary(text: str) -> Tuple[Optional[int], Optional[int], str]:
     - "2,000 - 3,000 ლარი"
     - "$2000"
     - "2000-3000$"
+    - "ხელფასი: 1500"
 
     Args:
         text: Text containing salary information
@@ -77,26 +78,75 @@ def extract_salary(text: str) -> Tuple[Optional[int], Optional[int], str]:
     if not text:
         return None, None, "GEL"
 
-    text = text.replace(",", "").replace(" ", "")
+    # Salary-related keywords (Georgian and English)
+    salary_keywords = [
+        r'ხელფასი', r'salary', r'ანაზღაურება', r'compensation',
+        r'გასამრჯელო', r'pay', r'wage', r'income',
+        r'GEL', r'ლარი', r'\$', r'USD', r'€', r'EUR',
+    ]
 
-    # Detect currency
+    # Build pattern to find salary context
+    # Look for numbers near salary keywords
+    salary_pattern = (
+        r'(?:' + '|'.join(salary_keywords) + r')'
+        r'[:\s]*'
+        r'(\d{1,3}(?:[,\s]?\d{3})*)'  # First number (with optional thousands separator)
+        r'(?:\s*[-–—]\s*(\d{1,3}(?:[,\s]?\d{3})*))?'  # Optional second number (range)
+    )
+
+    # Also try reverse pattern: number followed by currency
+    reverse_pattern = (
+        r'(\d{1,3}(?:[,\s]?\d{3})*)'
+        r'(?:\s*[-–—]\s*(\d{1,3}(?:[,\s]?\d{3})*))?'
+        r'\s*(?:GEL|ლარი|\$|USD|€|EUR)'
+    )
+
+    # Detect currency first
     currency = "GEL"
     if "$" in text or "USD" in text.upper():
         currency = "USD"
     elif "€" in text or "EUR" in text.upper():
         currency = "EUR"
 
-    # Extract numbers
-    numbers = re.findall(r"\d+", text)
-    numbers = [int(n) for n in numbers if int(n) > 50]  # Filter out small numbers
+    # Try to find salary with context
+    text_lower = text.lower()
 
-    if not numbers:
-        return None, None, currency
+    # Try salary keyword pattern first
+    match = re.search(salary_pattern, text_lower, re.IGNORECASE)
+    if match:
+        num1 = int(match.group(1).replace(",", "").replace(" ", ""))
+        num2 = int(match.group(2).replace(",", "").replace(" ", "")) if match.group(2) else num1
 
-    if len(numbers) == 1:
-        return numbers[0], numbers[0], currency
-    else:
-        return min(numbers[:2]), max(numbers[:2]), currency
+        # Validate reasonable salary range (50 to 100,000)
+        if 50 <= num1 <= 100000 and 50 <= num2 <= 100000:
+            return min(num1, num2), max(num1, num2), currency
+
+    # Try reverse pattern (number + currency)
+    match = re.search(reverse_pattern, text, re.IGNORECASE)
+    if match:
+        num1 = int(match.group(1).replace(",", "").replace(" ", ""))
+        num2 = int(match.group(2).replace(",", "").replace(" ", "")) if match.group(2) else num1
+
+        # Validate reasonable salary range
+        if 50 <= num1 <= 100000 and 50 <= num2 <= 100000:
+            return min(num1, num2), max(num1, num2), currency
+
+    # Fallback: look for standalone salary-like numbers (3-5 digits, reasonable range)
+    # But only if near a salary keyword
+    for keyword in ['ხელფასი', 'salary', 'ანაზღაურება', 'gel', 'ლარი']:
+        if keyword in text_lower:
+            # Find numbers near this keyword (within 50 chars)
+            keyword_pos = text_lower.find(keyword)
+            context = text[max(0, keyword_pos - 30):keyword_pos + len(keyword) + 30]
+            numbers = re.findall(r'\b(\d{3,5})\b', context)
+            valid_numbers = [int(n) for n in numbers if 100 <= int(n) <= 50000]
+            if valid_numbers:
+                if len(valid_numbers) == 1:
+                    return valid_numbers[0], valid_numbers[0], currency
+                else:
+                    return min(valid_numbers[:2]), max(valid_numbers[:2]), currency
+
+    return None, None, currency
 
 
 def extract_date(text: str, language: str = "ge") -> Optional[datetime]:
