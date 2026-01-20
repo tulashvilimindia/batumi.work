@@ -1,6 +1,6 @@
 # Session Notes - batumi.work
 
-**Last Updated:** January 19, 2026
+**Last Updated:** January 20, 2026
 **Status:** DEPLOYED AND LIVE
 
 ---
@@ -98,6 +98,57 @@ Located at: `/etc/nginx/sites-available/batumi.work`
 - [x] **Parser Service:** Running (parses jobs.ge every 60 minutes)
 - [ ] **Telegram Bot:** Token needs to be added to `.env`
 - [ ] **Email Reports:** SMTP credentials not configured
+
+---
+
+## Pending Tasks / Known Issues
+
+### 1. Category Classification Fix (IN PROGRESS)
+
+**Problem:** Jobs are being incorrectly categorized. For example, "გაყიდვების კონსულტანტი" (Sales Consultant) was classified as IT instead of Sales.
+
+**Root Cause:** The `classify_category` function in `worker/app/core/utils.py` used first-match logic with broad keywords.
+
+**Fix Applied:** Updated to use a scoring system:
+- Title matches = 3 points
+- Body matches = 1 point
+- Returns category with highest score
+- More specific keywords added
+
+**Status:** Code committed but needs re-parsing to apply:
+```bash
+# On server
+cd /opt/batumi-work/compose-project
+git pull
+docker compose build worker
+
+# Clear and re-parse
+docker compose exec db psql -U jobboard -d jobboard -c 'DELETE FROM jobs;'
+docker compose --profile parser run --rm worker python -m app.main --once
+```
+
+**Verify fix:**
+```bash
+# Check category distribution
+docker compose exec db psql -U jobboard -d jobboard -c "SELECT c.slug, c.name_ge, COUNT(j.id) FROM categories c LEFT JOIN jobs j ON c.id = j.category_id GROUP BY c.id ORDER BY COUNT(j.id) DESC;"
+
+# Check IT category has only IT jobs
+docker compose exec db psql -U jobboard -d jobboard -c "SELECT j.title_ge FROM jobs j JOIN categories c ON j.category_id = c.id WHERE c.slug = 'it-programming' LIMIT 10;"
+```
+
+### 2. Frontend Table Layout
+
+**Status:** ✅ Completed
+- Redesigned to match jobs.ge table layout
+- Columns: Position, Company, Published, Deadline
+- Company names now extracted correctly
+
+### 3. Parser Company Name Extraction
+
+**Status:** ✅ Completed
+- Fixed to skip "ამ ორგანიზაციის ყველა განცხადება" links
+- Fixed to skip "ყველა ვაკანსია ერთ გვერდზე" links
+- Now extracts actual company names
 
 ---
 
