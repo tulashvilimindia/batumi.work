@@ -526,7 +526,18 @@ docker compose exec db pg_dump -U jobboard jobboard > backup.sql
 - [x] Seed initial data (16 categories, 14 regions, 20 jobs)
 - [x] Verify https://batumi.work works
 - [x] Start parser service (parses jobs.ge every 60 minutes)
+- [x] Deploy admin dashboard on port 9000
 - [ ] Start Telegram bot (optional - token needed)
+
+## Admin Dashboard
+
+**URL:** http://38.242.143.10:9000
+
+The admin dashboard is accessible directly via port 9000 (not through nginx/Cloudflare).
+Access is controlled via UFW - only whitelisted IPs can connect.
+
+### Whitelisted IPs for Admin Access
+- 63.177.47.245 (all ports)
 
 ---
 

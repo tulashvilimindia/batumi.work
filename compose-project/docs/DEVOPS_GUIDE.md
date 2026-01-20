@@ -51,6 +51,7 @@ This guide covers deployment, operations, monitoring, and maintenance of the Geo
 | worker | compose-project-worker | - | Parser worker (scheduled) |
 | bot | compose-project-bot | - | Telegram bot (optional) |
 | backup | postgres:15-alpine | - | Backup container (optional) |
+| admin | compose-project-admin | 9000 | Admin dashboard (direct access) |
 
 ### Profiles
 
@@ -819,6 +820,7 @@ docker-compose exec db psql -U postgres jobboard
 | 80 | nginx | Yes |
 | 8000 | api | Yes |
 | 5432 | postgres | Yes (change in prod) |
+| 9000 | admin | Yes (UFW protected) |
 
 ---
 
