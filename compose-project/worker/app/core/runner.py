@@ -1,7 +1,7 @@
 """Parser runner/orchestrator for coordinating parsing operations."""
 import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Type
+from typing import Callable, Dict, List, Optional, Type
 from uuid import UUID
 import structlog
 from sqlalchemy import select, update
@@ -66,7 +66,10 @@ class ParserRunner:
         source_name: str,
         regions: Optional[List[str]] = None,
     ) -> ParseResult:
-        """Run a single parser source.
+        """Run a single parser source with instant job insertion.
+
+        Jobs are inserted to database immediately after parsing,
+        not batched at the end.
 
         Args:
             source_name: Source identifier (e.g., "jobs.ge")
@@ -89,82 +92,71 @@ class ParserRunner:
 
         run_id = await self._start_run(source_name)
         combined_result = ParseResult()
-
-        try:
-            # If regions is empty, run once with no filter (all jobs)
-            regions_to_parse = regions if regions else [None]
-            for region in regions_to_parse:
-                adapter = adapter_class()
-                result = await adapter.run(region)
-                combined_result.jobs.extend(result.jobs)
-                combined_result.errors.extend(result.errors)
-                combined_result.total_found += result.total_found
-                combined_result.pages_parsed += result.pages_parsed
-
-            # Process and store jobs
-            stats = await self._process_jobs(combined_result.jobs, source_name)
-
-            # Mark run as complete
-            await self._complete_run(run_id, combined_result, stats)
-
-            logger.info(
-                "parser_run_completed",
-                source=source_name,
-                total_found=combined_result.total_found,
-                new_jobs=stats.get("new", 0),
-                updated_jobs=stats.get("updated", 0),
-                errors=len(combined_result.errors),
-            )
-
-        except Exception as e:
-            await self._fail_run(run_id, str(e))
-            raise
-
-        return combined_result
-
-    async def _process_jobs(
-        self,
-        jobs: List[JobData],
-        source_name: str,
-    ) -> Dict[str, int]:
-        """Process parsed jobs and upsert to database.
-
-        Args:
-            jobs: List of parsed job data
-            source_name: Source identifier
-
-        Returns:
-            Stats dict with new/updated/skipped counts
-        """
         stats = {"new": 0, "updated": 0, "skipped": 0}
 
+        # Create persistent session for instant insertion
         async with self._session_maker() as session:
-            # Load category cache if empty
+            # Load category cache
             if not self._category_cache:
                 await self._load_categories(session)
 
-            for job in jobs:
+            # Create callback for instant job insertion
+            async def on_job_parsed(job: JobData) -> str:
+                """Insert job immediately after parsing."""
                 try:
                     result = await self._upsert_job(session, job, source_name)
                     stats[result] += 1
-                    # Flush after each successful insert to catch errors early
-                    await session.flush()
+                    await session.commit()  # Commit each job immediately
+
+                    # Log progress
+                    total = stats["new"] + stats["updated"] + stats["skipped"]
+                    if total % 10 == 0:  # Log every 10 jobs
+                        logger.info(
+                            "parse_progress",
+                            total=total,
+                            new=stats["new"],
+                            updated=stats["updated"],
+                        )
+                    return result
                 except Exception as e:
                     logger.warning(
-                        "job_upsert_failed",
+                        "job_insert_failed",
                         external_id=job.external_id,
                         error=str(e),
                     )
-                    stats["skipped"] += 1
-                    # Rollback and start fresh for next job
                     await session.rollback()
-                    # Reload categories after rollback
-                    if not self._category_cache:
-                        await self._load_categories(session)
+                    stats["skipped"] += 1
+                    return "skipped"
 
-            await session.commit()
+            try:
+                # Run parser with instant insertion callback
+                regions_to_parse = regions if regions else [None]
+                for region in regions_to_parse:
+                    adapter = adapter_class()
+                    result = await adapter.run(region, on_job_parsed=on_job_parsed)
+                    combined_result.errors.extend(result.errors)
+                    combined_result.pages_parsed += result.pages_parsed
 
-        return stats
+                combined_result.total_found = stats["new"] + stats["updated"] + stats["skipped"]
+
+                # Mark run as complete
+                await self._complete_run(run_id, combined_result, stats)
+
+                logger.info(
+                    "parser_run_completed",
+                    source=source_name,
+                    total_found=combined_result.total_found,
+                    new_jobs=stats["new"],
+                    updated_jobs=stats["updated"],
+                    skipped=stats["skipped"],
+                    errors=len(combined_result.errors),
+                )
+
+            except Exception as e:
+                await self._fail_run(run_id, str(e))
+                raise
+
+        return combined_result
 
     async def _load_categories(self, session: AsyncSession):
         """Load category slug to ID mapping into cache."""
@@ -307,6 +299,16 @@ class ParserRunner:
             )
 
             session.add(new_job)
+
+            # Log new job
+            logger.info(
+                "job_inserted",
+                external_id=job.external_id,
+                title=job.title_ge[:50] if job.title_ge else "",
+                category=job.category_slug,
+                cid=job.jobsge_cid,
+                lid=job.jobsge_lid,
+            )
             return "new"
 
     async def deactivate_not_seen(self) -> int:
@@ -337,16 +339,7 @@ class ParserRunner:
             return count
 
     async def _start_run(self, source_name: str) -> UUID:
-        """Record start of a parser run.
-
-        Args:
-            source_name: Source identifier
-
-        Returns:
-            Run ID
-        """
-        # TODO: Implement parser_runs table and storage
-        # For now, just generate a UUID
+        """Record start of a parser run."""
         from uuid import uuid4
         return uuid4()
 
@@ -356,22 +349,9 @@ class ParserRunner:
         result: ParseResult,
         stats: Dict[str, int],
     ):
-        """Record completion of a parser run.
-
-        Args:
-            run_id: Run ID
-            result: Parse result
-            stats: Job processing stats
-        """
-        # TODO: Update parser_runs table
+        """Record completion of a parser run."""
         pass
 
     async def _fail_run(self, run_id: UUID, error: str):
-        """Record failure of a parser run.
-
-        Args:
-            run_id: Run ID
-            error: Error message
-        """
-        # TODO: Update parser_runs table
+        """Record failure of a parser run."""
         pass

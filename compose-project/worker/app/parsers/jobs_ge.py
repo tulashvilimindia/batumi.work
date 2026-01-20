@@ -14,7 +14,7 @@ URL format: https://jobs.ge/ge/?cid={category_id}&lid={region_id}&page={page}
 import re
 import structlog
 from datetime import datetime
-from typing import List, Optional, Set
+from typing import Awaitable, Callable, List, Optional, Set
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
@@ -61,20 +61,29 @@ class JobsGeAdapter(BaseAdapter):
         self.categories = get_all_categories()
         self.regions = get_enabled_regions()
         self._seen_urls: Set[str] = set()  # For deduplication within a run
+        self._on_job_parsed: Optional[Callable[[JobData], Awaitable[str]]] = None
 
-    async def run(self, region: Optional[str] = None) -> ParseResult:
+    async def run(
+        self,
+        region: Optional[str] = None,
+        on_job_parsed: Optional[Callable[[JobData], Awaitable[str]]] = None
+    ) -> ParseResult:
         """Execute full parsing run through region/category combinations.
 
         Args:
             region: Optional region slug to parse (e.g., "adjara").
                    If None, parses all enabled regions.
                    Can be comma-separated: "adjara,tbilisi"
+            on_job_parsed: Optional async callback called for each parsed job.
+                          If provided, jobs are NOT collected in result.jobs.
+                          Callback receives JobData and should return status string.
 
         Returns:
-            ParseResult with all parsed jobs and statistics
+            ParseResult with statistics (jobs list empty if callback provided)
         """
         result = ParseResult()
         self._seen_urls.clear()
+        self._on_job_parsed = on_job_parsed  # Store for use in _parse_category
 
         # Determine which regions to parse
         if region:
@@ -98,6 +107,7 @@ class JobsGeAdapter(BaseAdapter):
             "parser_starting",
             regions=[r.name_en for r in regions_to_parse],
             categories=len(self.categories),
+            instant_mode=on_job_parsed is not None,
         )
 
         async with HTTPClient(
@@ -109,7 +119,8 @@ class JobsGeAdapter(BaseAdapter):
             for region_config in regions_to_parse:
                 try:
                     region_result = await self._parse_region(region_config)
-                    result.jobs.extend(region_result.jobs)
+                    if not on_job_parsed:
+                        result.jobs.extend(region_result.jobs)
                     result.errors.extend(region_result.errors)
                     result.pages_parsed += region_result.pages_parsed
                 except Exception as e:
@@ -117,10 +128,10 @@ class JobsGeAdapter(BaseAdapter):
                     logger.error("region_parse_failed", region=region_config.name_en, error=str(e))
                     result.errors.append(error_msg)
 
-        result.total_found = len(result.jobs)
+        if not on_job_parsed:
+            result.total_found = len(result.jobs)
         logger.info(
             "parser_completed",
-            total_jobs=result.total_found,
             pages_parsed=result.pages_parsed,
             errors=len(result.errors),
         )
@@ -137,22 +148,27 @@ class JobsGeAdapter(BaseAdapter):
             ParseResult for this region
         """
         result = ParseResult()
+        jobs_in_region = 0
 
         logger.info("parsing_region", region=region.name_en, lid=region.lid)
 
         for category in self.categories:
             try:
                 cat_result = await self._parse_category(region, category)
-                result.jobs.extend(cat_result.jobs)
+                if not self._on_job_parsed:
+                    result.jobs.extend(cat_result.jobs)
+                jobs_in_region += cat_result.total_found
                 result.errors.extend(cat_result.errors)
                 result.pages_parsed += cat_result.pages_parsed
 
-                logger.debug(
-                    "category_parsed",
-                    region=region.name_en,
-                    category=category.name_en,
-                    jobs_found=len(cat_result.jobs),
-                )
+                if cat_result.total_found > 0:
+                    logger.info(
+                        "category_completed",
+                        region=region.name_en,
+                        category=category.name_en,
+                        cid=category.cid,
+                        jobs_found=cat_result.total_found,
+                    )
             except Exception as e:
                 error_msg = f"Error parsing {region.name_en}/{category.name_en}: {str(e)}"
                 logger.warning("category_parse_failed", region=region.name_en, category=category.name_en, error=str(e))
@@ -161,7 +177,8 @@ class JobsGeAdapter(BaseAdapter):
         logger.info(
             "region_completed",
             region=region.name_en,
-            jobs_found=len(result.jobs),
+            lid=region.lid,
+            jobs_found=jobs_in_region,
             categories_parsed=len(self.categories),
         )
 
@@ -175,6 +192,7 @@ class JobsGeAdapter(BaseAdapter):
         """Parse all jobs for a specific region/category combination.
 
         Handles pagination automatically by checking for next page links.
+        If on_job_parsed callback is set, calls it for each job immediately.
 
         Args:
             region: Region configuration
@@ -186,6 +204,7 @@ class JobsGeAdapter(BaseAdapter):
         result = ParseResult()
         page = 1
         max_pages = 50  # Safety limit
+        jobs_found = 0
 
         while page <= max_pages:
             # Build filter URL
@@ -212,7 +231,12 @@ class JobsGeAdapter(BaseAdapter):
                     try:
                         job = await self._parse_job_detail(job_url, region, category)
                         if job:
-                            result.jobs.append(job)
+                            jobs_found += 1
+                            # If callback provided, call it immediately
+                            if self._on_job_parsed:
+                                await self._on_job_parsed(job)
+                            else:
+                                result.jobs.append(job)
                     except Exception as e:
                         result.errors.append(f"Error parsing job {job_url}: {str(e)}")
 
@@ -226,6 +250,7 @@ class JobsGeAdapter(BaseAdapter):
                 result.errors.append(f"Error fetching {url}: {str(e)}")
                 break
 
+        result.total_found = jobs_found
         return result
 
     def _build_filter_url(self, lid: int, cid: int, page: int = 1) -> str:
