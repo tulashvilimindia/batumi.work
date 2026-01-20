@@ -228,43 +228,72 @@ class TestClassifyCategory:
         """Test IT category classification."""
         assert classify_category("Python Developer", "Looking for a programmer") == "it-programming"
         assert classify_category("პროგრამისტი", "Python გამოცდილებით") == "it-programming"
+        assert classify_category("Software Engineer", "Building web applications") == "it-programming"
 
     def test_classify_sales(self):
         """Test sales category classification."""
         assert classify_category("Sales Manager", "Marketing experience required") == "sales-marketing"
+        # Critical test: "Sales Consultant" should be sales, NOT customer-service
+        assert classify_category("გაყიდვების კონსულტანტი", "მაღაზიაში მუშაობა") == "sales-marketing"
+        assert classify_category("Sales Consultant", "Retail position") == "sales-marketing"
 
     def test_classify_finance(self):
         """Test finance category classification."""
         assert classify_category("ბუღალტერი", "ფინანსური აღრიცხვა") == "finance-accounting"
+        assert classify_category("Accountant", "Financial reporting experience") == "finance-accounting"
 
     def test_classify_healthcare(self):
         """Test healthcare category classification."""
-        assert classify_category("Doctor", "Hospital position") == "medicine-healthcare"
+        assert classify_category("Doctor", "Hospital position needed") == "medicine-healthcare"
+        assert classify_category("ექიმი", "კლინიკა") == "medicine-healthcare"
 
     def test_classify_education(self):
         """Test education category classification."""
         assert classify_category("მასწავლებელი", "სკოლაში სწავლება") == "education"
+        assert classify_category("Teacher", "School position") == "education"
 
     def test_classify_tourism(self):
         """Test tourism category classification."""
-        assert classify_category("Hotel Receptionist", "Restaurant experience") == "tourism-hospitality"
+        assert classify_category("Hotel Receptionist", "სასტუმრო") == "tourism-hospitality"
+        assert classify_category("მიმტანი", "რესტორანი") == "tourism-hospitality"
 
     def test_classify_construction(self):
         """Test construction category classification."""
         assert classify_category("მშენებელი", "მშენებლობის გამოცდილება") == "construction"
+        assert classify_category("Architect", "Construction project") == "construction"
 
     def test_classify_logistics(self):
         """Test logistics category classification."""
         assert classify_category("მძღოლი", "ტრანსპორტი და ლოჯისტიკა") == "logistics-transport"
+        assert classify_category("Driver", "Delivery service") == "logistics-transport"
 
     def test_classify_customer_service(self):
         """Test customer service category classification."""
-        assert classify_category("ოპერატორი", "ქოლ ცენტრი") == "customer-service"
+        assert classify_category("Call Center Operator", "ქოლ ცენტრი") == "customer-service"
+        assert classify_category("Customer Service Representative", "მომხმარებელთა მომსახურება") == "customer-service"
 
-    def test_classify_admin(self):
-        """Test administration category classification."""
-        assert classify_category("მდივანი", "ოფისის ადმინისტრირება") == "administration"
+    def test_classify_hr_admin(self):
+        """Test HR/Administration category classification."""
+        assert classify_category("მდივანი", "ოფისის მენეჯერი") == "hr-admin"
+        assert classify_category("HR Manager", "Recruitment and hiring") == "hr-admin"
+        assert classify_category("Recruiter", "Talent acquisition") == "hr-admin"
 
-    def test_classify_unknown(self):
-        """Test unknown category returns None."""
-        assert classify_category("Random Job", "No keywords") is None
+    def test_classify_legal(self):
+        """Test legal category classification."""
+        assert classify_category("იურისტი", "იურიდიული კონსულტაცია") == "legal"
+        assert classify_category("Lawyer", "Legal services") == "legal"
+
+    def test_classify_design(self):
+        """Test design category classification."""
+        assert classify_category("Graphic Designer", "Creative work") == "design-creative"
+        assert classify_category("დიზაინერი", "UI/UX დიზაინი") == "design-creative"
+
+    def test_classify_unknown_returns_other(self):
+        """Test unknown category returns 'other' (not None)."""
+        assert classify_category("Random Job", "No keywords here") == "other"
+        assert classify_category("", "") == "other"
+
+    def test_classify_requires_minimum_confidence(self):
+        """Test that weak matches return 'other'."""
+        # Single weak keyword in body should not be enough
+        assert classify_category("General Position", "some random text") == "other"

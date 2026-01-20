@@ -246,52 +246,71 @@ def classify_category(title: str, body: str) -> Optional[str]:
     """Classify job into category based on keywords.
 
     Uses a scoring system - title matches are weighted higher than body matches.
-    Returns the category with highest score.
+    Multi-word phrases are checked first to avoid partial matches.
+    Returns the category with highest score, or "other" if no confident match.
 
     Args:
         title: Job title
         body: Job body
 
     Returns:
-        Category slug or None
+        Category slug (never None - returns "other" as fallback)
     """
     title_lower = title.lower() if title else ""
     body_lower = body.lower() if body else ""
+    combined = title_lower + " " + body_lower
 
-    # Category keywords mapping - more specific keywords first
+    # Multi-word phrases to check first (order matters - check before single words)
+    # These phrases help disambiguate (e.g., "sales consultant" should be sales, not customer-service)
+    phrase_categories = {
+        "sales-marketing": [
+            "გაყიდვების კონსულტანტი", "გაყიდვების მენეჯერი", "გაყიდვების წარმომადგენელი",
+            "sales consultant", "sales manager", "sales representative", "sales specialist",
+            "მარკეტინგის მენეჯერი", "marketing manager", "digital marketing",
+            "brand manager", "pr manager", "smm manager", "seo specialist",
+        ],
+        "it-programming": [
+            "software engineer", "software developer", "web developer", "ვებ დეველოპერი",
+            "frontend developer", "backend developer", "fullstack developer", "full-stack developer",
+            "mobile developer", "ios developer", "android developer",
+            "data scientist", "data engineer", "data analyst",
+            "qa engineer", "devops engineer", "system administrator", "სისტემური ადმინისტრატორი",
+            "it specialist", "it სპეციალისტი", "it support", "it მხარდაჭერა",
+            "network engineer", "ml engineer", "ai engineer",
+            "java developer", "python developer", "php developer", ".net developer",
+            "c# developer", "c++ developer", "ruby developer", "golang developer",
+        ],
+        "customer-service": [
+            "customer service", "მომხმარებელთა მომსახურება", "მომხმარებელთა მხარდაჭერა",
+            "support specialist", "მხარდაჭერის სპეციალისტი",
+            "call center", "ქოლ ცენტრი",
+        ],
+        "hr-admin": [
+            "hr manager", "hr specialist", "ადამიანური რესურსები",
+            "office manager", "ოფის მენეჯერი",
+        ],
+    }
+
+    # Category keywords mapping - single words and short terms
     categories = {
         "it-programming": [
-            # Very specific IT/Programming terms only
             "developer", "programmer", "პროგრამისტი", "დეველოპერი",
-            "software engineer", "python", "java developer", "javascript",
-            "react", "node.js", "nodejs", "angular", "vue.js",
-            "frontend developer", "backend developer", "fullstack", "full-stack",
-            "devops", "ios developer", "android developer", "mobile developer",
-            "qa engineer", "ტესტერი", "data engineer", "data scientist",
-            "machine learning", "ml engineer", "ai engineer",
-            "web developer", "ვებ დეველოპერი",
-            "system administrator", "სისტემური ადმინისტრატორი",
-            "it specialist", "it სპეციალისტი", "it მხარდაჭერა", "it support",
-            "cybersecurity", "კიბერუსაფრთხოება", "network engineer",
-            ".net developer", "c# developer", "c++ developer",
-            "php developer", "ruby developer", "golang", "rust developer",
-            "kotlin", "swift developer", "sql", "aws", "azure",
+            "python", "javascript", "react", "node.js", "nodejs", "angular", "vue.js",
+            "devops", "ტესტერი", "machine learning",
+            "cybersecurity", "კიბერუსაფრთხოება",
+            "kotlin", "swift", "sql", "aws", "azure", "docker", "kubernetes",
         ],
         "sales-marketing": [
-            "გაყიდვები", "გაყიდვების", "sales manager", "sales representative",
-            "მარკეტინგი", "marketing manager", "მარკეტინგის",
-            "seo specialist", "smm manager", "digital marketing",
-            "brand manager", "pr manager", "პიარი",
-            "account manager", "ექაუნთ მენეჯერი",
-            "merchandiser", "მერჩენდაიზერი",
-            "trade marketing", "სავაჭრო",
+            "გაყიდვები", "გაყიდვების", "sales",
+            "მარკეტინგი", "მარკეტინგის", "marketing",
+            "პიარი", "ექაუნთ მენეჯერი", "account manager",
+            "merchandiser", "მერჩენდაიზერი", "სავაჭრო",
         ],
         "finance-accounting": [
             "finance", "ფინანსები", "ფინანსური", "accounting", "ბუღალტერია",
             "accountant", "ბუღალტერი", "auditor", "აუდიტორი",
-            "tax specialist", "საგადასახადო", "banker", "ბანკირი",
-            "credit", "კრედიტ", "loan", "სესხ",
-            "financial analyst", "ფინანსური ანალიტიკოსი",
+            "საგადასახადო", "banker", "ბანკირი",
+            "კრედიტ", "სესხ", "ფინანსური ანალიტიკოსი",
             "cashier", "მოლარე",
         ],
         "medicine-healthcare": [
@@ -305,24 +324,24 @@ def classify_category(title: str, body: str) -> Optional[str]:
         "education": [
             "teacher", "მასწავლებელი", "tutor", "რეპეტიტორი",
             "professor", "პროფესორი", "lecturer", "ლექტორი",
-            "education", "განათლება", "school", "სკოლა",
+            "განათლება", "school", "სკოლა",
             "university", "უნივერსიტეტი", "trainer", "ტრენერი",
             "instructor", "ინსტრუქტორი", "coach", "მწვრთნელი",
         ],
         "tourism-hospitality": [
             "hotel", "სასტუმრო", "restaurant", "რესტორანი",
             "tourism", "ტურიზმი", "travel", "მოგზაურობა",
-            "chef", "მზარეული", "cook", "მზარეული",
+            "chef", "მზარეული", "cook",
             "waiter", "მიმტანი", "bartender", "ბარმენი",
-            "receptionist", "რეცეფციონისტი", "housekeeping", "დამლაგებელი",
-            "cafe", "კაფე", "bar ", "ბარი",
+            "receptionist", "რეცეფციონისტი", "housekeeping",
+            "კაფე", "cafe", "ბარი",
         ],
         "construction": [
             "construction", "მშენებლობა", "builder", "მშენებელი",
             "architect", "არქიტექტორი", "civil engineer", "სამოქალაქო ინჟინერი",
             "electrician", "ელექტრიკოსი", "plumber", "სანტექნიკ",
             "hvac", "კონდიციონერ", "welder", "შემდუღებელი",
-            "carpenter", "დურგალი", "painter", "მხატვარი",
+            "carpenter", "დურგალი",
         ],
         "logistics-transport": [
             "driver", "მძღოლი", "logistics", "ლოჯისტიკა",
@@ -332,28 +351,74 @@ def classify_category(title: str, body: str) -> Optional[str]:
             "expeditor", "ექსპედიტორი",
         ],
         "customer-service": [
-            "customer service", "მომხმარებელთა მომსახურება",
-            "support specialist", "მხარდაჭერის სპეციალისტი",
-            "call center", "ქოლ ცენტრი", "operator", "ოპერატორი",
-            "კონსულტანტი", "consultant",
+            "operator", "ოპერატორი",
+            # Note: "კონსულტანტი" removed - too generic, causes false positives
         ],
         "hr-admin": [
-            "hr manager", "hr specialist", "ადამიანური რესურსები",
-            "recruiter", "რეკრუტერი", "office manager", "ოფის მენეჯერი",
+            "recruiter", "რეკრუტერი",
             "secretary", "მდივანი", "assistant", "ასისტენტი",
             "administrator", "ადმინისტრატორი",
         ],
+        "legal": [
+            "lawyer", "იურისტი", "attorney", "ადვოკატი",
+            "legal", "იურიდიული", "notary", "ნოტარიუსი",
+            "paralegal", "სამართლებრივი",
+        ],
+        "design-creative": [
+            "designer", "დიზაინერი", "graphic designer", "გრაფიკული დიზაინერი",
+            "ui/ux", "ux designer", "ui designer",
+            "creative", "კრეატიული", "art director",
+            "photographer", "ფოტოგრაფი", "videographer", "ვიდეოგრაფი",
+            "animator", "ანიმატორი", "illustrator", "ილუსტრატორი",
+        ],
+        "media-journalism": [
+            "journalist", "ჟურნალისტი", "editor", "რედაქტორი",
+            "reporter", "რეპორტერი", "copywriter", "კოპირაიტერი",
+            "content writer", "კონტენტ მენეჯერი", "media", "მედია",
+            "tv", "ტელე", "radio", "რადიო",
+        ],
+        "agriculture": [
+            "agriculture", "სოფლის მეურნეობა", "farming", "ფერმა",
+            "agronomist", "აგრონომი", "farmer", "ფერმერი",
+            "veterinary", "ვეტერინარ", "gardener", "მებაღე",
+        ],
+        "manufacturing": [
+            "manufacturing", "წარმოება", "production", "პროდუქცია",
+            "factory", "ქარხანა", "operator", "machine operator",
+            "quality control", "ხარისხის კონტროლი",
+            "assembly", "აწყობა", "packaging", "შეფუთვა",
+        ],
+        "security": [
+            "security", "დაცვა", "guard", "მცველი",
+            "უსაფრთხოება", "security officer", "დაცვის თანამშრომელი",
+        ],
+        "cleaning": [
+            "cleaner", "დამლაგებელი", "cleaning", "დასუფთავება",
+            "housekeeper", "housemaid", "janitor",
+        ],
     }
 
-    # Score each category - title matches worth 3 points, body matches worth 1
     scores = {}
+
+    # First pass: check multi-word phrases (higher priority)
+    for category_slug, phrases in phrase_categories.items():
+        score = scores.get(category_slug, 0)
+        for phrase in phrases:
+            if phrase in title_lower:
+                score += 5  # Phrase in title = very confident
+            elif phrase in body_lower:
+                score += 2  # Phrase in body = moderately confident
+        if score > 0:
+            scores[category_slug] = score
+
+    # Second pass: check single keywords
     for category_slug, keywords in categories.items():
-        score = 0
+        score = scores.get(category_slug, 0)
         for keyword in keywords:
             if keyword in title_lower:
-                score += 3
+                score += 3  # Word in title
             elif keyword in body_lower:
-                score += 1
+                score += 1  # Word in body
         if score > 0:
             scores[category_slug] = score
 
@@ -364,9 +429,9 @@ def classify_category(title: str, body: str) -> Optional[str]:
     best_category = max(scores, key=scores.get)
     best_score = scores[best_category]
 
-    # Require minimum score of 2 (at least one body match + something else, or a title match)
-    # Single body keyword match is not confident enough
-    if best_score < 2:
+    # Require minimum score of 3 for confidence
+    # (one title keyword match, or phrase in body + something, etc.)
+    if best_score < 3:
         return "other"
 
     return best_category

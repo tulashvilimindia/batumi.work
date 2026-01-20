@@ -1,7 +1,7 @@
 # Session Notes - batumi.work
 
 **Last Updated:** January 20, 2026
-**Status:** DEPLOYED AND LIVE
+**Status:** DEPLOYED AND LIVE - Category Classification Fix Ready
 
 ---
 
@@ -103,20 +103,25 @@ Located at: `/etc/nginx/sites-available/batumi.work`
 
 ## Pending Tasks / Known Issues
 
-### 1. Category Classification Fix (NEEDS RE-PARSING)
+### 1. Category Classification Fix (CODE COMPLETE - NEEDS DEPLOYMENT)
 
-**Problem:** Jobs are being incorrectly categorized. For example, "გაყიდვების კონსულტანტი" (Sales Consultant) was classified as IT instead of Sales.
+**Problem:** Jobs were incorrectly categorized. For example, "გაყიდვების კონსულტანტი" (Sales Consultant) was classified as IT instead of Sales.
 
-**Root Cause:** The `classify_category` function in `worker/app/core/utils.py` used first-match logic with broad keywords.
+**Root Cause:** The `classify_category` function used first-match logic with broad keywords.
 
-**Fixes Applied (3 commits):**
-1. Scoring system: title matches = 3 points, body matches = 1 point
-2. Made IT keywords more specific (removed broad terms like "software", "database")
-3. Added minimum score threshold (2) - weak matches go to "other"
+**Fixes Applied (January 20, 2026):**
+1. **Two-pass scoring system:**
+   - Multi-word phrases checked first (5 points in title, 2 points in body)
+   - Single keywords checked second (3 points in title, 1 point in body)
+2. **Phrase-first matching:** "გაყიდვების კონსულტანტი" and "Sales Consultant" matched as phrases → sales-marketing
+3. **Removed generic "კონსულტანტი"** from customer-service to avoid false positives
+4. **Added missing categories:** legal, design-creative, media-journalism, agriculture, manufacturing, security, cleaning
+5. **Minimum score threshold:** Increased to 3 points for confident classification
+6. **Updated tests:** Fixed test expectations (hr-admin instead of administration, "other" instead of None)
 
-**Status:** Code committed (commit 0602fca), **NEEDS RE-PARSING**
+**Status:** ✅ Code complete and tested locally, **NEEDS DEPLOYMENT**
 
-**TO COMPLETE THIS TASK, run these commands on server:**
+**TO DEPLOY, run these commands on server:**
 ```bash
 # SSH to server
 ssh root@38.242.143.10
@@ -127,32 +132,33 @@ cd /opt/batumi-work/compose-project
 # Pull latest code
 git pull
 
-# Rebuild worker
+# Rebuild worker with new classification logic
 docker compose build worker
 
-# Clear database
+# Clear existing jobs to re-parse with correct categories
 docker compose exec db psql -U jobboard -d jobboard -c 'DELETE FROM channel_message_history; DELETE FROM channel_message_queue; DELETE FROM jobs;'
 
-# Run parser (takes ~10-15 minutes)
+# Run parser once (takes ~10-15 minutes)
 docker compose --profile parser run --rm worker python -m app.main --once
 ```
 
 **Verify fix after parsing completes:**
 ```bash
-# Check category distribution (IT should have ~10-20 jobs, not 100)
+# Check category distribution (IT should have ~10-20 jobs, not 100+)
 docker compose exec db psql -U jobboard -d jobboard -c "SELECT c.slug, c.name_ge, COUNT(j.id) FROM categories c LEFT JOIN jobs j ON c.id = j.category_id GROUP BY c.id ORDER BY COUNT(j.id) DESC;"
+
+# Verify sales jobs are correctly categorized
+docker compose exec db psql -U jobboard -d jobboard -c "SELECT j.title_ge, c.slug FROM jobs j JOIN categories c ON j.category_id = c.id WHERE j.title_ge LIKE '%გაყიდვ%' LIMIT 10;"
 
 # Check IT category has actual IT jobs
 docker compose exec db psql -U jobboard -d jobboard -c "SELECT j.title_ge FROM jobs j JOIN categories c ON j.category_id = c.id WHERE c.slug = 'it-programming' LIMIT 10;"
-
-# Verify sales jobs are in sales category
-docker compose exec db psql -U jobboard -d jobboard -c "SELECT j.title_ge, c.slug FROM jobs j JOIN categories c ON j.category_id = c.id WHERE j.title_ge LIKE '%გაყიდვ%' LIMIT 10;"
 ```
 
 **Expected Results:**
-- IT category: ~10-20 actual IT/developer jobs
+- IT category: ~10-20 actual IT/developer jobs (not 100+)
 - Sales-Marketing: ~60-80 jobs
-- "გაყიდვების კონსულტანტი" should be in sales-marketing (NOT it-programming)
+- "გაყიდვების კონსულტანტი" should be in **sales-marketing** (NOT it-programming)
+- Unknown jobs should fall into "other" category
 
 ### 2. Frontend Table Layout
 
@@ -222,6 +228,28 @@ DNS is managed through Cloudflare with proxy enabled.
 - **GitHub:** https://github.com/tulashvilimindia/batumi.work
 - **Branch:** main
 - **Status:** All documentation up to date
+
+---
+
+---
+
+## Changelog
+
+### January 20, 2026
+- **Category Classification Fix (Major)**
+  - Rewrote `classify_category()` in `worker/app/core/utils.py`
+  - Added two-pass scoring: multi-word phrases first, then single keywords
+  - Added 7 new categories: legal, design-creative, media-journalism, agriculture, manufacturing, security, cleaning
+  - Fixed "Sales Consultant" misclassification (was going to IT, now goes to sales-marketing)
+  - Updated unit tests in `worker/tests/unit/test_utils.py`
+  - Files changed:
+    - `worker/app/core/utils.py` - Classification algorithm
+    - `worker/tests/unit/test_utils.py` - Test cases
+
+### January 19, 2026
+- Initial deployment to production server
+- All core services running (web, api, db, worker)
+- SSL configured via Cloudflare
 
 ---
 

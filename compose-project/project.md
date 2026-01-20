@@ -2738,7 +2738,10 @@ compose-project/docs/
 - Parser correctly discovers all jobs from homepage
 - Detail pages parsed with bilingual support (GE + EN)
 - Salary extraction working (normalized to GEL/USD/EUR)
-- Category classification working (16 categories)
+- Category classification working (16+ categories, improved 2026-01-20)
+  - Two-pass scoring: multi-word phrases first, then single keywords
+  - Phrase matching prevents "Sales Consultant" misclassification
+  - Supports additional categories: legal, design-creative, media-journalism, agriculture, manufacturing, security, cleaning
 
 **Database Status (as of 2026-01-19):**
 | Source | Active | Inactive | Total |
