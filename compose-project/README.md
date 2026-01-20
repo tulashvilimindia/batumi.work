@@ -126,7 +126,7 @@ SECRET_KEY=change-me-in-production-secret
 # Parser
 PARSER_INTERVAL_MINUTES=60
 ENABLED_SOURCES=jobs.ge
-PARSE_REGIONS=batumi,tbilisi
+PARSE_REGIONS=all  # Use "all" for all jobs, or comma-separated regions like "batumi,tbilisi"
 
 # Telegram Bot
 TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
