@@ -7,43 +7,6 @@ from app.database import get_db
 
 router = APIRouter()
 
-# Region name mapping
-REGION_NAMES = {
-    14: "აჭარა (Adjara)",
-    1: "თბილისი (Tbilisi)",
-    8: "იმერეთი (Imereti)",
-    3: "კახეთი (Kakheti)",
-    5: "ქვემო ქართლი (Kvemo Kartli)",
-    6: "შიდა ქართლი (Shida Kartli)",
-    9: "გურია (Guria)",
-    7: "სამცხე-ჯავახეთი (Samtskhe-Javakheti)",
-    4: "მცხეთა-მთიანეთი (Mtskheta-Mtianeti)",
-    13: "სამეგრელო (Samegrelo)",
-    12: "რაჭა-ლეჩხუმი (Racha-Lechkhumi)",
-    17: "დისტანციური (Remote)",
-}
-
-# Category name mapping
-CATEGORY_NAMES = {
-    1: "ადმინისტრაცია (Administration)",
-    2: "გაყიდვები (Sales)",
-    3: "ფინანსები (Finance)",
-    4: "მარკეტინგი (Marketing)",
-    5: "ლოგისტიკა (Logistics)",
-    6: "IT/პროგრამირება (IT/Programming)",
-    7: "სამართალი (Law)",
-    8: "მედიცინა (Medicine)",
-    9: "სხვა (Other)",
-    10: "კვება (Food/Catering)",
-    11: "მშენებლობა (Construction)",
-    12: "განათლება (Education)",
-    13: "მედია (Media)",
-    14: "სილამაზე (Beauty)",
-    16: "დასუფთავება (Cleaning)",
-    17: "დაცვა (Security)",
-    18: "ტექნიკური (Technical)",
-}
-
 
 @router.get("/stats")
 async def get_parser_stats(db: AsyncSession = Depends(get_db)):
@@ -54,32 +17,34 @@ async def get_parser_stats(db: AsyncSession = Depends(get_db)):
 
     # Jobs by region
     result = await db.execute(text("""
-        SELECT jobsge_lid, COUNT(*) as count
-        FROM jobs
-        GROUP BY jobsge_lid
+        SELECT r.name_en, r.name_ge, COUNT(*) as count
+        FROM jobs j
+        LEFT JOIN regions r ON j.region_id = r.id
+        GROUP BY r.id, r.name_en, r.name_ge
         ORDER BY count DESC
     """))
     by_region = [
         {
-            "lid": row[0],
-            "name": REGION_NAMES.get(row[0], "Unknown") if row[0] else "Unknown",
-            "count": row[1]
+            "name_en": row[0],
+            "name_ge": row[1],
+            "count": row[2]
         }
         for row in result.fetchall()
     ]
 
     # Jobs by category
     result = await db.execute(text("""
-        SELECT jobsge_cid, COUNT(*) as count
-        FROM jobs
-        GROUP BY jobsge_cid
+        SELECT c.name_en, c.name_ge, COUNT(*) as count
+        FROM jobs j
+        LEFT JOIN categories c ON j.category_id = c.id
+        GROUP BY c.id, c.name_en, c.name_ge
         ORDER BY count DESC
     """))
     by_category = [
         {
-            "cid": row[0],
-            "name": CATEGORY_NAMES.get(row[0], "Unknown") if row[0] else "Unknown",
-            "count": row[1]
+            "name_en": row[0],
+            "name_ge": row[1],
+            "count": row[2]
         }
         for row in result.fetchall()
     ]
@@ -99,8 +64,8 @@ async def get_parser_stats(db: AsyncSession = Depends(get_db)):
 
     return {
         "total_jobs": total_jobs,
-        "total_regions": len([r for r in by_region if r["lid"]]),
-        "total_categories": len([c for c in by_category if c["cid"]]),
+        "total_regions": len([r for r in by_region if r["name_en"]]),
+        "total_categories": len([c for c in by_category if c["name_en"]]),
         "parsed_today": parsed_today,
         "last_parsed": last_parsed.isoformat() if last_parsed else None,
         "by_region": by_region,

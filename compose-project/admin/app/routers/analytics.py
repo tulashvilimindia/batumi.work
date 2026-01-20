@@ -62,21 +62,24 @@ async def get_salary_analytics(db: AsyncSession = Depends(get_db)):
     # Salary by category
     result = await db.execute(text("""
         SELECT
-            jobsge_cid,
-            AVG(salary_min) as avg_min,
-            AVG(salary_max) as avg_max,
+            c.name_en,
+            c.name_ge,
+            AVG(j.salary_min) as avg_min,
+            AVG(j.salary_max) as avg_max,
             COUNT(*) as count
-        FROM jobs
-        WHERE has_salary = true AND salary_min > 0
-        GROUP BY jobsge_cid
+        FROM jobs j
+        LEFT JOIN categories c ON j.category_id = c.id
+        WHERE j.has_salary = true AND j.salary_min > 0
+        GROUP BY c.id, c.name_en, c.name_ge
         ORDER BY avg_max DESC
     """))
     by_category = [
         {
-            "cid": r[0],
-            "avg_min": round(r[1], 0) if r[1] else 0,
-            "avg_max": round(r[2], 0) if r[2] else 0,
-            "count": r[3]
+            "name_en": r[0],
+            "name_ge": r[1],
+            "avg_min": round(r[2], 0) if r[2] else 0,
+            "avg_max": round(r[3], 0) if r[3] else 0,
+            "count": r[4]
         }
         for r in result.fetchall()
     ]

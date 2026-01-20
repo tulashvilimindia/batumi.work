@@ -101,9 +101,9 @@
                         <div class="bg-white rounded-lg shadow p-6">
                             <h3 class="font-bold mb-4">Jobs by Region</h3>
                             <div class="space-y-2">
-                                <template x-for="region in (dashboard?.by_region || []).slice(0, 5)" :key="region.lid">
+                                <template x-for="(region, idx) in (dashboard?.by_region || []).slice(0, 5)" :key="idx">
                                     <div class="flex justify-between">
-                                        <span class="text-gray-600" x-text="'LID ' + region.lid"></span>
+                                        <span class="text-gray-600" x-text="region.name_en || region.name_ge || 'Unknown'"></span>
                                         <span class="font-semibold" x-text="region.count"></span>
                                     </div>
                                 </template>
@@ -112,9 +112,9 @@
                         <div class="bg-white rounded-lg shadow p-6">
                             <h3 class="font-bold mb-4">Jobs by Category</h3>
                             <div class="space-y-2">
-                                <template x-for="cat in (dashboard?.by_category || []).slice(0, 5)" :key="cat.cid">
+                                <template x-for="(cat, idx) in (dashboard?.by_category || []).slice(0, 5)" :key="idx">
                                     <div class="flex justify-between">
-                                        <span class="text-gray-600" x-text="'CID ' + cat.cid"></span>
+                                        <span class="text-gray-600" x-text="cat.name_en || cat.name_ge || 'Unknown'"></span>
                                         <span class="font-semibold" x-text="cat.count"></span>
                                     </div>
                                 </template>
@@ -161,13 +161,14 @@
                             <option value="inactive">Inactive</option>
                             <option value="expired">Expired</option>
                         </select>
-                        <select x-model="jobFilters.cid" @change="loadJobs()" class="border rounded px-3 py-2">
+                        <select x-model="jobFilters.category" @change="loadJobs()" class="border rounded px-3 py-2">
                             <option value="">All Categories</option>
-                            <option value="1">Administration (1)</option>
-                            <option value="2">Sales (2)</option>
-                            <option value="3">Finance (3)</option>
-                            <option value="6">IT (6)</option>
-                            <option value="8">Medicine (8)</option>
+                            <option value="it-programming">IT & Programming</option>
+                            <option value="sales-marketing">Sales & Marketing</option>
+                            <option value="finance-accounting">Finance & Accounting</option>
+                            <option value="tourism-hospitality">Tourism & Hospitality</option>
+                            <option value="education">Education</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 </div>
@@ -181,7 +182,7 @@
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Title</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Company</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">CID/LID</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Category/Region</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                             </tr>
                         </thead>
@@ -196,7 +197,7 @@
                                     <td class="px-4 py-3">
                                         <span class="px-2 py-1 text-xs rounded-full" :class="job.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'" x-text="job.status"></span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm" x-text="job.jobsge_cid + '/' + job.jobsge_lid"></td>
+                                    <td class="px-4 py-3 text-sm" x-text="(job.category || '-') + ' / ' + (job.region || '-')"></td>
                                     <td class="px-4 py-3">
                                         <button @click="toggleJobStatus(job)" class="text-blue-600 hover:underline text-sm mr-2">Toggle</button>
                                         <button @click="deleteJob(job.id)" class="text-red-600 hover:underline text-sm">Delete</button>
@@ -248,9 +249,9 @@
                         <div class="bg-white rounded-lg shadow p-6">
                             <h3 class="font-bold mb-4">By Region</h3>
                             <div class="space-y-2 max-h-96 overflow-auto">
-                                <template x-for="region in parserStats?.by_region || []" :key="region.lid">
+                                <template x-for="(region, idx) in parserStats?.by_region || []" :key="idx">
                                     <div class="flex justify-between py-1 border-b">
-                                        <span class="text-gray-600" x-text="region.name"></span>
+                                        <span class="text-gray-600" x-text="region.name_en || region.name_ge || 'Unknown'"></span>
                                         <span class="font-semibold" x-text="region.count"></span>
                                     </div>
                                 </template>
@@ -259,9 +260,9 @@
                         <div class="bg-white rounded-lg shadow p-6">
                             <h3 class="font-bold mb-4">By Category</h3>
                             <div class="space-y-2 max-h-96 overflow-auto">
-                                <template x-for="cat in parserStats?.by_category || []" :key="cat.cid">
+                                <template x-for="(cat, idx) in parserStats?.by_category || []" :key="idx">
                                     <div class="flex justify-between py-1 border-b">
-                                        <span class="text-gray-600" x-text="cat.name"></span>
+                                        <span class="text-gray-600" x-text="cat.name_en || cat.name_ge || 'Unknown'"></span>
                                         <span class="font-semibold" x-text="cat.count"></span>
                                     </div>
                                 </template>
@@ -496,7 +497,7 @@
 
                 // Jobs
                 jobs: {},
-                jobFilters: { page: 1, status: '', cid: '', q: '' },
+                jobFilters: { page: 1, status: '', category: '', q: '' },
 
                 // Parser
                 parserStats: null,
@@ -552,7 +553,7 @@
                     const params = new URLSearchParams();
                     params.set('page', this.jobFilters.page);
                     if (this.jobFilters.status) params.set('status', this.jobFilters.status);
-                    if (this.jobFilters.cid) params.set('cid', this.jobFilters.cid);
+                    if (this.jobFilters.category) params.set('category', this.jobFilters.category);
                     if (this.jobFilters.q) params.set('q', this.jobFilters.q);
                     this.jobs = await this.api('/jobs?' + params.toString()) || {};
                     this.loading = false;

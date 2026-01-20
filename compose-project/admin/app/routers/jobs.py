@@ -15,8 +15,8 @@ async def list_jobs(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     status: Optional[str] = None,
-    cid: Optional[int] = None,
-    lid: Optional[int] = None,
+    category: Optional[str] = None,
+    region: Optional[str] = None,
     q: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
@@ -26,25 +26,30 @@ async def list_jobs(
     params = {}
 
     if status:
-        where_clauses.append("status = :status")
+        where_clauses.append("j.status = :status")
         params["status"] = status
 
-    if cid:
-        where_clauses.append("jobsge_cid = :cid")
-        params["cid"] = cid
+    if category:
+        where_clauses.append("c.slug = :category")
+        params["category"] = category
 
-    if lid:
-        where_clauses.append("jobsge_lid = :lid")
-        params["lid"] = lid
+    if region:
+        where_clauses.append("r.slug = :region")
+        params["region"] = region
 
     if q:
-        where_clauses.append("(title_ge ILIKE :q OR company_name ILIKE :q)")
+        where_clauses.append("(j.title_ge ILIKE :q OR j.company_name ILIKE :q)")
         params["q"] = f"%{q}%"
 
     where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
 
     # Count total
-    count_sql = f"SELECT COUNT(*) FROM jobs WHERE {where_sql}"
+    count_sql = f"""
+        SELECT COUNT(*) FROM jobs j
+        LEFT JOIN categories c ON j.category_id = c.id
+        LEFT JOIN regions r ON j.region_id = r.id
+        WHERE {where_sql}
+    """
     result = await db.execute(text(count_sql), params)
     total = result.scalar()
 
@@ -54,12 +59,15 @@ async def list_jobs(
     params["offset"] = offset
 
     query_sql = f"""
-        SELECT id, title_ge, title_en, company_name, location, status,
-               jobsge_cid, jobsge_lid, has_salary, salary_min, salary_max,
-               published_at, created_at, parsed_from
-        FROM jobs
+        SELECT j.id, j.title_ge, j.title_en, j.company_name, j.location, j.status,
+               c.name_en as category_name, r.name_en as region_name,
+               j.has_salary, j.salary_min, j.salary_max,
+               j.published_at, j.created_at, j.parsed_from
+        FROM jobs j
+        LEFT JOIN categories c ON j.category_id = c.id
+        LEFT JOIN regions r ON j.region_id = r.id
         WHERE {where_sql}
-        ORDER BY created_at DESC
+        ORDER BY j.created_at DESC
         LIMIT :limit OFFSET :offset
     """
     result = await db.execute(text(query_sql), params)
@@ -73,8 +81,8 @@ async def list_jobs(
             "company_name": row[3],
             "location": row[4],
             "status": row[5],
-            "jobsge_cid": row[6],
-            "jobsge_lid": row[7],
+            "category": row[6],
+            "region": row[7],
             "has_salary": row[8],
             "salary_min": row[9],
             "salary_max": row[10],

@@ -24,21 +24,23 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
 
     # Jobs by region
     result = await db.execute(text("""
-        SELECT jobsge_lid, COUNT(*) as count
-        FROM jobs
-        GROUP BY jobsge_lid
+        SELECT r.name_en, r.name_ge, COUNT(*) as count
+        FROM jobs j
+        LEFT JOIN regions r ON j.region_id = r.id
+        GROUP BY r.id, r.name_en, r.name_ge
         ORDER BY count DESC
     """))
-    regions = [{"lid": row[0], "count": row[1]} for row in result.fetchall()]
+    regions = [{"name_en": row[0], "name_ge": row[1], "count": row[2]} for row in result.fetchall()]
 
     # Jobs by category
     result = await db.execute(text("""
-        SELECT jobsge_cid, COUNT(*) as count
-        FROM jobs
-        GROUP BY jobsge_cid
+        SELECT c.name_en, c.name_ge, COUNT(*) as count
+        FROM jobs j
+        LEFT JOIN categories c ON j.category_id = c.id
+        GROUP BY c.id, c.name_en, c.name_ge
         ORDER BY count DESC
     """))
-    categories = [{"cid": row[0], "count": row[1]} for row in result.fetchall()]
+    categories = [{"name_en": row[0], "name_ge": row[1], "count": row[2]} for row in result.fetchall()]
 
     # Jobs added today
     result = await db.execute(text("""
@@ -74,8 +76,8 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             "active_jobs": active_jobs,
             "jobs_today": jobs_today,
             "jobs_with_salary": jobs_with_salary,
-            "total_regions": len([r for r in regions if r["lid"]]),
-            "total_categories": len([c for c in categories if c["cid"]]),
+            "total_regions": len([r for r in regions if r["name_en"]]),
+            "total_categories": len([c for c in categories if c["name_en"]]),
         },
         "by_region": regions[:10],
         "by_category": categories[:10],
