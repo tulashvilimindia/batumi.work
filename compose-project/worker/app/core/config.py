@@ -8,6 +8,7 @@ def _parse_regions(value: str) -> List[str]:
     """Parse PARSE_REGIONS env var.
 
     - Empty string or "all" returns empty list (no filter = all jobs)
+    - "adjara" or "batumi" uses lid=14 on jobs.ge (Adjara AR)
     - Otherwise returns list of region names
     """
     value = value.strip().lower()

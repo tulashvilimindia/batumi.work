@@ -57,6 +57,47 @@ class JobsGeAdapter(BaseAdapter):
             if "url" in job:
                 yield job["url"]
 
+    async def run(self, region: Optional[str] = None) -> "ParseResult":
+        """Execute a full parsing run with location preservation.
+
+        Overrides base run() to pass location from list page to detail parsing.
+        """
+        from app.core.base_adapter import ParseResult
+
+        result = ParseResult()
+
+        # Get job list with location data
+        job_list = await self.parse_list_page(1, region)
+        result.total_found = len(job_list)
+        result.pages_parsed = 1
+
+        for job_info in job_list:
+            url = job_info.get("url")
+            location = job_info.get("location")
+
+            if not url:
+                continue
+
+            try:
+                job = await self.parse_job(url, location=location)
+                if job:
+                    result.jobs.append(job)
+            except Exception as e:
+                result.errors.append(f"Error parsing {url}: {str(e)}")
+
+        return result
+
+    # Location ID mapping for jobs.ge
+    # lid=14 is Adjara AR (აჭარა)
+    LOCATION_IDS = {
+        "adjara": 14,
+        "აჭარა": 14,
+        "batumi": 14,  # Batumi is in Adjara
+        "ბათუმი": 14,
+        "tbilisi": 1,
+        "თბილისი": 1,
+    }
+
     async def parse_list_page(self, page: int, region: Optional[str] = None) -> List[dict]:
         """Parse a job list page from jobs.ge.
 
@@ -74,19 +115,34 @@ class JobsGeAdapter(BaseAdapter):
                 url = f"{self.base_url}/"
                 params = {}
 
-                # Add region/search filter if specified
+                # Use location ID (lid) for region filtering if available
                 if region:
-                    params["q"] = region
+                    region_lower = region.lower()
+                    if region_lower in self.LOCATION_IDS:
+                        params["lid"] = self.LOCATION_IDS[region_lower]
+                    else:
+                        # Fallback to text search
+                        params["q"] = region
 
                 html = await client.get_text(url, params=params)
-                return self._extract_jobs_from_list(html)
+                return self._extract_jobs_from_list(html, region)
             except Exception as e:
                 return []
 
-    def _extract_jobs_from_list(self, html: str) -> List[dict]:
+    def _extract_jobs_from_list(self, html: str, region: Optional[str] = None) -> List[dict]:
         """Extract job entries from jobs.ge list page HTML."""
         soup = BeautifulSoup(html, "lxml")
         jobs = []
+
+        # Determine location based on region filter
+        # If parsing from Adjara (lid=14), set location to აჭარა
+        location = None
+        if region:
+            region_lower = region.lower()
+            if region_lower in ("adjara", "აჭარა", "batumi", "ბათუმი"):
+                location = "აჭარა"  # Adjara AR
+            elif region_lower in ("tbilisi", "თბილისი"):
+                location = "თბილისი"
 
         # jobs.ge uses links with href containing "view=jobs&id="
         job_links = soup.select('a[href*="view=jobs&id="]')
@@ -133,6 +189,7 @@ class JobsGeAdapter(BaseAdapter):
                     "title": title,
                     "company_name": company_name,
                     "is_vip": is_vip,
+                    "location": location,  # Set location based on region filter
                 })
 
             except Exception:
@@ -140,8 +197,13 @@ class JobsGeAdapter(BaseAdapter):
 
         return jobs
 
-    async def parse_job(self, url: str) -> Optional[JobData]:
-        """Parse a single job detail page from jobs.ge."""
+    async def parse_job(self, url: str, location: Optional[str] = None) -> Optional[JobData]:
+        """Parse a single job detail page from jobs.ge.
+
+        Args:
+            url: Job detail page URL
+            location: Optional location from list page (e.g., "აჭარა" for Adjara)
+        """
         async with HTTPClient(rate_limit_delay=self.rate_limit_delay) as client:
             try:
                 # Fetch Georgian version
@@ -150,6 +212,10 @@ class JobsGeAdapter(BaseAdapter):
 
                 if not job_data:
                     return None
+
+                # Override location if provided from list page
+                if location:
+                    job_data.location = location
 
                 # Try to get English version
                 try:

@@ -185,6 +185,7 @@ class JobSearchParams(BaseModel):
     q: Optional[str] = Field(None, description="Search query for title/company")
     category: Optional[str] = Field(None, description="Category slug")
     region: Optional[str] = Field(None, description="Region slug")
+    location: Optional[str] = Field(None, description="Location text filter (e.g., აჭარა)")
     has_salary: Optional[bool] = Field(None, description="Filter jobs with salary info")
     is_vip: Optional[bool] = Field(None, description="Filter VIP jobs")
     status: Optional[JobStatus] = Field("active", description="Job status")

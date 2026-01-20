@@ -63,6 +63,10 @@ class JobService:
             region_subq = select(Region.id).where(Region.slug == params.region)
             filters.append(Job.region_id.in_(region_subq))
 
+        # Location text filter (e.g., "აჭარა" for Adjara)
+        if params.location:
+            filters.append(Job.location == params.location)
+
         # Has salary filter
         if params.has_salary is not None:
             filters.append(Job.has_salary == params.has_salary)

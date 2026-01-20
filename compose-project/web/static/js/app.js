@@ -10,9 +10,9 @@ const API_BASE = '/api/v1';
 // Current language (from URL path)
 const LANG = window.location.pathname.startsWith('/en') ? 'en' : 'ge';
 
-// Region filter - only show Batumi and Ajara jobs
-// We search for "batumi" which matches jobs with batumi in location/description
-const REGION_FILTER = 'batumi';
+// Region filter - only show Adjara (აჭარა) jobs
+// Jobs from Adjara are marked with location "აჭარა" by the parser
+const LOCATION_FILTER = 'აჭარა';
 
 // Translations
 const T = {
@@ -225,15 +225,11 @@ async function loadJobs() {
         params.set('page_size', state.filters.page_size);
         params.set('status', 'active');
 
-        // Always filter for Batumi/Ajara region
-        // Combine user search with region filter
-        const searchTerms = [];
-        if (state.filters.q) searchTerms.push(state.filters.q);
-        searchTerms.push(REGION_FILTER);
-        params.set('q', searchTerms.join(' '));
+        // Filter for Adjara region using location parameter
+        params.set('location', LOCATION_FILTER);
 
+        if (state.filters.q) params.set('q', state.filters.q);
         if (state.filters.category) params.set('category', state.filters.category);
-        // Region filter is now automatic, no need for user selection
         if (state.filters.has_salary) params.set('has_salary', 'true');
         if (state.filters.is_vip) params.set('is_vip', 'true');
 
