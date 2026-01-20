@@ -263,27 +263,35 @@ def classify_category(title: str, body: str) -> Optional[str]:
     # Multi-word phrases to check first (order matters - check before single words)
     # These phrases help disambiguate (e.g., "sales consultant" should be sales, not customer-service)
     phrase_categories = {
-        "sales-marketing": [
-            "გაყიდვების კონსულტანტი", "გაყიდვების მენეჯერი", "გაყიდვების წარმომადგენელი",
-            "sales consultant", "sales manager", "sales representative", "sales specialist",
-            "მარკეტინგის მენეჯერი", "marketing manager", "digital marketing",
-            "brand manager", "pr manager", "smm manager", "seo specialist",
-        ],
         "it-programming": [
+            # IT Support/Engineer phrases - MUST come before customer-service
+            "it support", "it specialist", "it engineer", "it manager", "it admin",
+            "it სპეციალისტ", "it ინჟინერ", "it მხარდაჭერ", "it ადმინისტრატორ",
+            "it ქსელ",  # IT network
+            # Software/Dev phrases
             "software engineer", "software developer", "web developer", "ვებ დეველოპერი",
             "frontend developer", "backend developer", "fullstack developer", "full-stack developer",
             "mobile developer", "ios developer", "android developer",
             "data scientist", "data engineer", "data analyst",
-            "qa engineer", "devops engineer", "system administrator", "სისტემური ადმინისტრატორი",
-            "it specialist", "it სპეციალისტი", "it support", "it მხარდაჭერა",
-            "network engineer", "ml engineer", "ai engineer",
+            "qa engineer", "devops engineer", "system administrator", "სისტემური ადმინისტრატორ",
+            "network engineer", "ml engineer", "ai engineer", "ai/ml",
             "java developer", "python developer", "php developer", ".net developer",
             "c# developer", "c++ developer", "ruby developer", "golang developer",
+            # Cloud/DevOps
+            "cloud engineer", "cloud architect", "devops", "სერვერ ადმინისტრატორ",
+        ],
+        "sales-marketing": [
+            "გაყიდვების კონსულტანტი", "გაყიდვების მენეჯერი", "გაყიდვების წარმომადგენელი",
+            "გაყიდვების სპეციალისტ",
+            "sales consultant", "sales manager", "sales representative", "sales specialist",
+            "მარკეტინგის მენეჯერი", "marketing manager", "digital marketing",
+            "brand manager", "pr manager", "smm manager", "seo specialist",
         ],
         "customer-service": [
+            # Note: "support" alone is ambiguous - IT support should go to IT
             "customer service", "მომხმარებელთა მომსახურება", "მომხმარებელთა მხარდაჭერა",
-            "support specialist", "მხარდაჭერის სპეციალისტი",
             "call center", "ქოლ ცენტრი",
+            "კლიენტთა მომსახურება",
         ],
         "hr-admin": [
             "hr manager", "hr specialist", "ადამიანური რესურსები",
@@ -299,6 +307,10 @@ def classify_category(title: str, body: str) -> Optional[str]:
             "devops", "ტესტერი", "machine learning",
             "cybersecurity", "კიბერუსაფრთხოება",
             "kotlin", "swift", "sql", "aws", "azure", "docker", "kubernetes",
+            # Additional IT terms
+            "backend", "frontend", "fullstack", "api", "database",
+            "linux", "windows server", "vmware", "networking",
+            "გრაფიკული", "photoshop", "figma",
         ],
         "sales-marketing": [
             "გაყიდვები", "გაყიდვების", "sales",
