@@ -46,6 +46,7 @@ from app.routers import jobs_router, categories_router, regions_router, admin_ro
 from app.routers.admin_parser import router as parser_admin_router
 from app.routers.admin_analytics import router as analytics_admin_router, public_router as analytics_public_router
 from app.routers.admin_backup import router as backup_admin_router
+from app.routers.stats import router as stats_router
 
 logger = get_logger(__name__)
 
@@ -271,6 +272,12 @@ app.include_router(
     regions_router,
     prefix="/api/v1/regions",
     tags=["Regions"],
+)
+
+# Stats endpoint (public - for parser status)
+app.include_router(
+    stats_router,
+    prefix="/api/v1",
 )
 
 # Admin endpoints (protected by API key)
