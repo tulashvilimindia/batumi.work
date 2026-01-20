@@ -4,7 +4,7 @@
 
 const API_BASE = '/api/v1';
 const LANG = window.location.pathname.startsWith('/en') ? 'en' : 'ge';
-const LOCATION_FILTER = 'აჭარა';
+const ADJARA_LID = 14;  // jobs.ge region ID for Adjara
 
 const T = {
     ge: {
@@ -115,7 +115,7 @@ async function loadJobs() {
         params.set('page', state.filters.page);
         params.set('page_size', state.filters.page_size);
         params.set('status', 'active');
-        params.set('location', LOCATION_FILTER);
+        params.set('lid', ADJARA_LID);
 
         if (state.filters.q) params.set('q', state.filters.q);
         if (state.filters.category) params.set('category', state.filters.category);

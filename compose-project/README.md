@@ -126,7 +126,7 @@ SECRET_KEY=change-me-in-production-secret
 # Parser
 PARSER_INTERVAL_MINUTES=60
 ENABLED_SOURCES=jobs.ge
-PARSE_REGIONS=all  # Use "all" for all jobs, or comma-separated regions like "batumi,tbilisi"
+PARSE_REGIONS=all  # Use "all" for all Georgian regions, or "adjara" for Adjara only
 
 # Telegram Bot
 TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
@@ -150,6 +150,7 @@ REPORT_RECIPIENTS=admin@example.com
 | GET | `/api/v1/jobs/{id}` | Get job details |
 | GET | `/api/v1/categories` | List categories |
 | GET | `/api/v1/regions` | List regions |
+| GET | `/api/v1/stats` | Parser statistics (jobs by region/category) |
 
 ### Query Parameters
 
@@ -157,15 +158,45 @@ REPORT_RECIPIENTS=admin@example.com
 # Pagination
 ?page=1&page_size=20
 
-# Filtering
+# Filtering (slug-based)
 ?q=developer              # Search in title/company
-?category=it-programming  # Filter by category
-?region=batumi            # Filter by region
+?category=it-programming  # Filter by category slug
+?region=adjara            # Filter by region slug
 ?has_salary=true          # Jobs with salary
+?location=ბათუმი          # Location text search (ILIKE)
+
+# Filtering (jobs.ge compatible - recommended)
+?cid=6                    # jobs.ge category ID (6 = IT/Programming)
+?lid=14                   # jobs.ge location ID (14 = Adjara)
 
 # Sorting
-?sort_by=created_at&sort_order=desc
+?sort=-published_at       # Sort by published date descending
 ```
+
+### Jobs.ge Filter IDs
+
+The API supports native jobs.ge filter parameters for seamless integration:
+
+**Category IDs (cid):**
+| cid | Category |
+|-----|----------|
+| 1 | Administration |
+| 2 | Sales |
+| 3 | Finance |
+| 6 | IT/Programming |
+| 8 | Medicine |
+| 11 | Construction |
+| 12 | Education |
+
+**Region IDs (lid):**
+| lid | Region |
+|-----|--------|
+| 14 | Adjara |
+| 1 | Tbilisi |
+| 8 | Imereti |
+| 17 | Remote |
+
+See [SESSION_NOTES.md](SESSION_NOTES.md) for complete ID mappings.
 
 ### Admin Endpoints (requires X-API-Key header)
 

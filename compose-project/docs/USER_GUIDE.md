@@ -107,7 +107,13 @@ Filters are reflected in the URL, so you can:
 - Share filtered results with others
 - Return to the same search later
 
-Example: `http://your-domain.com/ge/?category=it&has_salary=true`
+Example: `https://batumi.work/ge/?category=it-programming&has_salary=true`
+
+### Jobs.ge Compatibility
+
+The website uses the same region and category filters as jobs.ge, so jobs are organized exactly as on the original site. This means:
+- IT jobs from jobs.ge appear in our IT category
+- Jobs from specific regions are correctly filtered by location
 
 ---
 

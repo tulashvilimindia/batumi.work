@@ -265,7 +265,7 @@ ENVIRONMENT=production
 # Parser
 PARSER_INTERVAL_MINUTES=60
 ENABLED_SOURCES=jobs.ge
-PARSE_REGIONS=batumi,tbilisi
+PARSE_REGIONS=all  # "all" for all Georgian regions, or "adjara" for Adjara only
 
 # Telegram Bot (get from @BotFather)
 TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN

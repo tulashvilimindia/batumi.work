@@ -247,8 +247,33 @@ curl -X POST http://localhost:8000/api/v1/admin/parser/trigger \
 |----------|---------|-------------|
 | `PARSER_INTERVAL_MINUTES` | 60 | Time between automatic runs |
 | `NOT_SEEN_DAYS_TO_INACTIVE` | 7 | Days before marking job inactive |
-| `ENABLED_SOURCES` | jobs.ge,hr.ge | Comma-separated source list |
-| `PARSE_REGIONS` | batumi,tbilisi | Regions to parse |
+| `ENABLED_SOURCES` | jobs.ge | Comma-separated source list |
+| `PARSE_REGIONS` | all | "all" for all regions, or "adjara" for Adjara only |
+
+### Parser Stats Endpoint
+
+Monitor parser progress in real-time:
+
+```bash
+curl http://your-domain.com/api/v1/stats
+```
+
+Response:
+```json
+{
+  "total_jobs": 317,
+  "total_regions": 12,
+  "total_categories": 17,
+  "by_region": [
+    {"lid": 14, "name": "აჭარა (Adjara)", "count": 295},
+    {"lid": 1, "name": "თბილისი (Tbilisi)", "count": 15}
+  ],
+  "by_category": [
+    {"cid": 2, "name": "გაყიდვები (Sales)", "count": 53},
+    {"cid": 6, "name": "IT/პროგრამირება (IT/Programming)", "count": 12}
+  ]
+}
+```
 
 ---
 
@@ -466,10 +491,11 @@ http://your-domain.com/api/v1
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/jobs` | List jobs (paginated) |
+| GET | `/jobs` | List jobs (paginated, filtered) |
 | GET | `/jobs/{id}` | Get job details |
 | GET | `/categories` | List categories |
 | GET | `/regions` | List regions |
+| GET | `/stats` | Parser statistics (jobs by region/category) |
 
 ### Admin Endpoints (require X-API-Key)
 
@@ -497,9 +523,33 @@ http://your-domain.com/api/v1
 | `status` | string | Filter by status |
 | `category` | string | Filter by category slug |
 | `region` | string | Filter by region slug |
+| `cid` | int | jobs.ge category ID (1-18) |
+| `lid` | int | jobs.ge location/region ID |
+| `location` | string | Location text search (ILIKE partial match) |
 | `has_salary` | bool | Filter jobs with salary |
 | `is_vip` | bool | Filter VIP jobs |
 | `q` | string | Search query |
+
+### jobs.ge Filter IDs
+
+The API supports native jobs.ge filter parameters:
+
+**Common Category IDs (cid):**
+- `1` = Administration
+- `2` = Sales
+- `3` = Finance
+- `6` = IT/Programming
+- `8` = Medicine
+- `11` = Construction
+- `12` = Education
+
+**Common Region IDs (lid):**
+- `14` = Adjara
+- `1` = Tbilisi
+- `8` = Imereti
+- `17` = Remote
+
+See [SESSION_NOTES.md](../SESSION_NOTES.md) for complete mappings.
 
 ### Response Format
 
