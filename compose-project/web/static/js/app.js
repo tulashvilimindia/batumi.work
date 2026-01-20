@@ -1,6 +1,7 @@
 /**
- * Georgia JobBoard - Main JavaScript
+ * Batumi Jobs - Main JavaScript
  * Vanilla JS, no frameworks, SEO-friendly
+ * Focused on Batumi & Ajara region jobs
  */
 
 // API Base URL
@@ -8,6 +9,10 @@ const API_BASE = '/api/v1';
 
 // Current language (from URL path)
 const LANG = window.location.pathname.startsWith('/en') ? 'en' : 'ge';
+
+// Region filter - only show Batumi and Ajara jobs
+// We search for "batumi" which matches jobs with batumi in location/description
+const REGION_FILTER = 'batumi';
 
 // Translations
 const T = {
@@ -220,9 +225,15 @@ async function loadJobs() {
         params.set('page_size', state.filters.page_size);
         params.set('status', 'active');
 
-        if (state.filters.q) params.set('q', state.filters.q);
+        // Always filter for Batumi/Ajara region
+        // Combine user search with region filter
+        const searchTerms = [];
+        if (state.filters.q) searchTerms.push(state.filters.q);
+        searchTerms.push(REGION_FILTER);
+        params.set('q', searchTerms.join(' '));
+
         if (state.filters.category) params.set('category', state.filters.category);
-        if (state.filters.region) params.set('region', state.filters.region);
+        // Region filter is now automatic, no need for user selection
         if (state.filters.has_salary) params.set('has_salary', 'true');
         if (state.filters.is_vip) params.set('is_vip', 'true');
 
@@ -490,7 +501,7 @@ function renderJobDetail(job) {
     const categoryName = job.category ? (LANG === 'en' && job.category.name_en ? job.category.name_en : job.category.name_ge) : '';
 
     // Update page title
-    document.title = `${title} | Georgia JobBoard`;
+    document.title = `${title} | Batumi Jobs`;
 
     // Update meta description
     const metaDesc = document.querySelector('meta[name="description"]');

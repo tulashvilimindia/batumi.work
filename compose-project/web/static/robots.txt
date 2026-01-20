@@ -1,10 +1,10 @@
-# Georgia JobBoard - robots.txt
+# Batumi Jobs - robots.txt
 
 User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://jobboard.ge/sitemap.xml
+Sitemap: https://batumi.work/sitemap.xml
 
 # Disallow admin and API docs
 Disallow: /docs

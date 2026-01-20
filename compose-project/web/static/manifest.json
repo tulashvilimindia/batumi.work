@@ -1,7 +1,7 @@
 {
-  "name": "ვაკანსიები - Georgia Jobs",
-  "short_name": "Jobs",
-  "description": "სამუშაო ადგილები საქართველოში | Find jobs in Georgia",
+  "name": "Batumi Jobs - ვაკანსიები ბათუმში",
+  "short_name": "Batumi Jobs",
+  "description": "სამუშაო ადგილები ბათუმსა და აჭარაში | Find jobs in Batumi and Ajara",
   "start_url": "/ge/",
   "scope": "/",
   "display": "standalone",
@@ -30,7 +30,7 @@
     {
       "name": "ძიება",
       "short_name": "Search",
-      "description": "სამუშაოს ძიება",
+      "description": "სამუშაოს ძიება ბათუმში",
       "url": "/ge/?focus=search",
       "icons": [{"src": "/icons/icon-192.svg", "sizes": "192x192"}]
     },
