@@ -539,24 +539,150 @@ class JobsGeAdapter(BaseAdapter):
         return None
 
     def _extract_published_date(self, soup: BeautifulSoup) -> Optional[datetime]:
-        """Extract published date from page."""
-        # Look for date patterns in common locations
-        page_text = soup.get_text()
-        date = extract_date(page_text)
-        return date
+        """Extract published date from page.
 
-    def _extract_deadline_date(self, soup: BeautifulSoup) -> Optional[datetime]:
-        """Extract deadline date from page."""
-        # Look for deadline-specific text
-        for pattern in [r'ბოლო.*ვადა', r'deadline', r'დედლაინ']:
+        jobs.ge typically shows published date in specific locations:
+        1. Meta tags or structured data
+        2. Near "გამოქვეყნდა" (published) text
+        3. In a dedicated date element near the title
+        4. In table cells with date-like formatting
+        """
+        from datetime import timezone
+
+        # 1. Try meta tags first (most reliable)
+        for meta in soup.find_all("meta"):
+            prop = meta.get("property", "") or meta.get("name", "")
+            if "date" in prop.lower() or "published" in prop.lower():
+                content = meta.get("content", "")
+                if content:
+                    date = extract_date(content)
+                    if date:
+                        return date.replace(tzinfo=timezone.utc)
+
+        # 2. Look for Georgian "გამოქვეყნდა" (published) keyword
+        publish_patterns = [
+            r'გამოქვეყნდა', r'დამატებულია', r'თარიღი',  # Georgian
+            r'published', r'posted', r'date added',  # English
+        ]
+
+        for pattern in publish_patterns:
             for elem in soup.find_all(string=re.compile(pattern, re.I)):
+                # Get parent and siblings for context
                 parent = elem.parent
                 if parent:
-                    # Get surrounding text
-                    context = parent.get_text() if parent else str(elem)
+                    # Check parent's text
+                    context = parent.get_text()
                     date = extract_date(context)
                     if date:
-                        return date
+                        return date.replace(tzinfo=timezone.utc)
+
+                    # Check next sibling
+                    next_sib = parent.find_next_sibling()
+                    if next_sib:
+                        context = next_sib.get_text()
+                        date = extract_date(context)
+                        if date:
+                            return date.replace(tzinfo=timezone.utc)
+
+                    # Check grandparent (for nested structures)
+                    grandparent = parent.parent
+                    if grandparent:
+                        context = grandparent.get_text()
+                        date = extract_date(context)
+                        if date:
+                            return date.replace(tzinfo=timezone.utc)
+
+        # 3. Look for table cells with dates (common in jobs.ge layout)
+        for td in soup.find_all("td"):
+            text = td.get_text(strip=True)
+            # Only check cells that look like they contain just a date
+            if len(text) < 30 and re.search(r'\d{1,2}[./]\d{1,2}[./]\d{4}', text):
+                date = extract_date(text)
+                if date:
+                    return date.replace(tzinfo=timezone.utc)
+
+        # 4. Look for spans/divs with date-like classes
+        for elem in soup.find_all(["span", "div"], class_=re.compile(r'date|time', re.I)):
+            text = elem.get_text(strip=True)
+            if text:
+                date = extract_date(text)
+                if date:
+                    return date.replace(tzinfo=timezone.utc)
+
+        # 5. Last resort: scan first 500 chars of page for a date
+        # (avoids footer/sidebar dates)
+        header_area = soup.find("header") or soup.find("article") or soup.find("main")
+        if header_area:
+            text = header_area.get_text()[:500]
+            date = extract_date(text)
+            if date:
+                return date.replace(tzinfo=timezone.utc)
+
+        return None
+
+    def _extract_deadline_date(self, soup: BeautifulSoup) -> Optional[datetime]:
+        """Extract deadline date from page.
+
+        jobs.ge uses various terms for deadline:
+        - ბოლო ვადა (last date)
+        - დედლაინი (deadline)
+        - განაცხადის მიღების ბოლო ვადა (application deadline)
+        """
+        from datetime import timezone
+
+        # Deadline-specific keywords in Georgian and English
+        deadline_patterns = [
+            r'ბოლო\s*ვადა', r'დედლაინ', r'განაცხადის.*ვადა',
+            r'მიღება.*ვადა', r'დასრულება',  # Georgian
+            r'deadline', r'apply\s*by', r'closing\s*date',
+            r'last\s*date', r'expires?',  # English
+        ]
+
+        for pattern in deadline_patterns:
+            for elem in soup.find_all(string=re.compile(pattern, re.I)):
+                parent = elem.parent
+                if not parent:
+                    continue
+
+                # Get broader context - parent, grandparent, siblings
+                contexts_to_check = []
+
+                # Parent text
+                contexts_to_check.append(parent.get_text())
+
+                # Next sibling (deadline value often in adjacent element)
+                next_sib = parent.find_next_sibling()
+                if next_sib:
+                    contexts_to_check.append(next_sib.get_text())
+
+                # Grandparent (for nested structures like table rows)
+                grandparent = parent.parent
+                if grandparent:
+                    contexts_to_check.append(grandparent.get_text())
+
+                # Parent's parent's next sibling (for complex layouts)
+                if grandparent:
+                    gp_next = grandparent.find_next_sibling()
+                    if gp_next:
+                        contexts_to_check.append(gp_next.get_text())
+
+                # Try to extract date from each context
+                for context in contexts_to_check:
+                    if not context:
+                        continue
+                    date = extract_date(context)
+                    if date:
+                        return date.replace(tzinfo=timezone.utc)
+
+        # Look for table rows with deadline label
+        for tr in soup.find_all("tr"):
+            row_text = tr.get_text().lower()
+            if any(kw in row_text for kw in ['ვადა', 'deadline', 'დედლაინ']):
+                # Get all text from this row
+                date = extract_date(tr.get_text())
+                if date:
+                    return date.replace(tzinfo=timezone.utc)
+
         return None
 
     def _extract_salary_info(self, soup: BeautifulSoup):
