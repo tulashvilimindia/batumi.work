@@ -62,6 +62,14 @@ class WorkerService:
                 logger.warning("adapter_import_failed", source="hr.ge", error=str(e))
 
         self.runner = ParserRunner(self.config, adapters)
+
+        # Ensure parse_jobs and parse_job_items tables exist
+        try:
+            await self.runner.ensure_tables_exist()
+            logger.info("parse_job_tables_ensured")
+        except Exception as e:
+            logger.warning("parse_job_tables_creation_failed", error=str(e))
+
         logger.info(
             "worker_initialized",
             enabled_sources=self.config.enabled_sources,

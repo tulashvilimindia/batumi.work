@@ -1,11 +1,21 @@
-"""Parser router - comprehensive parser management and control."""
+"""Parser router - comprehensive parser management, progress tracking, and job history.
+
+This router provides:
+- Parser configuration management
+- Job history with detailed progress tracking
+- Manual parse triggering with live progress
+- Parse single job by ID
+- Retry failed jobs
+- Data management (delete by filters)
+"""
 import json
 import os
+import httpx
 from datetime import datetime, date
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import text, delete
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -14,6 +24,9 @@ router = APIRouter()
 
 # Configuration file path
 CONFIG_FILE = "/app/parser_config.json"
+
+# Worker API URL (internal Docker network)
+WORKER_API_URL = os.environ.get("WORKER_API_URL", "http://worker:8000")
 
 # Default configuration
 DEFAULT_CONFIG = {
@@ -89,8 +102,18 @@ class ParserConfig(BaseModel):
 
 
 class TriggerParseRequest(BaseModel):
-    regions: Optional[List[str]] = None  # List of region slugs, None = all enabled
-    categories: Optional[List[int]] = None  # List of category cids, None = all enabled
+    regions: Optional[List[str]] = None
+    categories: Optional[List[int]] = None
+    source: str = "jobs.ge"
+
+
+class ParseSingleRequest(BaseModel):
+    external_id: str
+    source: str = "jobs.ge"
+
+
+class RetryJobRequest(BaseModel):
+    job_id: str
 
 
 class DeleteDataRequest(BaseModel):
@@ -125,6 +148,498 @@ def save_config(config: dict) -> None:
 
 
 # ============================================================================
+# Job History Endpoints
+# ============================================================================
+
+@router.get("/jobs")
+async def get_parse_jobs(
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0, ge=0),
+    status: Optional[str] = None,
+    job_type: Optional[str] = None,
+):
+    """Get parse job history with pagination and filtering."""
+    conditions = []
+    params = {"limit": limit, "offset": offset}
+
+    if status:
+        conditions.append("status = :status")
+        params["status"] = status
+
+    if job_type:
+        conditions.append("job_type = :job_type")
+        params["job_type"] = job_type
+
+    where_clause = " AND ".join(conditions) if conditions else "1=1"
+
+    # Get total count
+    count_query = f"SELECT COUNT(*) FROM parse_jobs WHERE {where_clause}"
+    result = await db.execute(text(count_query), params)
+    total = result.scalar() or 0
+
+    # Get jobs
+    query = f"""
+        SELECT
+            id, job_type, source, status, config,
+            total_items, processed_items, successful_items, failed_items,
+            skipped_items, new_items, updated_items,
+            current_region, current_category, current_page,
+            created_at, started_at, completed_at,
+            error_message, errors, triggered_by
+        FROM parse_jobs
+        WHERE {where_clause}
+        ORDER BY created_at DESC
+        LIMIT :limit OFFSET :offset
+    """
+
+    result = await db.execute(text(query), params)
+    rows = result.fetchall()
+
+    jobs = []
+    for row in rows:
+        duration = None
+        if row[17] and row[16]:  # completed_at and started_at
+            duration = (row[17] - row[16]).total_seconds()
+
+        percentage = 0
+        if row[5] and row[5] > 0:  # total_items
+            percentage = round((row[6] / row[5]) * 100, 1)
+
+        jobs.append({
+            "id": str(row[0]),
+            "job_type": row[1],
+            "source": row[2],
+            "status": row[3],
+            "config": row[4],
+            "progress": {
+                "total": row[5] or 0,
+                "processed": row[6] or 0,
+                "successful": row[7] or 0,
+                "failed": row[8] or 0,
+                "skipped": row[9] or 0,
+                "new": row[10] or 0,
+                "updated": row[11] or 0,
+                "percentage": percentage,
+            },
+            "current": {
+                "region": row[12],
+                "category": row[13],
+                "page": row[14],
+            },
+            "timing": {
+                "created_at": row[15].isoformat() if row[15] else None,
+                "started_at": row[16].isoformat() if row[16] else None,
+                "completed_at": row[17].isoformat() if row[17] else None,
+                "duration_seconds": duration,
+            },
+            "error_message": row[18],
+            "errors": row[19] or [],
+            "triggered_by": row[20],
+        })
+
+    return {
+        "jobs": jobs,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+@router.get("/jobs/{job_id}")
+async def get_parse_job(job_id: str, db: AsyncSession = Depends(get_db)):
+    """Get detailed information about a specific parse job."""
+    query = """
+        SELECT
+            id, job_type, source, status, config,
+            total_items, processed_items, successful_items, failed_items,
+            skipped_items, new_items, updated_items,
+            current_region, current_category, current_page,
+            created_at, started_at, completed_at,
+            error_message, errors, triggered_by
+        FROM parse_jobs
+        WHERE id = :job_id
+    """
+
+    result = await db.execute(text(query), {"job_id": job_id})
+    row = result.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Parse job not found")
+
+    duration = None
+    if row[17] and row[16]:
+        duration = (row[17] - row[16]).total_seconds()
+
+    percentage = 0
+    if row[5] and row[5] > 0:
+        percentage = round((row[6] / row[5]) * 100, 1)
+
+    return {
+        "id": str(row[0]),
+        "job_type": row[1],
+        "source": row[2],
+        "status": row[3],
+        "config": row[4],
+        "progress": {
+            "total": row[5] or 0,
+            "processed": row[6] or 0,
+            "successful": row[7] or 0,
+            "failed": row[8] or 0,
+            "skipped": row[9] or 0,
+            "new": row[10] or 0,
+            "updated": row[11] or 0,
+            "percentage": percentage,
+        },
+        "current": {
+            "region": row[12],
+            "category": row[13],
+            "page": row[14],
+        },
+        "timing": {
+            "created_at": row[15].isoformat() if row[15] else None,
+            "started_at": row[16].isoformat() if row[16] else None,
+            "completed_at": row[17].isoformat() if row[17] else None,
+            "duration_seconds": duration,
+        },
+        "error_message": row[18],
+        "errors": row[19] or [],
+        "triggered_by": row[20],
+    }
+
+
+@router.get("/jobs/{job_id}/progress")
+async def get_parse_job_progress(job_id: str, db: AsyncSession = Depends(get_db)):
+    """Get real-time progress for a parse job (for polling)."""
+    query = """
+        SELECT
+            status, total_items, processed_items,
+            successful_items, failed_items, skipped_items,
+            new_items, updated_items,
+            current_region, current_category, current_page,
+            error_message
+        FROM parse_jobs
+        WHERE id = :job_id
+    """
+
+    result = await db.execute(text(query), {"job_id": job_id})
+    row = result.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Parse job not found")
+
+    percentage = 0
+    if row[1] and row[1] > 0:
+        percentage = round((row[2] / row[1]) * 100, 1)
+
+    return {
+        "job_id": job_id,
+        "status": row[0],
+        "progress": {
+            "total": row[1] or 0,
+            "processed": row[2] or 0,
+            "successful": row[3] or 0,
+            "failed": row[4] or 0,
+            "skipped": row[5] or 0,
+            "new": row[6] or 0,
+            "updated": row[7] or 0,
+            "percentage": percentage,
+        },
+        "current": {
+            "region": row[8],
+            "category": row[9],
+            "page": row[10],
+        },
+        "error_message": row[11],
+    }
+
+
+@router.get("/progress")
+async def get_current_progress(db: AsyncSession = Depends(get_db)):
+    """Get progress of currently running parse job (if any)."""
+    query = """
+        SELECT
+            id, job_type, source, status,
+            total_items, processed_items, successful_items,
+            failed_items, skipped_items, new_items, updated_items,
+            current_region, current_category, current_page,
+            started_at, error_message
+        FROM parse_jobs
+        WHERE status = 'running'
+        ORDER BY created_at DESC
+        LIMIT 1
+    """
+
+    result = await db.execute(text(query))
+    row = result.fetchone()
+
+    if not row:
+        return {
+            "running": False,
+            "job": None,
+        }
+
+    percentage = 0
+    if row[4] and row[4] > 0:
+        percentage = round((row[5] / row[4]) * 100, 1)
+
+    elapsed = None
+    if row[14]:
+        elapsed = (datetime.utcnow() - row[14].replace(tzinfo=None)).total_seconds()
+
+    return {
+        "running": True,
+        "job": {
+            "id": str(row[0]),
+            "job_type": row[1],
+            "source": row[2],
+            "status": row[3],
+            "progress": {
+                "total": row[4] or 0,
+                "processed": row[5] or 0,
+                "successful": row[6] or 0,
+                "failed": row[7] or 0,
+                "skipped": row[8] or 0,
+                "new": row[9] or 0,
+                "updated": row[10] or 0,
+                "percentage": percentage,
+            },
+            "current": {
+                "region": row[11],
+                "category": row[12],
+                "page": row[13],
+            },
+            "elapsed_seconds": elapsed,
+            "error_message": row[15],
+        },
+    }
+
+
+# ============================================================================
+# Parse Trigger and Single Job Parse
+# ============================================================================
+
+@router.post("/trigger")
+async def trigger_parse(request: TriggerParseRequest, db: AsyncSession = Depends(get_db)):
+    """Trigger a manual parse run and return job ID for tracking.
+
+    This creates a parse job record and signals the worker to start parsing.
+    Use the returned job_id to track progress via /api/parser/jobs/{job_id}/progress
+    """
+    config = load_config()
+
+    if request.regions:
+        regions = request.regions
+    else:
+        regions = [r["slug"] for r in config["regions"] if r["enabled"]]
+
+    # Create parse job record directly in database
+    job_id_query = """
+        INSERT INTO parse_jobs (
+            job_type, source, status, config, triggered_by, created_at
+        ) VALUES (
+            'manual', :source, 'pending',
+            :config::jsonb, 'admin', NOW()
+        )
+        RETURNING id
+    """
+
+    result = await db.execute(
+        text(job_id_query),
+        {
+            "source": request.source,
+            "config": json.dumps({
+                "regions": regions,
+                "categories": request.categories,
+            })
+        }
+    )
+    job_id = result.fetchone()[0]
+    await db.commit()
+
+    # Save trigger file for worker to pick up
+    trigger_data = {
+        "job_id": str(job_id),
+        "timestamp": datetime.utcnow().isoformat(),
+        "regions": regions,
+        "categories": request.categories,
+        "source": request.source,
+        "triggered_by": "admin",
+        "job_type": "manual",
+    }
+
+    trigger_file = "/app/parse_trigger.json"
+    try:
+        with open(trigger_file, 'w') as f:
+            json.dump(trigger_data, f)
+    except Exception:
+        pass
+
+    return {
+        "status": "triggered",
+        "job_id": str(job_id),
+        "message": f"Parse triggered for regions: {', '.join(regions)}",
+        "trigger_data": trigger_data,
+    }
+
+
+@router.post("/parse-single")
+async def parse_single_job(request: ParseSingleRequest, db: AsyncSession = Depends(get_db)):
+    """Parse a single job by its external ID (e.g., jobs.ge ID).
+
+    This creates a parse job record and signals the worker to parse
+    a specific job. Useful for re-parsing or fetching a specific listing.
+    """
+    # Create parse job record
+    job_id_query = """
+        INSERT INTO parse_jobs (
+            job_type, source, status, config, triggered_by,
+            total_items, created_at
+        ) VALUES (
+            'single', :source, 'pending',
+            :config::jsonb, 'admin', 1, NOW()
+        )
+        RETURNING id
+    """
+
+    result = await db.execute(
+        text(job_id_query),
+        {
+            "source": request.source,
+            "config": json.dumps({"external_id": request.external_id})
+        }
+    )
+    job_id = result.fetchone()[0]
+    await db.commit()
+
+    # Save trigger file for worker
+    trigger_data = {
+        "job_id": str(job_id),
+        "timestamp": datetime.utcnow().isoformat(),
+        "external_id": request.external_id,
+        "source": request.source,
+        "triggered_by": "admin",
+        "job_type": "single",
+    }
+
+    trigger_file = "/app/parse_trigger.json"
+    try:
+        with open(trigger_file, 'w') as f:
+            json.dump(trigger_data, f)
+    except Exception:
+        pass
+
+    # Build the expected URL for user reference
+    if request.source == "jobs.ge":
+        url = f"https://jobs.ge/ge/?view=jobs&id={request.external_id}"
+    else:
+        url = None
+
+    return {
+        "status": "triggered",
+        "job_id": str(job_id),
+        "external_id": request.external_id,
+        "source": request.source,
+        "url": url,
+        "message": f"Single job parse triggered for ID: {request.external_id}",
+    }
+
+
+@router.post("/jobs/{job_id}/retry")
+async def retry_failed_job(job_id: str, db: AsyncSession = Depends(get_db)):
+    """Retry a failed parse job.
+
+    Creates a new parse job with the same configuration as the original.
+    """
+    # Get original job config
+    query = """
+        SELECT config, source FROM parse_jobs WHERE id = :job_id
+    """
+    result = await db.execute(text(query), {"job_id": job_id})
+    row = result.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Parse job not found")
+
+    original_config = row[0]
+    source = row[1]
+
+    # Create new retry job
+    new_job_query = """
+        INSERT INTO parse_jobs (
+            job_type, source, status, config, triggered_by, created_at
+        ) VALUES (
+            'retry', :source, 'pending', :config::jsonb, 'admin', NOW()
+        )
+        RETURNING id
+    """
+
+    result = await db.execute(
+        text(new_job_query),
+        {"source": source, "config": json.dumps(original_config)}
+    )
+    new_job_id = result.fetchone()[0]
+    await db.commit()
+
+    # Save trigger file
+    trigger_data = {
+        "job_id": str(new_job_id),
+        "original_job_id": job_id,
+        "timestamp": datetime.utcnow().isoformat(),
+        "triggered_by": "admin",
+        "job_type": "retry",
+        "source": source,
+        **(original_config or {}),
+    }
+
+    trigger_file = "/app/parse_trigger.json"
+    try:
+        with open(trigger_file, 'w') as f:
+            json.dump(trigger_data, f)
+    except Exception:
+        pass
+
+    return {
+        "status": "triggered",
+        "job_id": str(new_job_id),
+        "original_job_id": job_id,
+        "message": "Retry job created and triggered",
+    }
+
+
+@router.post("/jobs/{job_id}/cancel")
+async def cancel_job(job_id: str, db: AsyncSession = Depends(get_db)):
+    """Cancel a running parse job.
+
+    Note: This marks the job as cancelled but may not immediately stop
+    the worker if it's mid-parse. The worker should check for cancellation.
+    """
+    # Update job status
+    query = """
+        UPDATE parse_jobs
+        SET status = 'cancelled', completed_at = NOW()
+        WHERE id = :job_id AND status = 'running'
+        RETURNING id
+    """
+
+    result = await db.execute(text(query), {"job_id": job_id})
+    row = result.fetchone()
+    await db.commit()
+
+    if not row:
+        raise HTTPException(
+            status_code=400,
+            detail="Job not found or not in running status"
+        )
+
+    return {
+        "status": "cancelled",
+        "job_id": job_id,
+        "message": "Job marked as cancelled",
+    }
+
+
+# ============================================================================
 # Parser Statistics Endpoints
 # ============================================================================
 
@@ -135,7 +650,7 @@ async def get_parser_stats(db: AsyncSession = Depends(get_db)):
     result = await db.execute(text("SELECT COUNT(*) FROM jobs"))
     total_jobs = result.scalar() or 0
 
-    # Jobs by region (using location field since region_id might be null)
+    # Jobs by region
     result = await db.execute(text("""
         SELECT
             COALESCE(r.name_en, j.location, 'Unknown') as name_en,
@@ -191,6 +706,20 @@ async def get_parser_stats(db: AsyncSession = Depends(get_db)):
     """))
     by_source = [{"source": row[0], "count": row[1]} for row in result.fetchall()]
 
+    # Parse job statistics
+    result = await db.execute(text("""
+        SELECT
+            COUNT(*) as total_jobs,
+            COUNT(*) FILTER (WHERE status = 'completed') as completed,
+            COUNT(*) FILTER (WHERE status = 'failed') as failed,
+            COUNT(*) FILTER (WHERE status = 'running') as running,
+            SUM(new_items) as total_new,
+            SUM(updated_items) as total_updated
+        FROM parse_jobs
+        WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+    """))
+    job_stats = result.fetchone()
+
     return {
         "total_jobs": total_jobs,
         "total_regions": len([r for r in by_region if r["name_en"] != 'Unknown']),
@@ -200,20 +729,15 @@ async def get_parser_stats(db: AsyncSession = Depends(get_db)):
         "by_region": by_region,
         "by_category": by_category,
         "by_source": by_source,
+        "parse_jobs_7d": {
+            "total": job_stats[0] or 0,
+            "completed": job_stats[1] or 0,
+            "failed": job_stats[2] or 0,
+            "running": job_stats[3] or 0,
+            "new_items": job_stats[4] or 0,
+            "updated_items": job_stats[5] or 0,
+        },
     }
-
-
-@router.get("/sources")
-async def get_parser_sources(db: AsyncSession = Depends(get_db)):
-    """Get parser source statistics."""
-    result = await db.execute(text("""
-        SELECT parsed_from, COUNT(*) as count
-        FROM jobs
-        GROUP BY parsed_from
-        ORDER BY count DESC
-    """))
-    sources = [{"source": row[0], "count": row[1]} for row in result.fetchall()]
-    return {"sources": sources}
 
 
 # ============================================================================
@@ -243,7 +767,7 @@ async def get_regions_config():
 
 @router.put("/regions")
 async def update_regions_config(regions: List[RegionConfig]):
-    """Update regions configuration (order and enabled status)."""
+    """Update regions configuration."""
     config = load_config()
     config["regions"] = [r.dict() for r in regions]
     save_config(config)
@@ -259,83 +783,43 @@ async def get_categories_config():
 
 @router.put("/categories")
 async def update_categories_config(categories: List[CategoryConfig]):
-    """Update categories configuration (order and enabled status)."""
+    """Update categories configuration."""
     config = load_config()
     config["categories"] = [c.dict() for c in categories]
     save_config(config)
     return {"status": "success", "categories": config["categories"]}
 
 
-# ============================================================================
-# Manual Parse Trigger
-# ============================================================================
-
-@router.post("/trigger")
-async def trigger_parse(request: TriggerParseRequest):
-    """Trigger a manual parse run.
-
-    This creates a signal file that the worker will pick up.
-    In production, this could use Redis/message queue for better reliability.
-    """
-    import httpx
-
-    # Build the regions parameter
-    config = load_config()
-
-    if request.regions:
-        regions = request.regions
-    else:
-        # Use all enabled regions from config
-        regions = [r["slug"] for r in config["regions"] if r["enabled"]]
-
-    # For now, we'll try to call the worker's API if available
-    # Otherwise, we'll create a trigger file
-    trigger_data = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "regions": regions,
-        "categories": request.categories,
-        "triggered_by": "admin"
-    }
-
-    # Save trigger file for worker to pick up
-    trigger_file = "/app/parse_trigger.json"
-    try:
-        with open(trigger_file, 'w') as f:
-            json.dump(trigger_data, f)
-    except Exception:
-        pass
-
-    return {
-        "status": "triggered",
-        "message": f"Parse triggered for regions: {', '.join(regions)}",
-        "trigger_data": trigger_data
-    }
-
-
 @router.get("/status")
-async def get_parser_status():
-    """Get current parser status."""
-    # Check for trigger file
-    trigger_file = "/app/parse_trigger.json"
-    pending_trigger = None
-    if os.path.exists(trigger_file):
-        try:
-            with open(trigger_file, 'r') as f:
-                pending_trigger = json.load(f)
-        except Exception:
-            pass
-
+async def get_parser_status(db: AsyncSession = Depends(get_db)):
+    """Get current parser status including any running jobs."""
     config = load_config()
     enabled_regions = [r["name_en"] for r in config["regions"] if r["enabled"]]
     enabled_categories = [c["name_en"] for c in config["categories"] if c["enabled"]]
 
+    # Check for running job
+    result = await db.execute(text("""
+        SELECT id, current_region, current_category, processed_items, total_items
+        FROM parse_jobs
+        WHERE status = 'running'
+        ORDER BY created_at DESC
+        LIMIT 1
+    """))
+    running_job = result.fetchone()
+
     return {
-        "status": "running" if pending_trigger else "idle",
+        "status": "running" if running_job else "idle",
         "interval_minutes": config.get("interval_minutes", 60),
         "enabled_regions": enabled_regions,
         "enabled_categories": enabled_categories,
-        "pending_trigger": pending_trigger,
-        "last_updated": config.get("last_updated")
+        "running_job": {
+            "id": str(running_job[0]),
+            "current_region": running_job[1],
+            "current_category": running_job[2],
+            "processed": running_job[3],
+            "total": running_job[4],
+        } if running_job else None,
+        "last_updated": config.get("last_updated"),
     }
 
 
@@ -350,7 +834,6 @@ async def preview_delete(request: DeleteDataRequest, db: AsyncSession = Depends(
     params = {}
 
     if request.delete_all:
-        # Will delete all jobs
         pass
     else:
         if request.region_slugs:
@@ -385,7 +868,6 @@ async def preview_delete(request: DeleteDataRequest, db: AsyncSession = Depends(
     result = await db.execute(text(query), params)
     count = result.scalar() or 0
 
-    # Get breakdown
     breakdown_query = f"""
         SELECT
             COALESCE(c.name_en, 'Unknown') as category,
@@ -423,13 +905,8 @@ async def delete_data(request: DeleteDataRequest, db: AsyncSession = Depends(get
     conditions = []
     params = {}
 
-    if request.delete_all:
-        # Delete all jobs - requires explicit flag
-        if not request.delete_all:
-            raise HTTPException(status_code=400, detail="Must set delete_all=true to delete all data")
-    else:
+    if not request.delete_all:
         if request.region_slugs:
-            # Need to use subquery for region
             conditions.append("""
                 region_id IN (SELECT id FROM regions WHERE slug = ANY(:region_slugs))
             """)
@@ -455,7 +932,6 @@ async def delete_data(request: DeleteDataRequest, db: AsyncSession = Depends(get
 
     where_clause = " AND ".join(conditions) if conditions else "1=1"
 
-    # First get count
     count_query = f"SELECT COUNT(*) FROM jobs WHERE {where_clause}"
     result = await db.execute(text(count_query), params)
     count = result.scalar() or 0
@@ -463,7 +939,6 @@ async def delete_data(request: DeleteDataRequest, db: AsyncSession = Depends(get
     if count == 0:
         return {"status": "success", "deleted": 0, "message": "No jobs matched the filters"}
 
-    # Delete
     delete_query = f"DELETE FROM jobs WHERE {where_clause}"
     await db.execute(text(delete_query), params)
     await db.commit()
@@ -478,7 +953,6 @@ async def delete_data(request: DeleteDataRequest, db: AsyncSession = Depends(get
 @router.get("/data/stats")
 async def get_data_stats(db: AsyncSession = Depends(get_db)):
     """Get data statistics for management UI."""
-    # Jobs by date
     result = await db.execute(text("""
         SELECT DATE(created_at) as date, COUNT(*) as count
         FROM jobs
@@ -488,7 +962,6 @@ async def get_data_stats(db: AsyncSession = Depends(get_db)):
     """))
     by_date = [{"date": str(row[0]), "count": row[1]} for row in result.fetchall()]
 
-    # Jobs by source
     result = await db.execute(text("""
         SELECT parsed_from, COUNT(*) as count
         FROM jobs
@@ -497,7 +970,6 @@ async def get_data_stats(db: AsyncSession = Depends(get_db)):
     """))
     by_source = [{"source": row[0], "count": row[1]} for row in result.fetchall()]
 
-    # Jobs by region (from location field)
     result = await db.execute(text("""
         SELECT
             COALESCE(r.name_en, j.location, 'Unknown') as region,
@@ -510,7 +982,6 @@ async def get_data_stats(db: AsyncSession = Depends(get_db)):
     """))
     by_region = [{"region": row[0], "slug": row[1], "count": row[2]} for row in result.fetchall()]
 
-    # Jobs by category
     result = await db.execute(text("""
         SELECT
             COALESCE(c.name_en, 'Unknown') as category,
@@ -523,11 +994,9 @@ async def get_data_stats(db: AsyncSession = Depends(get_db)):
     """))
     by_category = [{"category": row[0], "slug": row[1], "count": row[2]} for row in result.fetchall()]
 
-    # Total
     result = await db.execute(text("SELECT COUNT(*) FROM jobs"))
     total = result.scalar() or 0
 
-    # Date range
     result = await db.execute(text("""
         SELECT MIN(created_at), MAX(created_at) FROM jobs
     """))
