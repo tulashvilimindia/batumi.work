@@ -343,7 +343,13 @@ DNS is managed through Cloudflare with proxy enabled.
 
 ## Changelog
 
-### January 21, 2026 (Session 2) - E2E Tests & Parser UI
+### January 21, 2026 (Session 2) - E2E Tests, Parser UI & Sorting Fix
+
+**Job Sorting Fix (jobs.ge compatibility):**
+- Changed default sort from `-published_at` to `-external_id` (job ID DESC)
+- Jobs now display in exact same order as jobs.ge
+- Cast external_id to integer for proper numeric sorting
+- Updated router, schema, and service to use consistent defaults
 
 **E2E Test Suite Added:**
 - 77 comprehensive tests covering all admin console APIs
@@ -364,6 +370,9 @@ DNS is managed through Cloudflare with proxy enabled.
 - Auto-refresh progress every 5 seconds
 
 **Files Changed:**
+- `api/app/routers/jobs.py`: Changed default sort to `-external_id`
+- `api/app/schemas/job.py`: Changed JobSearchParams sort default
+- `api/app/services/job_service.py`: Added external_id sorting with integer cast
 - `admin/tests/test_e2e_admin.py`: New comprehensive E2E test suite (77 tests)
 - `admin/app/routers/jobs.py`: Added `limit` parameter support
 - `admin/app/routers/logs.py`: Added `lines` parameter support
