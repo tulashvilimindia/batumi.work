@@ -61,6 +61,7 @@ async def list_services():
 async def get_logs(
     service: str,
     tail: int = Query(100, ge=1, le=1000),
+    lines: Optional[int] = Query(None, ge=1, le=1000, description="Alias for tail"),
     since: Optional[str] = None,
 ):
     """Get container logs."""
@@ -78,11 +79,14 @@ async def get_logs(
 
     container_name = CONTAINER_NAMES[service]
 
+    # Use lines if provided, otherwise use tail
+    effective_tail = lines if lines is not None else tail
+
     try:
         container = docker_client.containers.get(container_name)
 
         kwargs = {
-            "tail": tail,
+            "tail": effective_tail,
             "timestamps": True,
         }
         if since:

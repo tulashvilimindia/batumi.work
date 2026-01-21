@@ -14,6 +14,7 @@ router = APIRouter()
 async def list_jobs(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
+    limit: Optional[int] = Query(None, ge=1, le=100, description="Alias for page_size"),
     status: Optional[str] = None,
     category: Optional[str] = None,
     region: Optional[str] = None,
@@ -21,6 +22,9 @@ async def list_jobs(
     db: AsyncSession = Depends(get_db),
 ):
     """List jobs with pagination and filters."""
+    # Use limit if provided, otherwise use page_size
+    effective_page_size = limit if limit is not None else page_size
+
     # Build query
     where_clauses = []
     params = {}
@@ -54,8 +58,8 @@ async def list_jobs(
     total = result.scalar()
 
     # Get jobs
-    offset = (page - 1) * page_size
-    params["limit"] = page_size
+    offset = (page - 1) * effective_page_size
+    params["limit"] = effective_page_size
     params["offset"] = offset
 
     query_sql = f"""
@@ -97,8 +101,8 @@ async def list_jobs(
         "items": jobs,
         "total": total,
         "page": page,
-        "page_size": page_size,
-        "pages": (total + page_size - 1) // page_size if total else 0,
+        "page_size": effective_page_size,
+        "pages": (total + effective_page_size - 1) // effective_page_size if total else 0,
     }
 
 
