@@ -3,690 +3,644 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>batumi.work Admin</title>
+    <title>Batumi.work Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .log-debug { color: #6b7280; }
-        .log-info { color: #3b82f6; }
-        .log-warning { color: #f59e0b; }
-        .log-error { color: #ef4444; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen" x-data="adminApp()" x-init="init()">
-    <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-gray-900">batumi.work Admin</h1>
-            <div class="flex items-center gap-4">
-                <span class="text-sm text-gray-500" x-text="currentTime"></span>
-                <button @click="refreshAll()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                    Refresh
-                </button>
+<body class="bg-gray-100" x-data="adminApp()" x-init="init()">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 text-white flex flex-col">
+            <div class="p-4 border-b border-gray-700">
+                <h1 class="text-xl font-bold">Batumi.work</h1>
+                <p class="text-gray-400 text-sm">Admin Dashboard</p>
             </div>
-        </div>
-    </header>
-
-    <!-- Progress Banner -->
-    <template x-if="runningJobs.length > 0">
-        <div class="bg-blue-600 text-white px-4 py-3">
-            <div class="max-w-7xl mx-auto">
-                <template x-for="job in runningJobs" :key="job.id">
-                    <div class="flex items-center justify-between mb-2 last:mb-0">
-                        <div class="flex items-center gap-3">
-                            <div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" x-show="job.status === 'running'"></div>
-                            <div class="w-4 h-4 bg-yellow-400 rounded" x-show="job.status === 'paused'"></div>
-                            <span class="font-medium" x-text="job.status === 'paused' ? 'PAUSED' : 'Parsing...'"></span>
-                            <span x-text="job.scope?.region || 'All regions'"></span>
-                            <span class="text-blue-200">|</span>
-                            <span x-text="job.progress.processed + ' processed'"></span>
-                            <span class="text-green-300" x-text="'(' + job.progress.new + ' new)'"></span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-48 bg-blue-400 rounded-full h-2">
-                                <div class="bg-white h-2 rounded-full transition-all" :style="'width: ' + job.progress.percentage + '%'"></div>
-                            </div>
-                            <span class="text-sm" x-text="job.progress.percentage + '%'"></span>
-                            <!-- Job Controls -->
-                            <template x-if="job.status === 'running'">
-                                <button @click="controlJob(job.id, 'pause')" class="ml-2 px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600">Pause</button>
-                            </template>
-                            <template x-if="job.status === 'paused'">
-                                <button @click="controlJob(job.id, 'resume')" class="ml-2 px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Resume</button>
-                            </template>
-                            <button @click="controlJob(job.id, 'stop')" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">Stop</button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-    </template>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Tab Navigation -->
-        <div class="mb-6 border-b border-gray-200">
-            <nav class="flex gap-6">
-                <button @click="activeTab = 'jobs'" :class="activeTab === 'jobs' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'" class="py-3 border-b-2 font-medium transition">
-                    Job History
-                </button>
-                <button @click="activeTab = 'stats'" :class="activeTab === 'stats' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'" class="py-3 border-b-2 font-medium transition">
-                    Statistics
-                </button>
-                <button @click="activeTab = 'manual'" :class="activeTab === 'manual' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'" class="py-3 border-b-2 font-medium transition">
-                    Manual Parse
-                </button>
-                <button @click="activeTab = 'single'" :class="activeTab === 'single' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'" class="py-3 border-b-2 font-medium transition">
-                    Parse by ID
-                </button>
-                <button @click="activeTab = 'batch'" :class="activeTab === 'batch' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'" class="py-3 border-b-2 font-medium transition">
-                    Batch Jobs
-                </button>
+            <nav class="flex-1 p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <button @click="currentPage = 'dashboard'" :class="currentPage === 'dashboard' ? 'bg-gray-700' : ''" class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center">
+                            <span class="mr-3">📊</span> Dashboard
+                        </button>
+                    </li>
+                    <li>
+                        <button @click="currentPage = 'jobs'" :class="currentPage === 'jobs' ? 'bg-gray-700' : ''" class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center">
+                            <span class="mr-3">💼</span> Jobs
+                        </button>
+                    </li>
+                    <li>
+                        <button @click="currentPage = 'parser'" :class="currentPage === 'parser' ? 'bg-gray-700' : ''" class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center">
+                            <span class="mr-3">🔄</span> Parser
+                        </button>
+                    </li>
+                    <li>
+                        <button @click="currentPage = 'analytics'" :class="currentPage === 'analytics' ? 'bg-gray-700' : ''" class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center">
+                            <span class="mr-3">📈</span> Analytics
+                        </button>
+                    </li>
+                    <li>
+                        <button @click="currentPage = 'backups'" :class="currentPage === 'backups' ? 'bg-gray-700' : ''" class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center">
+                            <span class="mr-3">💾</span> Backups
+                        </button>
+                    </li>
+                    <li>
+                        <button @click="currentPage = 'database'" :class="currentPage === 'database' ? 'bg-gray-700' : ''" class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center">
+                            <span class="mr-3">🗄️</span> Database
+                        </button>
+                    </li>
+                    <li>
+                        <button @click="currentPage = 'logs'" :class="currentPage === 'logs' ? 'bg-gray-700' : ''" class="w-full text-left px-4 py-2 rounded hover:bg-gray-700 flex items-center">
+                            <span class="mr-3">📝</span> Logs
+                        </button>
+                    </li>
+                </ul>
             </nav>
-        </div>
-
-        <!-- Job History Tab -->
-        <div x-show="activeTab === 'jobs'" x-cloak>
-            <!-- Filters -->
-            <div class="bg-white rounded-lg shadow p-4 mb-4">
-                <div class="flex flex-wrap gap-4 items-center">
-                    <select x-model="jobFilters.status" @change="loadJobs()" class="border rounded px-3 py-2 text-sm">
-                        <option value="">All Status</option>
-                        <option value="running">Running</option>
-                        <option value="paused">Paused</option>
-                        <option value="completed">Completed</option>
-                        <option value="failed">Failed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                    <select x-model="jobFilters.job_type" @change="loadJobs()" class="border rounded px-3 py-2 text-sm">
-                        <option value="">All Types</option>
-                        <option value="scheduled">Scheduled</option>
-                        <option value="manual">Manual</option>
-                        <option value="single">Single</option>
-                        <option value="batch">Batch</option>
-                    </select>
-                    <select x-model="jobFilters.days" @change="loadJobs()" class="border rounded px-3 py-2 text-sm">
-                        <option value="1">Last 24h</option>
-                        <option value="7">Last 7 days</option>
-                        <option value="30">Last 30 days</option>
-                    </select>
-                    <span class="text-sm text-gray-500" x-text="'Total: ' + jobsTotal + ' jobs'"></span>
+            <div class="p-4 border-t border-gray-700 text-sm text-gray-400">
+                <div class="flex items-center">
+                    <span class="w-2 h-2 rounded-full mr-2" :class="health === 'healthy' ? 'bg-green-500' : 'bg-red-500'"></span>
+                    <span x-text="health"></span>
                 </div>
             </div>
+        </aside>
 
-            <!-- Jobs Table -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Scope</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Results</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        <template x-for="job in jobs" :key="job.id">
-                            <tr class="hover:bg-gray-50 cursor-pointer" @click="viewJobDetails(job.id)">
-                                <td class="px-4 py-3">
-                                    <span class="px-2 py-1 text-xs rounded-full"
-                                        :class="{
-                                            'bg-green-100 text-green-800': job.status === 'completed',
-                                            'bg-red-100 text-red-800': job.status === 'failed',
-                                            'bg-blue-100 text-blue-800': job.status === 'running',
-                                            'bg-yellow-100 text-yellow-800': job.status === 'paused',
-                                            'bg-orange-100 text-orange-800': job.status === 'stopping',
-                                            'bg-gray-100 text-gray-800': job.status === 'cancelled' || job.status === 'pending'
-                                        }"
-                                        x-text="job.status">
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-sm" x-text="job.job_type"></td>
-                                <td class="px-4 py-3 text-sm">
-                                    <span x-text="job.scope?.region || 'All regions'"></span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-24 bg-gray-200 rounded-full h-2">
-                                            <div class="h-2 rounded-full transition-all"
-                                                :class="job.status === 'failed' ? 'bg-red-500' : 'bg-green-500'"
-                                                :style="'width: ' + job.progress.percentage + '%'"></div>
-                                        </div>
-                                        <span class="text-xs text-gray-500" x-text="job.progress.percentage + '%'"></span>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3 text-sm">
-                                    <span class="text-green-600" x-text="job.progress.new + ' new'"></span>,
-                                    <span class="text-blue-600" x-text="job.progress.updated + ' upd'"></span>,
-                                    <span class="text-gray-500" x-text="job.progress.skipped + ' skip'"></span>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-500" x-text="formatTime(job.timing.started_at)"></td>
-                                <td class="px-4 py-3 text-sm" @click.stop>
-                                    <template x-if="job.controls.can_pause">
-                                        <button @click="controlJob(job.id, 'pause')" class="text-yellow-600 hover:underline mr-2">Pause</button>
-                                    </template>
-                                    <template x-if="job.controls.can_resume">
-                                        <button @click="controlJob(job.id, 'resume')" class="text-green-600 hover:underline mr-2">Resume</button>
-                                    </template>
-                                    <template x-if="job.controls.can_stop">
-                                        <button @click="controlJob(job.id, 'stop')" class="text-red-600 hover:underline mr-2">Stop</button>
-                                    </template>
-                                    <template x-if="job.controls.can_restart">
-                                        <button @click="controlJob(job.id, 'restart')" class="text-blue-600 hover:underline">Restart</button>
-                                    </template>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            <!-- Dashboard Page -->
+            <div x-show="currentPage === 'dashboard'" x-cloak class="p-6">
+                <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
 
-        <!-- Job Details Modal -->
-        <div x-show="showJobModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showJobModal = false">
-            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-                <div class="px-6 py-4 border-b flex items-center justify-between">
-                    <h3 class="text-lg font-semibold">Job Details</h3>
-                    <button @click="showJobModal = false" class="text-gray-500 hover:text-gray-700">&times;</button>
-                </div>
-                <div class="p-6 overflow-auto max-h-[70vh]" x-show="selectedJob">
-                    <!-- Job Info -->
-                    <div class="grid grid-cols-3 gap-4 mb-6">
-                        <div>
-                            <label class="text-xs text-gray-500">Status</label>
-                            <p class="font-medium" x-text="selectedJob?.status"></p>
+                <div x-show="loading" class="flex justify-center py-8"><div class="loader"></div></div>
+
+                <div x-show="!loading && dashboard" class="space-y-6">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Total Jobs</div>
+                            <div class="text-3xl font-bold" x-text="dashboard?.stats?.total_jobs || 0"></div>
                         </div>
-                        <div>
-                            <label class="text-xs text-gray-500">Type</label>
-                            <p class="font-medium" x-text="selectedJob?.job_type"></p>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Active Jobs</div>
+                            <div class="text-3xl font-bold text-green-600" x-text="dashboard?.stats?.active_jobs || 0"></div>
                         </div>
-                        <div>
-                            <label class="text-xs text-gray-500">Triggered By</label>
-                            <p class="font-medium" x-text="selectedJob?.triggered_by"></p>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Jobs Today</div>
+                            <div class="text-3xl font-bold text-blue-600" x-text="dashboard?.stats?.jobs_today || 0"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">With Salary</div>
+                            <div class="text-3xl font-bold text-purple-600" x-text="dashboard?.stats?.jobs_with_salary || 0"></div>
                         </div>
                     </div>
 
-                    <!-- Progress -->
-                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                        <h4 class="font-medium mb-3">Progress</h4>
-                        <div class="grid grid-cols-4 gap-4 text-center">
-                            <div>
-                                <p class="text-2xl font-bold text-green-600" x-text="selectedJob?.progress?.new || 0"></p>
-                                <p class="text-xs text-gray-500">New</p>
-                            </div>
-                            <div>
-                                <p class="text-2xl font-bold text-blue-600" x-text="selectedJob?.progress?.updated || 0"></p>
-                                <p class="text-xs text-gray-500">Updated</p>
-                            </div>
-                            <div>
-                                <p class="text-2xl font-bold text-gray-600" x-text="selectedJob?.progress?.skipped || 0"></p>
-                                <p class="text-xs text-gray-500">Skipped</p>
-                            </div>
-                            <div>
-                                <p class="text-2xl font-bold text-red-600" x-text="selectedJob?.progress?.failed || 0"></p>
-                                <p class="text-xs text-gray-500">Failed</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tab Navigation within Modal -->
-                    <div class="border-b mb-4">
-                        <nav class="flex gap-4">
-                            <button @click="jobDetailTab = 'logs'" :class="jobDetailTab === 'logs' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'" class="py-2 border-b-2 text-sm">Logs</button>
-                            <button @click="jobDetailTab = 'items'" :class="jobDetailTab === 'items' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'" class="py-2 border-b-2 text-sm">Items</button>
-                            <button @click="jobDetailTab = 'skip'" :class="jobDetailTab === 'skip' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'" class="py-2 border-b-2 text-sm">Skip Reasons</button>
-                        </nav>
-                    </div>
-
-                    <!-- Logs Tab -->
-                    <div x-show="jobDetailTab === 'logs'" class="max-h-64 overflow-auto">
-                        <template x-if="selectedJob?.logs?.length > 0">
-                            <div class="space-y-1 font-mono text-xs">
-                                <template x-for="log in selectedJob.logs" :key="log.id">
-                                    <div class="flex gap-2" :class="'log-' + log.level">
-                                        <span class="text-gray-400" x-text="formatTime(log.created_at)"></span>
-                                        <span class="font-bold uppercase w-12" x-text="log.level"></span>
-                                        <span x-text="log.region ? '[' + log.region + ']' : ''"></span>
-                                        <span x-text="log.message"></span>
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
-                        <p x-show="!selectedJob?.logs?.length" class="text-gray-500 text-sm">No logs available</p>
-                    </div>
-
-                    <!-- Items Tab -->
-                    <div x-show="jobDetailTab === 'items'" class="max-h-64 overflow-auto">
-                        <template x-if="selectedJob?.items?.length > 0">
-                            <table class="min-w-full text-xs">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-2 py-1 text-left">ID</th>
-                                        <th class="px-2 py-1 text-left">Title</th>
-                                        <th class="px-2 py-1 text-left">Result</th>
-                                        <th class="px-2 py-1 text-left">Skip Reason</th>
-                                        <th class="px-2 py-1 text-left">Time (ms)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="item in selectedJob.items" :key="item.id">
-                                        <tr class="border-b">
-                                            <td class="px-2 py-1" x-text="item.external_id"></td>
-                                            <td class="px-2 py-1 truncate max-w-xs" x-text="item.title || '-'"></td>
-                                            <td class="px-2 py-1">
-                                                <span :class="{
-                                                    'text-green-600': item.result === 'new',
-                                                    'text-blue-600': item.result === 'updated',
-                                                    'text-gray-500': item.result === 'skipped',
-                                                    'text-red-600': item.result === 'failed'
-                                                }" x-text="item.result"></span>
-                                            </td>
-                                            <td class="px-2 py-1 text-gray-500" x-text="item.skip_reason || '-'"></td>
-                                            <td class="px-2 py-1" x-text="item.processing_ms || '-'"></td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </template>
-                        <p x-show="!selectedJob?.items?.length" class="text-gray-500 text-sm">No items available</p>
-                    </div>
-
-                    <!-- Skip Reasons Tab -->
-                    <div x-show="jobDetailTab === 'skip'">
-                        <template x-if="selectedJobSkipReasons?.length > 0">
+                    <!-- Quick Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="font-bold mb-4">Jobs by Region</h3>
                             <div class="space-y-2">
-                                <template x-for="reason in selectedJobSkipReasons" :key="reason.reason">
-                                    <div class="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
-                                        <span class="font-mono text-sm" x-text="reason.reason"></span>
-                                        <span class="bg-gray-200 px-2 py-1 rounded text-sm" x-text="reason.count"></span>
+                                <template x-for="region in (dashboard?.by_region || []).slice(0, 5)" :key="region.lid">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600" x-text="'LID ' + region.lid"></span>
+                                        <span class="font-semibold" x-text="region.count"></span>
                                     </div>
                                 </template>
                             </div>
-                        </template>
-                        <p x-show="!selectedJobSkipReasons?.length" class="text-gray-500 text-sm">No skip reasons</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Statistics Tab -->
-        <div x-show="activeTab === 'stats'" x-cloak>
-            <div class="grid grid-cols-4 gap-4 mb-6">
-                <div class="bg-white rounded-lg shadow p-4">
-                    <p class="text-3xl font-bold text-blue-600" x-text="stats?.total_jobs || 0"></p>
-                    <p class="text-sm text-gray-500">Total Jobs</p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-4">
-                    <p class="text-3xl font-bold text-green-600" x-text="stats?.parsed_today || 0"></p>
-                    <p class="text-sm text-gray-500">Parsed Today</p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-4">
-                    <p class="text-3xl font-bold text-purple-600" x-text="stats?.total_regions || 0"></p>
-                    <p class="text-sm text-gray-500">Regions</p>
-                </div>
-                <div class="bg-white rounded-lg shadow p-4">
-                    <p class="text-3xl font-bold text-orange-600" x-text="stats?.total_categories || 0"></p>
-                    <p class="text-sm text-gray-500">Categories</p>
-                </div>
-            </div>
-
-            <!-- 7-Day Parse Stats -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <h3 class="font-semibold mb-4">7-Day Parsing Statistics</h3>
-                <div class="grid grid-cols-4 gap-4 text-center">
-                    <div>
-                        <p class="text-2xl font-bold" x-text="stats?.parse_jobs_7d?.total || 0"></p>
-                        <p class="text-sm text-gray-500">Parse Jobs</p>
-                    </div>
-                    <div>
-                        <p class="text-2xl font-bold text-green-600" x-text="stats?.parse_jobs_7d?.new_items || 0"></p>
-                        <p class="text-sm text-gray-500">New Items</p>
-                    </div>
-                    <div>
-                        <p class="text-2xl font-bold text-blue-600" x-text="stats?.parse_jobs_7d?.updated_items || 0"></p>
-                        <p class="text-sm text-gray-500">Updated Items</p>
-                    </div>
-                    <div>
-                        <p class="text-2xl font-bold text-gray-500" x-text="stats?.parse_jobs_7d?.skipped_items || 0"></p>
-                        <p class="text-sm text-gray-500">Skipped Items</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Skip Reasons -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <h3 class="font-semibold mb-4">Skip Reasons (7 days)</h3>
-                <div class="space-y-2">
-                    <template x-for="reason in stats?.skip_reasons_7d || []" :key="reason.reason">
-                        <div class="flex items-center justify-between">
-                            <span class="font-mono text-sm" x-text="reason.reason"></span>
-                            <span class="bg-gray-100 px-2 py-1 rounded" x-text="reason.count"></span>
                         </div>
-                    </template>
-                </div>
-            </div>
-
-            <!-- By Category -->
-            <div class="grid grid-cols-2 gap-6">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-semibold mb-4">By Category</h3>
-                    <div class="space-y-2 max-h-64 overflow-auto">
-                        <template x-for="cat in stats?.by_category || []" :key="cat.slug">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm" x-text="cat.name_en"></span>
-                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs" x-text="cat.count"></span>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="font-bold mb-4">Jobs by Category</h3>
+                            <div class="space-y-2">
+                                <template x-for="cat in (dashboard?.by_category || []).slice(0, 5)" :key="cat.cid">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600" x-text="'CID ' + cat.cid"></span>
+                                        <span class="font-semibold" x-text="cat.count"></span>
+                                    </div>
+                                </template>
                             </div>
-                        </template>
+                        </div>
                     </div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-semibold mb-4">By Region</h3>
-                    <div class="space-y-2 max-h-64 overflow-auto">
-                        <template x-for="reg in stats?.by_region || []" :key="reg.slug">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm" x-text="reg.name_en"></span>
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs" x-text="reg.count"></span>
+
+                    <!-- System Info -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="font-bold mb-4">System Status</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Parser Last Run:</span>
+                                <div x-text="dashboard?.parser?.last_run || 'Never'"></div>
                             </div>
-                        </template>
+                            <div>
+                                <span class="text-gray-500">Backups:</span>
+                                <div x-text="(dashboard?.backup?.count || 0) + ' files'"></div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Regions:</span>
+                                <div x-text="dashboard?.stats?.total_regions || 0"></div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Categories:</span>
+                                <div x-text="dashboard?.stats?.total_categories || 0"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Manual Parse Tab -->
-        <div x-show="activeTab === 'manual'" x-cloak>
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="font-semibold mb-4">Trigger Manual Parse</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Select Regions</label>
-                        <div class="grid grid-cols-4 gap-2">
-                            <template x-for="region in config?.regions || []" :key="region.slug">
-                                <label class="flex items-center gap-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                                    <input type="checkbox" :value="region.slug" x-model="parseForm.regions" class="rounded">
-                                    <span class="text-sm" x-text="region.name_en"></span>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button @click="triggerParse()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                            Start Parse
-                        </button>
-                        <button @click="parseForm.regions = config.regions.map(r => r.slug)" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                            Select All
-                        </button>
-                        <button @click="parseForm.regions = []" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                            Clear
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <!-- Jobs Page -->
+            <div x-show="currentPage === 'jobs'" x-cloak class="p-6">
+                <h2 class="text-2xl font-bold mb-6">Jobs</h2>
 
-        <!-- Parse by ID Tab -->
-        <div x-show="activeTab === 'single'" x-cloak>
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="font-semibold mb-4">Parse Single Job by ID</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Jobs.ge Job ID or URL</label>
-                        <input type="text" x-model="singleParseId" @input="extractJobId()" placeholder="e.g., 123456 or https://jobs.ge/ge/?view=jobs&id=123456" class="w-full border rounded px-4 py-2">
-                        <p class="text-xs text-gray-500 mt-1">Enter the job ID from jobs.ge or paste the full URL</p>
-                    </div>
-                    <button @click="parseSingleJob()" :disabled="!singleParseId" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                        Parse Job
-                    </button>
-                    <template x-if="singleParseResult">
-                        <div class="mt-4 p-4 rounded" :class="singleParseResult.success ? 'bg-green-50' : 'bg-red-50'">
-                            <p class="font-medium" x-text="singleParseResult.success ? 'Success!' : 'Failed'"></p>
-                            <p class="text-sm" x-text="singleParseResult.title || singleParseResult.message"></p>
-                            <p class="text-xs text-gray-500" x-text="'Result: ' + (singleParseResult.result || 'N/A')"></p>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </div>
-
-        <!-- Batch Jobs Tab -->
-        <div x-show="activeTab === 'batch'" x-cloak>
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <h3 class="font-semibold mb-4">Create Batch Job</h3>
-                <p class="text-sm text-gray-500 mb-4">Run multiple parse jobs - one per region</p>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Select Regions</label>
-                        <div class="grid grid-cols-4 gap-2">
-                            <template x-for="region in config?.regions || []" :key="region.slug">
-                                <label class="flex items-center gap-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                                    <input type="checkbox" :value="region.slug" x-model="batchForm.regions" class="rounded">
-                                    <span class="text-sm" x-text="region.name_en"></span>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Execution Mode</label>
-                        <select x-model="batchForm.mode" class="border rounded px-3 py-2">
-                            <option value="sequential">Sequential (one at a time)</option>
-                            <option value="parallel">Parallel (all at once)</option>
+                <!-- Filters -->
+                <div class="bg-white rounded-lg shadow p-4 mb-6">
+                    <div class="flex flex-wrap gap-4">
+                        <input type="text" x-model="jobFilters.q" @input.debounce.300ms="loadJobs()" placeholder="Search..." class="border rounded px-3 py-2">
+                        <select x-model="jobFilters.status" @change="loadJobs()" class="border rounded px-3 py-2">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <select x-model="jobFilters.cid" @change="loadJobs()" class="border rounded px-3 py-2">
+                            <option value="">All Categories</option>
+                            <option value="1">Administration (1)</option>
+                            <option value="2">Sales (2)</option>
+                            <option value="3">Finance (3)</option>
+                            <option value="6">IT (6)</option>
+                            <option value="8">Medicine (8)</option>
                         </select>
                     </div>
-                    <button @click="triggerBatch()" :disabled="batchForm.regions.length < 2" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                        Start Batch (<span x-text="batchForm.regions.length"></span> jobs)
-                    </button>
+                </div>
+
+                <div x-show="loading" class="flex justify-center py-8"><div class="loader"></div></div>
+
+                <div x-show="!loading" class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Title</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Company</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">CID/LID</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <template x-for="job in jobs.items || []" :key="job.id">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium" x-text="job.title_ge?.substring(0, 50) + '...'"></div>
+                                        <div class="text-xs text-gray-500" x-text="job.parsed_from"></div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm" x-text="job.company_name || '-'"></td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-1 text-xs rounded-full" :class="job.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'" x-text="job.status"></span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm" x-text="job.jobsge_cid + '/' + job.jobsge_lid"></td>
+                                    <td class="px-4 py-3">
+                                        <button @click="toggleJobStatus(job)" class="text-blue-600 hover:underline text-sm mr-2">Toggle</button>
+                                        <button @click="deleteJob(job.id)" class="text-red-600 hover:underline text-sm">Delete</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    <div class="px-4 py-3 bg-gray-50 flex justify-between items-center">
+                        <span class="text-sm text-gray-600" x-text="'Total: ' + (jobs.total || 0)"></span>
+                        <div class="flex gap-2">
+                            <button @click="jobFilters.page--; loadJobs()" :disabled="jobFilters.page <= 1" class="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
+                            <span class="px-3 py-1" x-text="'Page ' + jobFilters.page"></span>
+                            <button @click="jobFilters.page++; loadJobs()" :disabled="jobFilters.page >= jobs.pages" class="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Batch History -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="px-4 py-3 border-b">
-                    <h3 class="font-semibold">Batch History</h3>
+            <!-- Parser Page -->
+            <div x-show="currentPage === 'parser'" x-cloak class="p-6">
+                <h2 class="text-2xl font-bold mb-6">Parser Statistics</h2>
+
+                <div x-show="loading" class="flex justify-center py-8"><div class="loader"></div></div>
+
+                <div x-show="!loading && parserStats" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Total Jobs</div>
+                            <div class="text-3xl font-bold" x-text="parserStats?.total_jobs || 0"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Parsed Today</div>
+                            <div class="text-3xl font-bold text-blue-600" x-text="parserStats?.parsed_today || 0"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Regions</div>
+                            <div class="text-3xl font-bold" x-text="parserStats?.total_regions || 0"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Categories</div>
+                            <div class="text-3xl font-bold" x-text="parserStats?.total_categories || 0"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="font-bold mb-4">By Region</h3>
+                            <div class="space-y-2 max-h-96 overflow-auto">
+                                <template x-for="region in parserStats?.by_region || []" :key="region.lid">
+                                    <div class="flex justify-between py-1 border-b">
+                                        <span class="text-gray-600" x-text="region.name"></span>
+                                        <span class="font-semibold" x-text="region.count"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="font-bold mb-4">By Category</h3>
+                            <div class="space-y-2 max-h-96 overflow-auto">
+                                <template x-for="cat in parserStats?.by_category || []" :key="cat.cid">
+                                    <div class="flex justify-between py-1 border-b">
+                                        <span class="text-gray-600" x-text="cat.name"></span>
+                                        <span class="font-semibold" x-text="cat.count"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <table class="min-w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jobs</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        <template x-for="batch in batches" :key="batch.id">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3">
-                                    <span class="px-2 py-1 text-xs rounded-full"
-                                        :class="{
-                                            'bg-green-100 text-green-800': batch.status === 'completed',
-                                            'bg-red-100 text-red-800': batch.status === 'failed',
-                                            'bg-blue-100 text-blue-800': batch.status === 'running',
-                                        }"
-                                        x-text="batch.status">
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-sm" x-text="batch.mode"></td>
-                                <td class="px-4 py-3 text-sm">
-                                    <span x-text="batch.jobs.completed + '/' + batch.jobs.total"></span>
-                                    <span class="text-red-500" x-show="batch.jobs.failed > 0" x-text="' (' + batch.jobs.failed + ' failed)'"></span>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-500" x-text="formatTime(batch.timing.created_at)"></td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
             </div>
-        </div>
-    </main>
+
+            <!-- Analytics Page -->
+            <div x-show="currentPage === 'analytics'" x-cloak class="p-6">
+                <h2 class="text-2xl font-bold mb-6">Analytics</h2>
+
+                <div x-show="loading" class="flex justify-center py-8"><div class="loader"></div></div>
+
+                <div x-show="!loading && analyticsData" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Total Jobs</div>
+                            <div class="text-3xl font-bold" x-text="analyticsData?.overview?.total_jobs || 0"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">With Salary</div>
+                            <div class="text-3xl font-bold text-green-600" x-text="analyticsData?.overview?.with_salary || 0"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Avg Min Salary</div>
+                            <div class="text-3xl font-bold text-blue-600" x-text="(analyticsData?.salary?.average?.min || 0) + ' GEL'"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="text-gray-500 text-sm">Avg Max Salary</div>
+                            <div class="text-3xl font-bold text-purple-600" x-text="(analyticsData?.salary?.average?.max || 0) + ' GEL'"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="font-bold mb-4">Top Companies</h3>
+                        <div class="space-y-2">
+                            <template x-for="company in analyticsData?.trends?.top_companies || []" :key="company.company">
+                                <div class="flex justify-between py-1 border-b">
+                                    <span class="text-gray-600" x-text="company.company"></span>
+                                    <span class="font-semibold" x-text="company.count + ' jobs'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backups Page -->
+            <div x-show="currentPage === 'backups'" x-cloak class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Backups</h2>
+                    <button @click="createBackup()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Create Backup</button>
+                </div>
+
+                <div x-show="loading" class="flex justify-center py-8"><div class="loader"></div></div>
+
+                <div x-show="!loading" class="space-y-6">
+                    <!-- Status -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="w-3 h-3 rounded-full mr-2" :class="backupStatus?.health === 'healthy' ? 'bg-green-500' : backupStatus?.health === 'warning' ? 'bg-yellow-500' : 'bg-red-500'"></span>
+                            <span class="font-bold" x-text="backupStatus?.health || 'Unknown'"></span>
+                        </div>
+                        <p class="text-gray-600" x-text="backupStatus?.message"></p>
+                        <div class="mt-4 text-sm text-gray-500">
+                            <span x-text="'Total: ' + (backupStatus?.count || 0) + ' backups'"></span>
+                            <span class="ml-4" x-text="'Size: ' + (backupStatus?.total_size_mb || 0) + ' MB'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Backup List -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Type</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Size</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Created</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <template x-for="backup in backups?.backups || []" :key="backup.name">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 font-medium" x-text="backup.name"></td>
+                                        <td class="px-4 py-3">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100" x-text="backup.type"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm" x-text="backup.size_mb + ' MB'"></td>
+                                        <td class="px-4 py-3 text-sm" x-text="backup.created_at"></td>
+                                        <td class="px-4 py-3">
+                                            <a :href="'/api/backups/' + backup.path" class="text-blue-600 hover:underline text-sm">Download</a>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Page -->
+            <div x-show="currentPage === 'database'" x-cloak class="p-6">
+                <h2 class="text-2xl font-bold mb-6">Database Browser</h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Tables List -->
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <h3 class="font-bold mb-4">Tables</h3>
+                        <div x-show="loading" class="flex justify-center py-4"><div class="loader"></div></div>
+                        <div x-show="!loading" class="space-y-2">
+                            <template x-for="table in dbTables?.tables || []" :key="table.name">
+                                <button @click="loadTable(table.name)" class="w-full text-left px-3 py-2 rounded hover:bg-gray-100" :class="selectedTable === table.name ? 'bg-blue-100' : ''">
+                                    <div class="font-medium" x-text="table.name"></div>
+                                    <div class="text-xs text-gray-500" x-text="table.row_count + ' rows'"></div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Table Data -->
+                    <div class="lg:col-span-3 bg-white rounded-lg shadow p-4">
+                        <div x-show="!selectedTable" class="text-gray-500 py-8 text-center">Select a table to view data</div>
+                        <div x-show="selectedTable">
+                            <h3 class="font-bold mb-4" x-text="selectedTable"></h3>
+
+                            <!-- Columns -->
+                            <div class="mb-4 text-sm">
+                                <span class="font-semibold">Columns: </span>
+                                <span x-text="tableInfo?.columns?.map(c => c.name).join(', ')"></span>
+                            </div>
+
+                            <!-- Sample Data -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <template x-for="col in tableInfo?.columns?.slice(0, 6) || []" :key="col.name">
+                                                <th class="px-2 py-2 text-left" x-text="col.name"></th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        <template x-for="(row, idx) in tableInfo?.sample_rows || []" :key="idx">
+                                            <tr>
+                                                <template x-for="col in tableInfo?.columns?.slice(0, 6) || []" :key="col.name">
+                                                    <td class="px-2 py-2 truncate max-w-xs" x-text="row[col.name]"></td>
+                                                </template>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Query Box -->
+                        <div class="mt-6 pt-6 border-t">
+                            <h4 class="font-bold mb-2">Run Query (SELECT only)</h4>
+                            <textarea x-model="sqlQuery" class="w-full border rounded p-2 font-mono text-sm" rows="3" placeholder="SELECT * FROM jobs LIMIT 10"></textarea>
+                            <button @click="runQuery()" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Run</button>
+
+                            <div x-show="queryResult" class="mt-4 overflow-x-auto">
+                                <div class="text-sm text-gray-500 mb-2" x-text="'Rows: ' + (queryResult?.row_count || 0)"></div>
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <template x-for="col in queryResult?.columns || []" :key="col">
+                                                <th class="px-2 py-2 text-left" x-text="col"></th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        <template x-for="(row, idx) in queryResult?.rows || []" :key="idx">
+                                            <tr>
+                                                <template x-for="col in queryResult?.columns || []" :key="col">
+                                                    <td class="px-2 py-2 truncate max-w-xs" x-text="row[col]"></td>
+                                                </template>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Page -->
+            <div x-show="currentPage === 'logs'" x-cloak class="p-6">
+                <h2 class="text-2xl font-bold mb-6">Container Logs</h2>
+
+                <div class="flex gap-4 mb-6">
+                    <select x-model="selectedService" @change="loadLogs()" class="border rounded px-3 py-2">
+                        <option value="">Select Service</option>
+                        <option value="api">API</option>
+                        <option value="worker">Worker (Parser)</option>
+                        <option value="db">Database</option>
+                        <option value="web">Web (Nginx)</option>
+                    </select>
+                    <select x-model="logTail" @change="loadLogs()" class="border rounded px-3 py-2">
+                        <option value="50">Last 50 lines</option>
+                        <option value="100">Last 100 lines</option>
+                        <option value="500">Last 500 lines</option>
+                    </select>
+                    <button @click="loadLogs()" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">Refresh</button>
+                </div>
+
+                <div x-show="loading" class="flex justify-center py-8"><div class="loader"></div></div>
+
+                <div x-show="!loading && logs" class="bg-black text-green-400 rounded-lg p-4 font-mono text-sm overflow-auto max-h-[600px]">
+                    <template x-for="(line, idx) in logs?.lines || []" :key="idx">
+                        <div x-text="line" class="whitespace-pre-wrap"></div>
+                    </template>
+                    <div x-show="!logs?.lines?.length" class="text-gray-500">No logs available</div>
+                </div>
+            </div>
+        </main>
+    </div>
 
     <script>
         function adminApp() {
             return {
-                activeTab: 'jobs',
-                currentTime: '',
-                runningJobs: [],
-                jobs: [],
-                jobsTotal: 0,
-                jobFilters: { status: '', job_type: '', days: '7' },
-                showJobModal: false,
-                selectedJob: null,
-                selectedJobSkipReasons: [],
-                jobDetailTab: 'logs',
-                stats: null,
-                config: null,
-                batches: [],
-                parseForm: { regions: [] },
-                batchForm: { regions: [], mode: 'sequential' },
-                singleParseId: '',
-                singleParseResult: null,
-                progressInterval: null,
+                currentPage: 'dashboard',
+                loading: false,
+                health: 'checking...',
+
+                // Dashboard
+                dashboard: null,
+
+                // Jobs
+                jobs: {},
+                jobFilters: { page: 1, status: '', cid: '', q: '' },
+
+                // Parser
+                parserStats: null,
+
+                // Analytics
+                analyticsData: null,
+
+                // Backups
+                backups: null,
+                backupStatus: null,
+
+                // Database
+                dbTables: null,
+                selectedTable: null,
+                tableInfo: null,
+                sqlQuery: '',
+                queryResult: null,
+
+                // Logs
+                selectedService: '',
+                logTail: '100',
+                logs: null,
 
                 async init() {
-                    this.updateTime();
-                    setInterval(() => this.updateTime(), 1000);
-                    await this.loadConfig();
-                    await this.refreshAll();
-                    this.startProgressPolling();
-                },
-
-                updateTime() {
-                    this.currentTime = new Date().toLocaleString();
+                    await this.checkHealth();
+                    await this.loadDashboard();
                 },
 
                 async api(endpoint, options = {}) {
-                    const response = await fetch('/api/parser' + endpoint, {
-                        headers: { 'Content-Type': 'application/json' },
-                        ...options,
-                    });
-                    return response.json();
+                    try {
+                        const res = await fetch('/api' + endpoint, options);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return await res.json();
+                    } catch (e) {
+                        console.error('API Error:', e);
+                        return null;
+                    }
                 },
 
-                async refreshAll() {
-                    await Promise.all([
-                        this.loadJobs(),
-                        this.loadProgress(),
-                        this.loadStats(),
-                        this.loadBatches(),
-                    ]);
+                async checkHealth() {
+                    const data = await this.api('/health');
+                    this.health = data?.status || 'error';
                 },
 
-                async loadConfig() {
-                    this.config = await this.api('/config');
+                async loadDashboard() {
+                    this.loading = true;
+                    this.dashboard = await this.api('/dashboard');
+                    this.loading = false;
                 },
 
                 async loadJobs() {
-                    const params = new URLSearchParams({
-                        limit: '50',
-                        days: this.jobFilters.days,
-                    });
+                    this.loading = true;
+                    const params = new URLSearchParams();
+                    params.set('page', this.jobFilters.page);
                     if (this.jobFilters.status) params.set('status', this.jobFilters.status);
-                    if (this.jobFilters.job_type) params.set('job_type', this.jobFilters.job_type);
-
-                    const data = await this.api('/jobs?' + params.toString());
-                    this.jobs = data.jobs || [];
-                    this.jobsTotal = data.total || 0;
+                    if (this.jobFilters.cid) params.set('cid', this.jobFilters.cid);
+                    if (this.jobFilters.q) params.set('q', this.jobFilters.q);
+                    this.jobs = await this.api('/jobs?' + params.toString()) || {};
+                    this.loading = false;
                 },
 
-                async loadProgress() {
-                    const data = await this.api('/progress');
-                    this.runningJobs = data.jobs || [];
-                },
-
-                async loadStats() {
-                    this.stats = await this.api('/stats');
-                },
-
-                async loadBatches() {
-                    const data = await this.api('/batches');
-                    this.batches = data.batches || [];
-                },
-
-                startProgressPolling() {
-                    this.progressInterval = setInterval(async () => {
-                        await this.loadProgress();
-                        if (this.runningJobs.length > 0) {
-                            await this.loadJobs();
-                        }
-                    }, 2000);
-                },
-
-                async viewJobDetails(jobId) {
-                    const job = await this.api('/jobs/' + jobId + '?include_items=true&include_logs=true');
-                    this.selectedJob = job;
-                    this.jobDetailTab = 'logs';
-
-                    const skipData = await this.api('/jobs/' + jobId + '/skip-reasons');
-                    this.selectedJobSkipReasons = skipData.skip_reasons || [];
-
-                    this.showJobModal = true;
-                },
-
-                async controlJob(jobId, action) {
-                    await this.api('/jobs/' + jobId + '/control', {
-                        method: 'POST',
-                        body: JSON.stringify({ action }),
-                    });
-                    await this.loadProgress();
+                async toggleJobStatus(job) {
+                    const newStatus = job.status === 'active' ? 'inactive' : 'active';
+                    await this.api(`/jobs/${job.id}/status?status=${newStatus}`, { method: 'PATCH' });
                     await this.loadJobs();
                 },
 
-                async triggerParse() {
-                    const result = await this.api('/trigger', {
+                async deleteJob(id) {
+                    if (!confirm('Delete this job?')) return;
+                    await this.api(`/jobs/${id}`, { method: 'DELETE' });
+                    await this.loadJobs();
+                },
+
+                async loadParserStats() {
+                    this.loading = true;
+                    this.parserStats = await this.api('/parser/stats');
+                    this.loading = false;
+                },
+
+                async loadAnalytics() {
+                    this.loading = true;
+                    const [overview, salary, trends] = await Promise.all([
+                        this.api('/analytics/overview'),
+                        this.api('/analytics/salary'),
+                        this.api('/analytics/trends'),
+                    ]);
+                    this.analyticsData = { overview, salary, trends };
+                    this.loading = false;
+                },
+
+                async loadBackups() {
+                    this.loading = true;
+                    [this.backups, this.backupStatus] = await Promise.all([
+                        this.api('/backups'),
+                        this.api('/backups/status'),
+                    ]);
+                    this.loading = false;
+                },
+
+                async createBackup() {
+                    this.loading = true;
+                    await this.api('/backups', { method: 'POST' });
+                    await this.loadBackups();
+                },
+
+                async loadDbTables() {
+                    this.loading = true;
+                    this.dbTables = await this.api('/database/tables');
+                    this.loading = false;
+                },
+
+                async loadTable(name) {
+                    this.selectedTable = name;
+                    this.tableInfo = await this.api(`/database/tables/${name}`);
+                },
+
+                async runQuery() {
+                    if (!this.sqlQuery.trim()) return;
+                    this.queryResult = await this.api('/database/query', {
                         method: 'POST',
-                        body: JSON.stringify({
-                            regions: this.parseForm.regions.length > 0 ? this.parseForm.regions : null,
-                            source: 'jobs.ge',
-                        }),
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sql: this.sqlQuery }),
                     });
-                    if (result.success) {
-                        this.activeTab = 'jobs';
-                        await this.refreshAll();
+                },
+
+                async loadLogs() {
+                    if (!this.selectedService) return;
+                    this.loading = true;
+                    this.logs = await this.api(`/logs/${this.selectedService}?tail=${this.logTail}`);
+                    this.loading = false;
+                },
+
+                // Watch for page changes
+                $watch: {
+                    currentPage(page) {
+                        this.loading = false;
+                        if (page === 'dashboard') this.loadDashboard();
+                        else if (page === 'jobs') this.loadJobs();
+                        else if (page === 'parser') this.loadParserStats();
+                        else if (page === 'analytics') this.loadAnalytics();
+                        else if (page === 'backups') this.loadBackups();
+                        else if (page === 'database') this.loadDbTables();
                     }
-                },
-
-                async triggerBatch() {
-                    const result = await this.api('/trigger-batch', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            regions: this.batchForm.regions,
-                            mode: this.batchForm.mode,
-                            source: 'jobs.ge',
-                        }),
-                    });
-                    if (result.success) {
-                        await this.loadBatches();
-                        this.batchForm.regions = [];
-                    }
-                },
-
-                extractJobId() {
-                    const match = this.singleParseId.match(/id=(\d+)/);
-                    if (match) {
-                        this.singleParseId = match[1];
-                    }
-                },
-
-                async parseSingleJob() {
-                    this.singleParseResult = null;
-                    const result = await this.api('/parse-single', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            external_id: this.singleParseId,
-                            source: 'jobs.ge',
-                        }),
-                    });
-                    this.singleParseResult = result;
-                },
-
-                formatTime(isoString) {
-                    if (!isoString) return '-';
-                    return new Date(isoString).toLocaleString();
-                },
+                }
             };
         }
     </script>
