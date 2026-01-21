@@ -32,16 +32,16 @@ All features tested and verified working:
 | Endpoint | Status | Result |
 |----------|--------|--------|
 | `/api/health` | ✅ Pass | `{"status":"healthy","service":"admin"}` |
-| `/api/dashboard` | ✅ Pass | 331 total jobs, 99 with salary |
+| `/api/dashboard` | ✅ Pass | 356 total jobs, 106 with salary |
 | `/api/jobs` | ✅ Pass | Returns paginated job list with filters |
-| `/api/analytics/overview` | ✅ Pass | Stats: 331 active, 10 VIP |
-| `/api/analytics/salary` | ✅ Pass | Avg: 668-847 GEL, Range: 25-12000 |
+| `/api/analytics/overview` | ✅ Pass | Stats: 356 active, 11 VIP |
+| `/api/analytics/salary` | ✅ Pass | Avg salary data with distribution |
 
 ### Parser Management
 
 | Endpoint | Status | Result |
 |----------|--------|--------|
-| `/api/parser/stats` | ✅ Pass | 14 regions, 16 categories, 331 parsed today |
+| `/api/parser/stats` | ✅ Pass | 14 regions, 16 categories, 356 jobs parsed |
 | `/api/parser/progress` | ✅ Pass | Shows running jobs in real-time |
 | `/api/parser/jobs` | ✅ Pass | Job history with status, progress, timing |
 | `/api/parser/config` | ✅ Pass | Returns regions, categories, sources |
@@ -51,8 +51,8 @@ All features tested and verified working:
 
 | Feature | Status | Result |
 |---------|--------|--------|
-| `/api/database/tables` | ✅ Pass | 11 tables: jobs(331), parse_job_items(331), logs(62) |
-| `/api/backups` | ✅ Pass | 1 backup available |
+| `/api/database/tables` | ✅ Pass | 11 tables: jobs(356), parse_job_items(769), logs(112) |
+| `/api/backups` | ✅ Pass | Backup system operational |
 | `/api/logs/worker` | ✅ Pass | Returns container logs |
 
 ### Date Parsing
@@ -185,10 +185,12 @@ Cloudflare handles public-facing SSL. Origin uses self-signed cert for encrypted
 
 ## Database
 
-- **Seeded Data:**
+- **Current Data:**
   - 16 categories
   - 14 regions
-  - 300+ jobs (from all regions parser)
+  - 356 jobs (parsed from jobs.ge)
+  - 769 parse job items tracked
+  - 112 parse job logs
 
 - **Alembic Version:** Stamped at head (20260119_000003)
 
