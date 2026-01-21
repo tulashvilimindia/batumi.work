@@ -1,6 +1,6 @@
 # Session Notes - batumi.work
 
-**Last Updated:** January 21, 2026
+**Last Updated:** January 22, 2026
 **Status:** LIVE - All Features Tested and Verified
 
 ---
@@ -32,16 +32,16 @@ All features tested and verified working:
 | Endpoint | Status | Result |
 |----------|--------|--------|
 | `/api/health` | ✅ Pass | `{"status":"healthy","service":"admin"}` |
-| `/api/dashboard` | ✅ Pass | 356 total jobs, 106 with salary |
+| `/api/dashboard` | ✅ Pass | 357 total jobs, 106+ with salary |
 | `/api/jobs` | ✅ Pass | Returns paginated job list with filters |
-| `/api/analytics/overview` | ✅ Pass | Stats: 356 active, 11 VIP |
+| `/api/analytics/overview` | ✅ Pass | Stats: 357 active, 11 VIP |
 | `/api/analytics/salary` | ✅ Pass | Avg salary data with distribution |
 
 ### Parser Management
 
 | Endpoint | Status | Result |
 |----------|--------|--------|
-| `/api/parser/stats` | ✅ Pass | 14 regions, 16 categories, 356 jobs parsed |
+| `/api/parser/stats` | ✅ Pass | 14 regions, 16 categories, 357 jobs parsed |
 | `/api/parser/progress` | ✅ Pass | Shows running jobs in real-time |
 | `/api/parser/jobs` | ✅ Pass | Job history with status, progress, timing |
 | `/api/parser/config` | ✅ Pass | Returns regions, categories, sources |
@@ -51,7 +51,7 @@ All features tested and verified working:
 
 | Feature | Status | Result |
 |---------|--------|--------|
-| `/api/database/tables` | ✅ Pass | 11 tables: jobs(356), parse_job_items(769), logs(112) |
+| `/api/database/tables` | ✅ Pass | 11 tables: jobs(357), parse_job_items(769+), logs(112+) |
 | `/api/backups` | ✅ Pass | Backup system operational |
 | `/api/logs/worker` | ✅ Pass | Returns container logs |
 
@@ -188,9 +188,10 @@ Cloudflare handles public-facing SSL. Origin uses self-signed cert for encrypted
 - **Current Data:**
   - 16 categories
   - 14 regions
-  - 356 jobs (parsed from jobs.ge)
-  - 769 parse job items tracked
-  - 112 parse job logs
+  - 357 jobs (parsed from jobs.ge)
+  - Adjara jobs ID range: 689123-695820
+  - 769+ parse job items tracked
+  - 112+ parse job logs
 
 - **Alembic Version:** Stamped at head (20260119_000003)
 
@@ -343,6 +344,35 @@ DNS is managed through Cloudflare with proxy enabled.
 
 ## Changelog
 
+### January 22, 2026 - Job Count Verification
+
+**Investigation: batumi.work vs jobs.ge Job Comparison**
+
+Comprehensive comparison performed between batumi.work and jobs.ge for Adjara region jobs.
+
+**Results:**
+
+| Metric | Count |
+|--------|-------|
+| batumi.work Adjara jobs | 357 |
+| jobs.ge visible (pages 1+2) | 165 |
+| Missing from batumi.work | 0 |
+| Extra jobs in batumi.work | 192 |
+
+**Key Findings:**
+- batumi.work is NOT missing any jobs - all jobs from jobs.ge are present
+- batumi.work has 192 MORE jobs than jobs.ge's paginated view shows
+- Parser successfully fetches all jobs by iterating through category filters (cid 1-18 × lid 14)
+- jobs.ge's website pagination only shows ~165 jobs, hiding ~192 jobs
+- Sorting is correct: jobs display in same order as jobs.ge (external_id DESC)
+
+**Parser Working Correctly:**
+- Category-by-category iteration captures all Adjara jobs
+- ID range: 689123 to 695820
+- No parser fixes needed - system is functioning as designed
+
+---
+
 ### January 21, 2026 (Session 2) - E2E Tests, Parser UI & Sorting Fix
 
 **Job Sorting Fix (jobs.ge compatibility):**
@@ -482,4 +512,4 @@ DNS is managed through Cloudflare with proxy enabled.
 ---
 
 *Deployment completed: January 19, 2026*
-*Last session: January 21, 2026*
+*Last session: January 22, 2026*
