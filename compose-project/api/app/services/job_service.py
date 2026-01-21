@@ -2,7 +2,7 @@
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_, desc, asc
+from sqlalchemy import select, func, or_, desc, asc, cast, Integer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -100,19 +100,21 @@ class JobService:
         total = total_result.scalar_one()
 
         # Apply sorting
-        sort_field = params.sort or "-published_at"
+        # Default: sort by external_id DESC (same as jobs.ge)
+        sort_field = params.sort or "-external_id"
         descending = sort_field.startswith("-")
         field_name = sort_field.lstrip("-")
 
         # Map sort field names to columns
         sort_columns = {
+            "external_id": cast(Job.external_id, Integer),  # Cast to int for numeric sort
             "published_at": Job.published_at,
             "created_at": Job.created_at,
             "deadline_at": Job.deadline_at,
             "title_ge": Job.title_ge,
         }
 
-        sort_column = sort_columns.get(field_name, Job.published_at)
+        sort_column = sort_columns.get(field_name, cast(Job.external_id, Integer))
         if descending:
             query = query.order_by(desc(sort_column).nulls_last())
         else:
