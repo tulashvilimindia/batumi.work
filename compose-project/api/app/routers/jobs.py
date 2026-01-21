@@ -34,7 +34,7 @@ async def list_jobs(
     status: Optional[str] = Query("active", description="Job status"),
     employment_type: Optional[str] = Query(None, description="Employment type"),
     remote_type: Optional[str] = Query(None, description="Remote type"),
-    sort: Optional[str] = Query("-published_at", description="Sort field"),
+    sort: Optional[str] = Query("-external_id", description="Sort field (default: -external_id, same as jobs.ge)"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     db: AsyncSession = Depends(get_db),
