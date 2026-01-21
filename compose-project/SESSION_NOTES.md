@@ -23,6 +23,8 @@
 
 ## Test Results (January 21, 2026)
 
+**E2E Test Suite: 77 tests, all passing**
+
 All features tested and verified working:
 
 ### Admin Dashboard APIs
@@ -339,7 +341,35 @@ DNS is managed through Cloudflare with proxy enabled.
 
 ## Changelog
 
-### January 21, 2026 - Parser Management System
+### January 21, 2026 (Session 2) - E2E Tests & Parser UI
+
+**E2E Test Suite Added:**
+- 77 comprehensive tests covering all admin console APIs
+- Tests for: Health, Dashboard, Jobs, Parser, Analytics, Database, Backups, Logs
+- Both positive and negative scenarios included
+- All tests passing
+
+**API Bug Fixes:**
+- `/api/jobs` now supports `limit` parameter alias for `page_size`
+- `/api/logs/{service}` now supports `lines` parameter alias for `tail`
+
+**Parser Page UI Enhancements:**
+- Live progress banner with pause/resume/stop controls
+- Job History tab showing all parse jobs with status and progress
+- Configuration tab showing regions and categories
+- Trigger Parse modal for manual job execution
+- Job Details modal with Logs/Items/Skip Reasons tabs
+- Auto-refresh progress every 5 seconds
+
+**Files Changed:**
+- `admin/tests/test_e2e_admin.py`: New comprehensive E2E test suite (77 tests)
+- `admin/app/routers/jobs.py`: Added `limit` parameter support
+- `admin/app/routers/logs.py`: Added `lines` parameter support
+- `admin/app/static/index.html`: Full parser management UI
+
+---
+
+### January 21, 2026 (Session 1) - Parser Management System
 
 **Major Enhancement: Full Parser Job Management**
 
