@@ -539,6 +539,61 @@ Access is controlled via UFW - only whitelisted IPs can connect.
 ### Whitelisted IPs for Admin Access
 - 63.177.47.245 (all ports)
 
+### Admin Dashboard Features
+
+**Parser Management (6 tabs):**
+
+1. **Job History** - Complete history of all parse jobs with:
+   - Real-time progress bars during active parsing
+   - Status colors (pending, running, completed, failed)
+   - Progress details (processed, new, updated, skipped, failed)
+   - Retry failed jobs / Cancel running jobs
+   - Click to view detailed job information
+
+2. **Statistics** - Parser statistics:
+   - Total jobs, regions, categories
+   - Jobs parsed today, last parsed time
+   - Distribution by region and category
+   - 7-day parsing metrics
+
+3. **Manual Parse** - Trigger manual parsing:
+   - Select regions to parse
+   - Select categories (optional)
+   - Returns job ID for tracking
+
+4. **Parse by ID** - Parse single job:
+   - Enter jobs.ge job ID or full URL
+   - Extracts ID automatically from URL
+   - Useful for testing or adding specific jobs
+
+5. **Configuration** - Parser settings:
+   - Enabled sources (jobs.ge)
+   - Parse interval
+   - Region order (drag-and-drop)
+
+6. **Data Management** - View/manage:
+   - Categories list
+   - Regions list
+
+### API Endpoints (Parser)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/parser/jobs` | GET | Job history with pagination |
+| `/api/parser/jobs/{id}` | GET | Job details |
+| `/api/parser/jobs/{id}/progress` | GET | Real-time progress |
+| `/api/parser/progress` | GET | Current running job progress |
+| `/api/parser/trigger` | POST | Trigger manual parse |
+| `/api/parser/parse-single` | POST | Parse single job by ID |
+| `/api/parser/jobs/{id}/retry` | POST | Retry failed job |
+| `/api/parser/jobs/{id}/cancel` | POST | Cancel running job |
+| `/api/parser/stats` | GET | Parser statistics |
+
+### Database Tables (Parse Tracking)
+
+- `parse_jobs` - Parse job records (status, progress, timing, errors)
+- `parse_job_items` - Individual items within parse jobs (optional detailed tracking)
+
 ---
 
 ## Contact & Resources
