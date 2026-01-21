@@ -1,7 +1,7 @@
 # Session Notes - batumi.work
 
-**Last Updated:** January 20, 2026
-**Status:** LIVE - All Regions Parsing with jobs.ge Filter Model
+**Last Updated:** January 21, 2026
+**Status:** LIVE - Full Parser Management with Job Controls
 
 ---
 
@@ -289,6 +289,73 @@ DNS is managed through Cloudflare with proxy enabled.
 
 ## Changelog
 
+### January 21, 2026 - Parser Management System
+
+**Major Enhancement: Full Parser Job Management**
+
+#### 1. Job Control System ✅
+- **Pause/Resume**: Pause running jobs and resume later
+- **Stop/Cancel**: Gracefully stop or force-cancel jobs
+- **Restart**: Re-run completed or failed jobs
+- Real-time status updates via polling
+
+#### 2. Batch Job Execution ✅
+- Run multiple jobs by region, category, or both
+- Support for parallel or sequential execution
+- Batch job tracking and history
+- Individual job progress within batches
+
+#### 3. Skip Reason Tracking ✅
+- Track why each item was skipped:
+  - `unchanged_content`: Job content hasn't changed
+  - `duplicate_url`: Same URL already processed
+  - `no_category`: Could not classify category
+  - `parse_error`: Failed to parse job details
+  - `no_title`: Missing required title
+- Skip reason analysis per job
+
+#### 4. Detailed Logging ✅
+- Per-job logging with levels (debug, info, warning, error)
+- Logs include region, category, and external_id context
+- Searchable log history per parse job
+
+#### 5. Date Parsing Fix ✅
+- Fixed published_at and deadline_at extraction
+- Now handles Georgian dates without year (e.g., "21 იანვარი")
+- Defaults to current year for dates without explicit year
+
+#### 6. Admin UI Enhancements ✅
+- Live job progress banner with controls
+- Job History tab with filtering
+- Job Details modal with Logs/Items/Skip Reasons tabs
+- Batch Jobs tab for multi-region/category parsing
+- Statistics with skip reason breakdown
+
+**Database Models Added:**
+- `ParseJobLog`: Detailed logs per parse job
+- `ParseBatch`: Batch job coordination
+- `SkipReason` enum for tracking skip reasons
+- Job control flags: `should_pause`, `should_stop`
+
+**API Endpoints Added:**
+- `GET /api/parser/progress`: Live progress
+- `GET /api/parser/jobs`: Job history with filters
+- `GET /api/parser/jobs/{id}`: Job details with items/logs
+- `POST /api/parser/jobs/{id}/control`: Job controls
+- `GET /api/parser/jobs/{id}/skip-reasons`: Skip analysis
+- `POST /api/parser/trigger-batch`: Batch job execution
+- `GET /api/parser/batches`: Batch history
+
+**Files Changed:**
+- `worker/app/models/parse_job.py`: Added logging and batch models
+- `worker/app/core/runner.py`: Complete rewrite with job controls
+- `worker/app/core/utils.py`: Fixed date extraction
+- `worker/app/parsers/jobs_ge.py`: Date parsing improvements
+- `admin/app/routers/parser.py`: New job management endpoints
+- `admin/app/static/index.html`: Enhanced UI
+
+---
+
 ### January 20, 2026 (Session 2)
 - **Frontend Fix - DEPLOYED**
   - Fixed 0 jobs showing on website
@@ -324,4 +391,4 @@ DNS is managed through Cloudflare with proxy enabled.
 ---
 
 *Deployment completed: January 19, 2026*
-*Last session: January 20, 2026*
+*Last session: January 21, 2026*

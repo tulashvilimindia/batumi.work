@@ -43,9 +43,12 @@ The Admin Dashboard is a standalone web-based management interface for batumi.wo
 
 ### Parser Control
 - View parser statistics by region/category
-- Trigger manual parse run
+- Trigger manual parse run (single or batch)
+- **Job Controls**: Pause, resume, stop, cancel, restart running jobs
+- **Job History**: View all past parse jobs with filtering by status, type, region
+- **Job Details**: View detailed logs and processed items per job
+- **Skip Reason Analysis**: See why items were skipped (duplicates, no category, etc.)
 - View parser logs
-- Configure parser settings
 
 ### Analytics
 - Job views and clicks
@@ -139,7 +142,14 @@ The admin dashboard exposes these API endpoints:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/parser/stats` | Parser statistics |
-| POST | `/api/parser/trigger` | Trigger parse |
+| GET | `/api/parser/progress` | Live parse progress |
+| POST | `/api/parser/trigger` | Trigger single parse job |
+| POST | `/api/parser/trigger-batch` | Trigger batch parse (multiple regions/categories) |
+| GET | `/api/parser/jobs` | List parse job history |
+| GET | `/api/parser/jobs/{id}` | Get job details with items/logs |
+| POST | `/api/parser/jobs/{id}/control` | Control job (pause/resume/stop/cancel/restart) |
+| GET | `/api/parser/jobs/{id}/skip-reasons` | Get skip reason summary |
+| GET | `/api/parser/batches` | List batch job history |
 | GET | `/api/parser/logs` | Parser logs |
 
 ### Analytics
@@ -259,4 +269,4 @@ admin/
 
 ---
 
-*Last updated: January 20, 2026*
+*Last updated: January 21, 2026*
