@@ -524,6 +524,17 @@
                 async init() {
                     await this.checkHealth();
                     await this.loadDashboard();
+
+                    // Watch for page changes
+                    this.$watch('currentPage', (page) => {
+                        this.loading = false;
+                        if (page === 'dashboard') this.loadDashboard();
+                        else if (page === 'jobs') this.loadJobs();
+                        else if (page === 'parser') this.loadParserStats();
+                        else if (page === 'analytics') this.loadAnalytics();
+                        else if (page === 'backups') this.loadBackups();
+                        else if (page === 'database') this.loadDbTables();
+                    });
                 },
 
                 async api(endpoint, options = {}) {
@@ -628,19 +639,6 @@
                     this.loading = true;
                     this.logs = await this.api(`/logs/${this.selectedService}?tail=${this.logTail}`);
                     this.loading = false;
-                },
-
-                // Watch for page changes
-                $watch: {
-                    currentPage(page) {
-                        this.loading = false;
-                        if (page === 'dashboard') this.loadDashboard();
-                        else if (page === 'jobs') this.loadJobs();
-                        else if (page === 'parser') this.loadParserStats();
-                        else if (page === 'analytics') this.loadAnalytics();
-                        else if (page === 'backups') this.loadBackups();
-                        else if (page === 'database') this.loadDbTables();
-                    }
                 }
             };
         }
