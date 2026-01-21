@@ -510,15 +510,31 @@ class JobsGeAdapter(BaseAdapter):
                 if text and len(text) > 1:
                     return text
 
-        # Look for organization links
+        # Look for organization links (jobs.ge uses view=client&client= pattern)
         for link in soup.find_all("a", href=True):
             href = link["href"]
-            if "org=" in href:
+            # Check for jobs.ge client links or org links
+            if "view=client&client=" in href or "org=" in href:
                 text = link.get_text(strip=True)
                 # Skip generic link text
-                if text and "ყველა" not in text and "ორგანიზაცია" not in text:
+                if text and "ყველა" not in text and "ორგანიზაცია" not in text and "განცხადება" not in text:
                     if len(text) > 1 and len(text) < 200:
                         return text
+
+        # Fallback: extract from page title (format: "ჯობს.გე - JobTitle - CompanyName")
+        title_tag = soup.find("title")
+        if title_tag:
+            title_text = title_tag.get_text(strip=True)
+            # Pattern: "ჯობს.გე - JobTitle - CompanyName" or "Jobs.GE - JobTitle - CompanyName"
+            if " - " in title_text:
+                parts = title_text.split(" - ")
+                if len(parts) >= 3:
+                    # Last part is usually the company name
+                    company = parts[-1].strip()
+                    if company and len(company) > 1 and len(company) < 200:
+                        # Skip if it's just the site name
+                        if company.lower() not in ["jobs.ge", "ჯობს.გე"]:
+                            return company
 
         return None
 
