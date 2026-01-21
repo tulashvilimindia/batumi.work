@@ -861,9 +861,9 @@ async def get_parser_config(db: AsyncSession = Depends(get_db)):
     """Get parser configuration."""
     # Get regions
     result = await db.execute(text("""
-        SELECT id, name_en, name_ge, slug, enabled, display_order
+        SELECT id, name_en, name_ge, slug, is_active, sort_order
         FROM regions
-        ORDER BY display_order, name_en
+        ORDER BY sort_order, name_en
     """))
     regions = [
         {
