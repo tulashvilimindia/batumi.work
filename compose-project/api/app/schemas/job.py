@@ -205,6 +205,6 @@ class JobSearchParams(BaseModel):
     status: Optional[JobStatus] = Field("active", description="Job status")
     employment_type: Optional[EmploymentType] = None
     remote_type: Optional[RemoteType] = None
-    sort: Optional[str] = Field("-published_at", description="Sort field (prefix - for desc)")
+    sort: Optional[str] = Field("-external_id", description="Sort field (prefix - for desc). Default: -external_id (same as jobs.ge)")
     page: int = Field(1, ge=1)
     page_size: int = Field(20, ge=1, le=100)
