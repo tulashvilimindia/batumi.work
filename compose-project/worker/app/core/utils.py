@@ -153,10 +153,12 @@ def extract_date(text: str, language: str = "ge") -> Optional[datetime]:
     """Extract date from text.
 
     Handles formats:
-    - "23 იანვარი 2024"
-    - "January 23, 2024"
-    - "23.01.2024"
-    - "2024-01-23"
+    - "23 იანვარი 2024" (Georgian with year)
+    - "23 იანვარი" (Georgian without year - uses current year)
+    - "January 23, 2024" (English with year)
+    - "January 23" (English without year - uses current year)
+    - "23.01.2024" (dot format)
+    - "2024-01-23" (ISO format)
 
     Args:
         text: Text containing date
@@ -169,6 +171,7 @@ def extract_date(text: str, language: str = "ge") -> Optional[datetime]:
         return None
 
     text = text.strip()
+    current_year = datetime.now().year
 
     # Georgian month names
     ge_months = {
@@ -208,9 +211,10 @@ def extract_date(text: str, language: str = "ge") -> Optional[datetime]:
         except ValueError:
             pass
 
-    # Try Georgian format (DD month YYYY)
+    # Try Georgian format (DD month [YYYY])
     for month_name, month_num in ge_months.items():
         if month_name in text:
+            # First try with year
             match = re.search(rf"(\d{{1,2}})\s*{month_name}\s*(\d{{4}})", text)
             if match:
                 try:
@@ -221,12 +225,24 @@ def extract_date(text: str, language: str = "ge") -> Optional[datetime]:
                     )
                 except ValueError:
                     pass
+            else:
+                # Try without year (default to current year)
+                match = re.search(rf"(\d{{1,2}})\s*{month_name}", text)
+                if match:
+                    try:
+                        return datetime(
+                            current_year,
+                            month_num,
+                            int(match.group(1)),
+                        )
+                    except ValueError:
+                        pass
 
     # Try English format
     text_lower = text.lower()
     for month_name, month_num in en_months.items():
         if month_name in text_lower:
-            # Try "Month DD, YYYY"
+            # Try "Month DD, YYYY" first
             match = re.search(rf"{month_name}\s+(\d{{1,2}}),?\s*(\d{{4}})", text_lower)
             if match:
                 try:
@@ -237,6 +253,18 @@ def extract_date(text: str, language: str = "ge") -> Optional[datetime]:
                     )
                 except ValueError:
                     pass
+            else:
+                # Try "Month DD" without year (default to current year)
+                match = re.search(rf"{month_name}\s+(\d{{1,2}})", text_lower)
+                if match:
+                    try:
+                        return datetime(
+                            current_year,
+                            month_num,
+                            int(match.group(1)),
+                        )
+                    except ValueError:
+                        pass
 
     return None
 
