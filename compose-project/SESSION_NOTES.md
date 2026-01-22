@@ -7,10 +7,10 @@
 
 ## 🚀 QUICK START FOR NEW AGENTS
 
-**Read these files first:**
-1. `compose-project/SESSION_NOTES.md` (this file) - Project overview
-2. `compose-project/admin-ui/BUGFIX_LOG.md` - Recent bug fixes
-3. `compose-project/README.md` - Docker setup instructions
+**Read these files in order:**
+1. `compose-project/AGENT_ONBOARDING.md` - **START HERE** - Complete setup guide
+2. `compose-project/SESSION_NOTES.md` (this file) - Detailed project history
+3. `compose-project/admin-ui/BUGFIX_LOG.md` - Recent bug fixes with solutions
 
 **Key URLs:**
 - Production Website: https://batumi.work

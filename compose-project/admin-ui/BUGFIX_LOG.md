@@ -129,3 +129,73 @@ This document tracks all bugs identified and fixed in the React Admin UI.
 ```
 
 This difference caused the crash - always use optional chaining when accessing `controls`.
+
+---
+
+### Lessons Learned for Future Development
+
+#### 1. Always Use Optional Chaining
+When accessing nested properties from API responses, always use `?.`:
+```typescript
+// BAD - will crash if controls is undefined
+job.controls.can_pause
+
+// GOOD - safe access
+job.controls?.can_pause
+```
+
+#### 2. Radix UI Select Component Rules
+- Never use empty string `""` as a value
+- Use a meaningful default like `"all"` instead
+- Filter logic should handle the default value
+
+#### 3. Check API Endpoint Existence
+Before implementing frontend calls:
+1. Check backend OpenAPI docs: `curl http://localhost:9000/openapi.json | jq '.paths | keys'`
+2. Verify endpoint exists and returns expected structure
+3. Use existing endpoints when possible (e.g., `/parser/config` for categories)
+
+#### 4. TanStack Query Best Practices
+```typescript
+// Add retry limits to prevent infinite loops on 404
+useQuery({
+  queryKey: ['data'],
+  queryFn: fetchData,
+  retry: 2,           // Limit retries
+  staleTime: 5 * 60 * 1000,  // Cache for 5 minutes
+})
+```
+
+#### 5. Query Invalidation Keys
+Use exact query keys for invalidation:
+```typescript
+// BAD - might not match
+queryClient.invalidateQueries({ queryKey: ['backups'] })
+
+// GOOD - exact match
+queryClient.invalidateQueries({ queryKey: ['backups', 'list'] })
+queryClient.invalidateQueries({ queryKey: ['backups', 'status'] })
+```
+
+---
+
+### Quick Debug Commands
+
+```bash
+# Check API endpoint exists
+curl -s http://localhost:9000/openapi.json | jq '.paths | keys' | grep -i "search_term"
+
+# Test API response structure
+curl -s http://localhost:9000/api/parser/progress | jq
+
+# Check nginx proxy logs
+docker logs jobboard-admin-ui --tail 50
+
+# Check browser requests (via nginx access log)
+docker logs jobboard-admin-ui 2>&1 | grep "HTTP"
+```
+
+---
+
+*Last updated: January 22, 2026*
+*See also: `../AGENT_ONBOARDING.md` for complete project documentation*
