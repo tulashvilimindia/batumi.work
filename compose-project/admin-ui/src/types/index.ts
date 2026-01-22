@@ -256,6 +256,7 @@ export interface AnalyticsDashboard {
 // Backup types
 export interface Backup {
   filename: string
+  path: string  // Full path relative to backup dir (e.g., "manual/backup_file.sql.gz")
   size_bytes: number
   size_mb: number
   created_at: string

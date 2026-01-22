@@ -161,3 +161,67 @@ async def download_backup(backup_type: str, filename: str):
         filename=filename,
         media_type="application/gzip",
     )
+
+
+@router.delete("/{backup_type}/{filename}")
+async def delete_backup(backup_type: str, filename: str):
+    """Delete a backup file."""
+    if backup_type not in ["daily", "weekly", "manual"]:
+        raise HTTPException(status_code=400, detail="Invalid backup type")
+
+    filepath = Path(settings.BACKUP_DIR) / backup_type / filename
+
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    try:
+        filepath.unlink()
+        return {"success": True, "message": f"Deleted {filename}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/restore")
+async def restore_backup(request: dict):
+    """Restore database from a backup file.
+
+    Request body: {"filename": "manual/backup_20260122_120000.sql.gz"}
+    """
+    backup_path = request.get("filename", "")
+    if not backup_path:
+        raise HTTPException(status_code=400, detail="filename is required")
+
+    # Parse backup path (e.g., "manual/backup_file.sql.gz")
+    filepath = Path(settings.BACKUP_DIR) / backup_path
+
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    if not str(filepath).endswith(".sql.gz"):
+        raise HTTPException(status_code=400, detail="Invalid backup file format")
+
+    # Get database connection info from environment
+    db_url = settings.DATABASE_URL
+    if "://" in db_url:
+        parts = db_url.split("://")[1]
+        auth, hostdb = parts.split("@")
+        user, password = auth.split(":")
+        hostport, dbname = hostdb.split("/")
+        host, port = hostport.split(":") if ":" in hostport else (hostport, "5432")
+    else:
+        raise HTTPException(status_code=500, detail="Invalid DATABASE_URL")
+
+    try:
+        # Run restore command
+        cmd = f"set -o pipefail && gunzip -c {filepath} | PGPASSWORD={password} psql -h {host} -p {port} -U {user} -d {dbname}"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, executable='/bin/bash')
+
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail=f"Restore failed: {result.stderr}")
+
+        return {
+            "success": True,
+            "message": f"Database restored from {backup_path}",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -41,31 +41,32 @@ import {
 
 export function BackupsPage() {
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
-  const [selectedBackup, setSelectedBackup] = useState<string | null>(null)
+  const [selectedBackup, setSelectedBackup] = useState<{ path: string; filename: string } | null>(null)
 
   const { data: backups, isLoading } = useBackups()
   const { data: status } = useBackupStatus()
   const triggerBackup = useTriggerBackup()
-  const deleteBackup = useDeleteBackup()
+  const deleteBackupMutation = useDeleteBackup()
   const { downloadBackup } = useDownloadBackup()
   const restoreBackup = useRestoreBackup()
 
-  const handleRestore = (filename: string) => {
-    setSelectedBackup(filename)
+  const handleRestore = (path: string, filename: string) => {
+    setSelectedBackup({ path, filename })
     setRestoreDialogOpen(true)
   }
 
   const confirmRestore = () => {
     if (selectedBackup) {
-      restoreBackup.mutate(selectedBackup)
+      // Pass the full path (e.g., "manual/backup_file.sql.gz")
+      restoreBackup.mutate(selectedBackup.path)
       setRestoreDialogOpen(false)
       setSelectedBackup(null)
     }
   }
 
-  const handleDelete = (filename: string) => {
+  const handleDelete = (backupType: string, filename: string) => {
     if (confirm(`Are you sure you want to delete ${filename}?`)) {
-      deleteBackup.mutate(filename)
+      deleteBackupMutation.mutate({ backupType, filename })
     }
   }
 
@@ -174,7 +175,7 @@ export function BackupsPage() {
                   </TableRow>
                 ) : (
                   backups?.map((backup) => (
-                    <TableRow key={backup.filename}>
+                    <TableRow key={backup.path}>
                       <TableCell className="font-medium font-mono text-sm">
                         {backup.filename}
                       </TableCell>
@@ -193,7 +194,7 @@ export function BackupsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => downloadBackup(backup.filename)}
+                            onClick={() => downloadBackup(backup.type, backup.filename)}
                             title="Download"
                           >
                             <Download className="h-4 w-4" />
@@ -201,7 +202,7 @@ export function BackupsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleRestore(backup.filename)}
+                            onClick={() => handleRestore(backup.path, backup.filename)}
                             title="Restore"
                           >
                             <RotateCcw className="h-4 w-4" />
@@ -209,7 +210,7 @@ export function BackupsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(backup.filename)}
+                            onClick={() => handleDelete(backup.type, backup.filename)}
                             className="text-destructive"
                             title="Delete"
                           >
@@ -232,7 +233,7 @@ export function BackupsPage() {
           <DialogHeader>
             <DialogTitle>Confirm Restore</DialogTitle>
             <DialogDescription>
-              Are you sure you want to restore from <strong>{selectedBackup}</strong>?
+              Are you sure you want to restore from <strong>{selectedBackup?.filename}</strong>?
               This will overwrite all current data in the database.
             </DialogDescription>
           </DialogHeader>

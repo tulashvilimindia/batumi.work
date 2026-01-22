@@ -38,7 +38,8 @@ export function useDeleteBackup() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (filename: string) => deleteBackup(filename),
+    mutationFn: ({ backupType, filename }: { backupType: string; filename: string }) =>
+      deleteBackup(backupType, filename),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backups'] })
     },
@@ -46,8 +47,8 @@ export function useDeleteBackup() {
 }
 
 export function useDownloadBackup() {
-  const handleDownload = async (filename: string) => {
-    const blob = await downloadBackup(filename)
+  const handleDownload = async (backupType: string, filename: string) => {
+    const blob = await downloadBackup(backupType, filename)
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -65,7 +66,8 @@ export function useRestoreBackup() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (filename: string) => restoreBackup(filename),
+    // Takes the full path (e.g., "manual/backup_file.sql.gz")
+    mutationFn: (backupPath: string) => restoreBackup(backupPath),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backups'] })
     },
