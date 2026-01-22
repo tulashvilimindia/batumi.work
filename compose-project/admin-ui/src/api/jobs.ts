@@ -12,6 +12,23 @@ interface JobFilters {
   is_vip?: boolean
 }
 
+interface JobApiItem {
+  id: string
+  title_ge: string
+  title_en?: string
+  company_name?: string
+  location?: string
+  status: string
+  category?: string
+  region?: string
+  has_salary: boolean
+  salary_min?: number
+  salary_max?: number
+  published_at?: string
+  created_at: string
+  parsed_from?: string
+}
+
 export async function getJobs(filters: JobFilters = {}): Promise<PaginatedResponse<Job>> {
   const params = new URLSearchParams()
 
@@ -22,7 +39,35 @@ export async function getJobs(filters: JobFilters = {}): Promise<PaginatedRespon
   })
 
   const { data } = await apiClient.get(`/jobs?${params.toString()}`)
-  return data
+
+  // Map API response to match frontend type
+  return {
+    data: (data.items || []).map((item: JobApiItem) => ({
+      id: item.id,
+      external_id: item.id,
+      title_ge: item.title_ge,
+      title_en: item.title_en,
+      company_name: item.company_name,
+      location: item.location,
+      status: item.status as 'active' | 'inactive' | 'expired' | 'pending_review',
+      category: item.category ? { name_en: item.category, name_ge: '', slug: '', id: '', is_active: true } : undefined,
+      region: item.region ? { name_en: item.region, name_ge: '', slug: '', id: '', is_active: true } : undefined,
+      has_salary: item.has_salary,
+      salary_min: item.salary_min,
+      salary_max: item.salary_max,
+      is_vip: false,
+      views_count: 0,
+      created_at: item.created_at,
+      updated_at: item.created_at,
+      source_url: item.parsed_from ? `https://jobs.ge` : undefined,
+    })),
+    meta: {
+      page: data.page || 1,
+      page_size: data.page_size || 20,
+      total: data.total || 0,
+      total_pages: data.pages || 1,
+    },
+  }
 }
 
 export async function getJob(id: string): Promise<Job> {

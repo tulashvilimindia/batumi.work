@@ -23,7 +23,7 @@ const LOG_LEVELS = [
 ]
 
 export function LogsPage() {
-  const [service, setService] = useState('')
+  const [service, setService] = useState('admin')
   const [level, setLevel] = useState('')
   const [search, setSearch] = useState('')
   const [autoRefresh, setAutoRefresh] = useState(false)
@@ -31,7 +31,7 @@ export function LogsPage() {
   const { data: services } = useServices()
   const { data: logs, isLoading, refetch } = useLogs(
     {
-      service: service || undefined,
+      service: service || 'admin',
       level: level || undefined,
       search: search || undefined,
       limit: 200,
