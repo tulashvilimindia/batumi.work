@@ -3,375 +3,779 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard | JobBoard Admin</title>
-    <meta name="theme-color" content="#1a1a2e">
+    <title>Analytics Dashboard | batumi.work</title>
     <meta name="robots" content="noindex, nofollow">
-
-    <!-- Preconnect to CDN -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="apple-touch-icon" href="/icons/icon-192.svg">
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'grafana': {
+                            'bg': '#111827',
+                            'panel': '#1f2937',
+                            'border': '#374151',
+                            'text': '#f3f4f6',
+                            'muted': '#9ca3af',
+                            'blue': '#3b82f6',
+                            'green': '#10b981',
+                            'orange': '#f59e0b',
+                            'red': '#ef4444',
+                            'purple': '#8b5cf6',
+                            'cyan': '#06b6d4',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
-            color: #2c3e50;
-            line-height: 1.6;
+        [x-cloak] { display: none !important; }
+        .loader {
+            border: 3px solid #374151;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
         }
-        .header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        .header h1 { font-size: 1.5rem; }
-        .header-right { display: flex; align-items: center; gap: 1rem; }
-        .api-key-input {
-            padding: 0.5rem;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 4px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            width: 250px;
-        }
-        .api-key-input::placeholder { color: rgba(255,255,255,0.5); }
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .btn-primary { background: #4ECDC4; color: #1a1a2e; }
-        .btn-primary:hover { background: #3db9b0; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 0.25rem;
-        }
-        .stat-label { color: #7f8c8d; font-size: 0.9rem; }
-        .stat-trend {
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-        }
-        .trend-up { color: #27ae60; }
-        .trend-down { color: #e74c3c; }
-        .chart-container {
-            grid-column: span 2;
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .chart-container h3 {
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            color: #2c3e50;
-        }
-        .full-width { grid-column: span 4; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        th, td {
-            text-align: left;
-            padding: 0.75rem;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            font-weight: 600;
-            color: #7f8c8d;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        .status-healthy { background: #d4edda; color: #155724; }
-        .status-warning { background: #fff3cd; color: #856404; }
-        .status-error { background: #f8d7da; color: #721c24; }
-        .status-pending { background: #e2e3e5; color: #383d41; }
-        .loading {
-            text-align: center;
-            padding: 3rem;
-            color: #7f8c8d;
-        }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        @media (max-width: 1200px) {
-            .dashboard { grid-template-columns: repeat(2, 1fr); }
-            .chart-container { grid-column: span 2; }
-            .full-width { grid-column: span 2; }
-        }
-        @media (max-width: 768px) {
-            .dashboard { grid-template-columns: 1fr; }
-            .chart-container, .full-width { grid-column: span 1; }
-            .header { flex-direction: column; gap: 1rem; }
-            .header-right { width: 100%; flex-direction: column; }
-            .api-key-input { width: 100%; }
-        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        /* Chart.js dark theme fixes */
+        canvas { max-height: 300px; }
     </style>
 </head>
-<body>
-    <header class="header">
-        <h1>Analytics Dashboard</h1>
-        <div class="header-right">
-            <input type="password" id="api-key" class="api-key-input" placeholder="Enter Admin API Key">
-            <button class="btn btn-primary" onclick="loadDashboard()">Load Data</button>
+<body class="bg-grafana-bg text-grafana-text min-h-screen" x-data="analyticsApp()" x-init="init()">
+    <!-- Header -->
+    <header class="bg-grafana-panel border-b border-grafana-border px-4 py-3 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Analytics Dashboard</h1>
+                <span class="text-grafana-muted text-sm" x-text="'Last updated: ' + lastUpdated"></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button @click="loadData()" class="px-3 py-1.5 bg-grafana-border hover:bg-gray-600 rounded text-sm transition">
+                    Refresh
+                </button>
+                <a href="/admin/" class="px-3 py-1.5 bg-grafana-border hover:bg-gray-600 rounded text-sm transition">
+                    Admin Home
+                </a>
+            </div>
         </div>
     </header>
 
-    <div class="container">
-        <div id="error-container"></div>
-        <div id="loading" class="loading">Enter your API key and click "Load Data" to view analytics.</div>
-
-        <div id="dashboard" class="dashboard" style="display: none;">
-            <!-- Summary Cards -->
-            <div class="stat-card">
-                <div class="stat-value" id="total-jobs">--</div>
-                <div class="stat-label">Active Jobs</div>
-                <div class="stat-trend" id="jobs-trend"></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="total-views">--</div>
-                <div class="stat-label">Views (7 days)</div>
-                <div class="stat-trend" id="views-trend"></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="unique-visitors">--</div>
-                <div class="stat-label">Unique Visitors</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="searches">--</div>
-                <div class="stat-label">Searches</div>
-                <div class="stat-trend" id="searches-trend"></div>
-            </div>
-
-            <!-- Charts -->
-            <div class="chart-container">
-                <h3>Top Categories</h3>
-                <canvas id="categories-chart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Top Regions</h3>
-                <canvas id="regions-chart"></canvas>
+    <!-- Filter Bar -->
+    <div class="bg-grafana-panel border-b border-grafana-border px-4 py-3">
+        <div class="max-w-7xl mx-auto">
+            <!-- Date Presets -->
+            <div class="flex flex-wrap items-center gap-4 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-grafana-muted text-sm">Quick:</span>
+                    <template x-for="preset in datePresets" :key="preset.days">
+                        <button
+                            @click="applyDatePreset(preset.days)"
+                            :class="activeDatePreset === preset.days ? 'bg-grafana-blue text-white' : 'bg-grafana-border hover:bg-gray-600'"
+                            class="px-3 py-1 rounded text-sm transition"
+                            x-text="preset.label">
+                        </button>
+                    </template>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-grafana-muted text-sm">Custom:</span>
+                    <input type="date" x-model="filters.date_from" @change="activeDatePreset = null; loadData()"
+                        class="bg-grafana-bg border border-grafana-border rounded px-2 py-1 text-sm">
+                    <span class="text-grafana-muted">to</span>
+                    <input type="date" x-model="filters.date_to" @change="activeDatePreset = null; loadData()"
+                        class="bg-grafana-bg border border-grafana-border rounded px-2 py-1 text-sm">
+                </div>
             </div>
 
-            <!-- Tables -->
-            <div class="stat-card full-width">
-                <h3>Parser Sources Status</h3>
-                <table id="sources-table">
-                    <thead>
-                        <tr>
-                            <th>Source</th>
-                            <th>Status</th>
-                            <th>Last Run</th>
-                            <th>Jobs Today</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <!-- Filter Dropdowns -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Categories Multi-select -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="flex items-center gap-2 bg-grafana-bg border border-grafana-border rounded px-3 py-1.5 text-sm hover:border-grafana-blue transition">
+                        <span>Categories</span>
+                        <span x-show="filters.categories.length" class="bg-grafana-blue text-white text-xs px-1.5 rounded" x-text="filters.categories.length"></span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" @click.outside="open = false" x-cloak
+                        class="absolute top-full left-0 mt-1 bg-grafana-panel border border-grafana-border rounded shadow-lg z-50 w-64 max-h-64 overflow-auto">
+                        <div class="p-2 border-b border-grafana-border">
+                            <button @click="filters.categories = []; loadData()" class="text-xs text-grafana-blue hover:underline">Clear all</button>
+                        </div>
+                        <template x-for="opt in filterOptions.categories" :key="opt.value">
+                            <label class="flex items-center gap-2 px-3 py-2 hover:bg-grafana-border cursor-pointer">
+                                <input type="checkbox" :value="opt.value" x-model="filters.categories" @change="loadData()"
+                                    class="rounded border-grafana-border bg-grafana-bg">
+                                <span x-text="opt.label" class="flex-1 truncate"></span>
+                                <span class="text-grafana-muted text-xs" x-text="opt.count"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Regions Multi-select -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="flex items-center gap-2 bg-grafana-bg border border-grafana-border rounded px-3 py-1.5 text-sm hover:border-grafana-blue transition">
+                        <span>Regions</span>
+                        <span x-show="filters.regions.length" class="bg-grafana-blue text-white text-xs px-1.5 rounded" x-text="filters.regions.length"></span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" @click.outside="open = false" x-cloak
+                        class="absolute top-full left-0 mt-1 bg-grafana-panel border border-grafana-border rounded shadow-lg z-50 w-64 max-h-64 overflow-auto">
+                        <div class="p-2 border-b border-grafana-border">
+                            <button @click="filters.regions = []; loadData()" class="text-xs text-grafana-blue hover:underline">Clear all</button>
+                        </div>
+                        <template x-for="opt in filterOptions.regions" :key="opt.value">
+                            <label class="flex items-center gap-2 px-3 py-2 hover:bg-grafana-border cursor-pointer">
+                                <input type="checkbox" :value="opt.value" x-model="filters.regions" @change="loadData()"
+                                    class="rounded border-grafana-border bg-grafana-bg">
+                                <span x-text="opt.label" class="flex-1 truncate"></span>
+                                <span class="text-grafana-muted text-xs" x-text="opt.count"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Has Salary Toggle -->
+                <label class="flex items-center gap-2 bg-grafana-bg border border-grafana-border rounded px-3 py-1.5 text-sm cursor-pointer hover:border-grafana-blue transition">
+                    <input type="checkbox" x-model="filters.has_salary" @change="loadData()"
+                        class="rounded border-grafana-border bg-grafana-bg">
+                    <span>With Salary</span>
+                </label>
+
+                <!-- VIP Toggle -->
+                <label class="flex items-center gap-2 bg-grafana-bg border border-grafana-border rounded px-3 py-1.5 text-sm cursor-pointer hover:border-grafana-blue transition">
+                    <input type="checkbox" x-model="filters.is_vip" @change="loadData()"
+                        class="rounded border-grafana-border bg-grafana-bg">
+                    <span>VIP Only</span>
+                </label>
+
+                <!-- Spacer -->
+                <div class="flex-1"></div>
+
+                <!-- Action Buttons -->
+                <button @click="clearFilters()" class="px-3 py-1.5 text-grafana-muted hover:text-white text-sm transition">
+                    Clear Filters
+                </button>
+                <button @click="exportCSV()" class="flex items-center gap-2 px-3 py-1.5 bg-grafana-green hover:bg-green-600 rounded text-sm transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Export CSV
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Loading State -->
+    <div x-show="loading" class="flex justify-center items-center py-20">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main x-show="!loading" x-cloak class="max-w-7xl mx-auto p-4">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <div class="text-grafana-muted text-xs uppercase tracking-wide mb-1">Total Jobs</div>
+                <div class="text-3xl font-bold text-grafana-blue" x-text="formatNumber(data.summary?.total_jobs || 0)"></div>
+            </div>
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <div class="text-grafana-muted text-xs uppercase tracking-wide mb-1">Active</div>
+                <div class="text-3xl font-bold text-grafana-green" x-text="formatNumber(data.summary?.active_jobs || 0)"></div>
+            </div>
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <div class="text-grafana-muted text-xs uppercase tracking-wide mb-1">New in Period</div>
+                <div class="text-3xl font-bold text-grafana-orange" x-text="formatNumber(data.summary?.new_in_period || 0)"></div>
+            </div>
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <div class="text-grafana-muted text-xs uppercase tracking-wide mb-1">With Salary</div>
+                <div class="text-3xl font-bold text-grafana-purple" x-text="formatNumber(data.summary?.with_salary || 0)"></div>
+            </div>
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <div class="text-grafana-muted text-xs uppercase tracking-wide mb-1">Avg Salary</div>
+                <div class="text-2xl font-bold text-grafana-cyan">
+                    <span x-text="data.summary?.avg_salary_min ? formatNumber(data.summary.avg_salary_min) : '-'"></span>
+                    <span class="text-grafana-muted text-lg">-</span>
+                    <span x-text="data.summary?.avg_salary_max ? formatNumber(data.summary.avg_salary_max) : '-'"></span>
+                    <span class="text-sm text-grafana-muted">GEL</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jobs Over Time Chart -->
+        <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold">Jobs Posted Over Time</h3>
+                <div class="text-grafana-muted text-sm" x-text="(data.time_series?.length || 0) + ' data points'"></div>
+            </div>
+            <div class="relative" style="height: 250px;">
+                <canvas id="timeSeriesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Category and Region Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Category Distribution -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">Category Distribution</h3>
+                    <div class="flex gap-2">
+                        <button @click="categoryChartType = 'bar'; renderCategoryChart()"
+                            :class="categoryChartType === 'bar' ? 'bg-grafana-blue' : 'bg-grafana-border'"
+                            class="px-2 py-1 rounded text-xs">Bar</button>
+                        <button @click="categoryChartType = 'doughnut'; renderCategoryChart()"
+                            :class="categoryChartType === 'doughnut' ? 'bg-grafana-blue' : 'bg-grafana-border'"
+                            class="px-2 py-1 rounded text-xs">Pie</button>
+                    </div>
+                </div>
+                <div class="relative" style="height: 280px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Region Distribution -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">Regional Distribution</h3>
+                    <div class="flex gap-2">
+                        <button @click="regionChartType = 'bar'; renderRegionChart()"
+                            :class="regionChartType === 'bar' ? 'bg-grafana-blue' : 'bg-grafana-border'"
+                            class="px-2 py-1 rounded text-xs">Bar</button>
+                        <button @click="regionChartType = 'doughnut'; renderRegionChart()"
+                            :class="regionChartType === 'doughnut' ? 'bg-grafana-blue' : 'bg-grafana-border'"
+                            class="px-2 py-1 rounded text-xs">Pie</button>
+                    </div>
+                </div>
+                <div class="relative" style="height: 280px;">
+                    <canvas id="regionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment Type and Remote Type -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Employment Type -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <h3 class="font-semibold mb-4">Employment Type</h3>
+                <div class="relative" style="height: 200px;">
+                    <canvas id="employmentChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Remote Type -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <h3 class="font-semibold mb-4">Work Location Type</h3>
+                <div class="relative" style="height: 200px;">
+                    <canvas id="remoteChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Salary Distribution -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Salary Histogram -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <h3 class="font-semibold mb-4">Salary Distribution</h3>
+                <div class="relative" style="height: 250px;">
+                    <canvas id="salaryHistogramChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Salary by Category -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <h3 class="font-semibold mb-4">Average Salary by Category</h3>
+                <div class="relative" style="height: 250px;">
+                    <canvas id="salaryCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Tables -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Top Categories Table -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <h3 class="font-semibold mb-4">Categories Breakdown</h3>
+                <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <thead class="text-grafana-muted text-xs uppercase sticky top-0 bg-grafana-panel">
+                            <tr>
+                                <th class="text-left py-2">Category</th>
+                                <th class="text-right py-2">Jobs</th>
+                                <th class="text-right py-2">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="item in data.by_category || []" :key="item.slug">
+                                <tr class="border-t border-grafana-border hover:bg-grafana-border/50">
+                                    <td class="py-2">
+                                        <span x-text="item.name"></span>
+                                        <span x-show="item.name_ge" class="text-grafana-muted text-xs ml-1" x-text="'(' + item.name_ge + ')'"></span>
+                                    </td>
+                                    <td class="text-right py-2 font-medium" x-text="item.count"></td>
+                                    <td class="text-right py-2 text-grafana-muted" x-text="item.percentage + '%'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Regions Table -->
+            <div class="bg-grafana-panel border border-grafana-border rounded-lg p-4">
+                <h3 class="font-semibold mb-4">Regions Breakdown</h3>
+                <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <thead class="text-grafana-muted text-xs uppercase sticky top-0 bg-grafana-panel">
+                            <tr>
+                                <th class="text-left py-2">Region</th>
+                                <th class="text-right py-2">Jobs</th>
+                                <th class="text-right py-2">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="item in data.by_region || []" :key="item.slug">
+                                <tr class="border-t border-grafana-border hover:bg-grafana-border/50">
+                                    <td class="py-2">
+                                        <span x-text="item.name"></span>
+                                        <span x-show="item.name_ge" class="text-grafana-muted text-xs ml-1" x-text="'(' + item.name_ge + ')'"></span>
+                                    </td>
+                                    <td class="text-right py-2 font-medium" x-text="item.count"></td>
+                                    <td class="text-right py-2 text-grafana-muted" x-text="item.percentage + '%'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-grafana-panel border-t border-grafana-border px-4 py-3 mt-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center text-sm text-grafana-muted">
+            <span>batumi.work Analytics Dashboard</span>
+            <span x-text="'Data from ' + (filterOptions.date_range?.min_date || 'N/A') + ' to ' + (filterOptions.date_range?.max_date || 'N/A')"></span>
+        </div>
+    </footer>
+
     <script>
-        let categoriesChart = null;
-        let regionsChart = null;
+        // Chart.js global dark theme config
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = '#374151';
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
 
-        function getApiKey() {
-            const input = document.getElementById('api-key');
-            let key = input.value.trim();
-            if (!key) {
-                key = localStorage.getItem('admin_api_key');
-                if (key) input.value = key;
-            } else {
-                localStorage.setItem('admin_api_key', key);
-            }
-            return key;
-        }
+        const CHART_COLORS = [
+            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'
+        ];
 
-        function showError(message) {
-            const container = document.getElementById('error-container');
-            container.innerHTML = `<div class="error">${message}</div>`;
-        }
-
-        function clearError() {
-            document.getElementById('error-container').innerHTML = '';
-        }
-
-        function formatNumber(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-            return num.toLocaleString();
-        }
-
-        function updateTrend(elementId, pct) {
-            const el = document.getElementById(elementId);
-            if (!el) return;
-            const arrow = pct >= 0 ? '\u2191' : '\u2193';
-            const cls = pct >= 0 ? 'trend-up' : 'trend-down';
-            el.innerHTML = `<span class="${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span> vs last period`;
-        }
-
-        function renderCategoriesChart(categories) {
-            const ctx = document.getElementById('categories-chart').getContext('2d');
-
-            if (categoriesChart) categoriesChart.destroy();
-
-            categoriesChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: categories.map(c => c.name),
-                    datasets: [{
-                        label: 'Jobs',
-                        data: categories.map(c => c.jobs),
-                        backgroundColor: '#4ECDC4',
-                        borderRadius: 4
-                    }]
+        function analyticsApp() {
+            return {
+                loading: true,
+                lastUpdated: '-',
+                data: {},
+                filterOptions: { categories: [], regions: [], date_range: {} },
+                filters: {
+                    date_from: null,
+                    date_to: null,
+                    categories: [],
+                    regions: [],
+                    has_salary: false,
+                    is_vip: false,
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true }
+                datePresets: [
+                    { days: 7, label: '7d' },
+                    { days: 14, label: '14d' },
+                    { days: 30, label: '30d' },
+                    { days: 90, label: '90d' },
+                    { days: 365, label: '1y' },
+                    { days: 0, label: 'All' },
+                ],
+                activeDatePreset: 30,
+                categoryChartType: 'bar',
+                regionChartType: 'bar',
+
+                // Chart instances
+                charts: {},
+
+                async init() {
+                    // Load URL state
+                    this.loadUrlState();
+
+                    // Load filter options first
+                    await this.loadFilterOptions();
+
+                    // Apply default date preset if no custom dates
+                    if (!this.filters.date_from && !this.filters.date_to) {
+                        this.applyDatePreset(30);
+                    } else {
+                        await this.loadData();
                     }
-                }
-            });
-        }
-
-        function renderRegionsChart(regions) {
-            const ctx = document.getElementById('regions-chart').getContext('2d');
-
-            if (regionsChart) regionsChart.destroy();
-
-            regionsChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: regions.map(r => r.name),
-                    datasets: [{
-                        data: regions.map(r => r.jobs),
-                        backgroundColor: [
-                            '#4ECDC4', '#FF6B6B', '#45B7D1',
-                            '#96CEB4', '#FFEAA7', '#DDA0DD'
-                        ]
-                    }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'right'
+
+                loadUrlState() {
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.get('date_from')) this.filters.date_from = params.get('date_from');
+                    if (params.get('date_to')) this.filters.date_to = params.get('date_to');
+                    if (params.get('categories')) this.filters.categories = params.get('categories').split(',');
+                    if (params.get('regions')) this.filters.regions = params.get('regions').split(',');
+                    if (params.get('has_salary') === 'true') this.filters.has_salary = true;
+                    if (params.get('is_vip') === 'true') this.filters.is_vip = true;
+                    if (params.get('preset')) this.activeDatePreset = parseInt(params.get('preset'));
+                },
+
+                saveUrlState() {
+                    const params = new URLSearchParams();
+                    if (this.filters.date_from) params.set('date_from', this.filters.date_from);
+                    if (this.filters.date_to) params.set('date_to', this.filters.date_to);
+                    if (this.filters.categories.length) params.set('categories', this.filters.categories.join(','));
+                    if (this.filters.regions.length) params.set('regions', this.filters.regions.join(','));
+                    if (this.filters.has_salary) params.set('has_salary', 'true');
+                    if (this.filters.is_vip) params.set('is_vip', 'true');
+                    if (this.activeDatePreset !== null) params.set('preset', this.activeDatePreset);
+
+                    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+                    history.replaceState(null, '', newUrl);
+                },
+
+                async loadFilterOptions() {
+                    try {
+                        const res = await fetch('/admin-api/analytics/filters');
+                        if (res.ok) {
+                            this.filterOptions = await res.json();
                         }
+                    } catch (e) {
+                        console.error('Failed to load filter options:', e);
                     }
-                }
-            });
-        }
+                },
 
-        function renderSourcesTable(sources) {
-            const tbody = document.querySelector('#sources-table tbody');
-            tbody.innerHTML = sources.map(s => `
-                <tr>
-                    <td><strong>${s.name}</strong></td>
-                    <td><span class="status-badge status-${s.status}">${s.status}</span></td>
-                    <td>${s.last_run ? new Date(s.last_run).toLocaleString() : 'Never'}</td>
-                    <td>${s.jobs_today}</td>
-                </tr>
-            `).join('');
-        }
+                async loadData() {
+                    this.loading = true;
+                    this.saveUrlState();
 
-        async function loadDashboard() {
-            const apiKey = getApiKey();
-            if (!apiKey) {
-                showError('Please enter your Admin API Key');
-                return;
-            }
+                    try {
+                        const params = new URLSearchParams();
+                        if (this.filters.date_from) params.set('date_from', this.filters.date_from);
+                        if (this.filters.date_to) params.set('date_to', this.filters.date_to);
+                        if (this.filters.categories.length) params.set('categories', this.filters.categories.join(','));
+                        if (this.filters.regions.length) params.set('regions', this.filters.regions.join(','));
+                        if (this.filters.has_salary) params.set('has_salary', 'true');
+                        if (this.filters.is_vip) params.set('is_vip', 'true');
 
-            clearError();
-            document.getElementById('loading').textContent = 'Loading...';
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('dashboard').style.display = 'none';
+                        const res = await fetch(`/admin-api/analytics/dashboard-v2?${params.toString()}`);
+                        if (res.ok) {
+                            this.data = await res.json();
+                            this.lastUpdated = new Date().toLocaleTimeString();
 
-            try {
-                const response = await fetch('/admin-api/analytics/dashboard', {
-                    headers: { 'X-API-Key': apiKey }
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error('Invalid API Key. Please check and try again.');
+                            // Render all charts
+                            this.$nextTick(() => {
+                                this.renderTimeSeriesChart();
+                                this.renderCategoryChart();
+                                this.renderRegionChart();
+                                this.renderEmploymentChart();
+                                this.renderRemoteChart();
+                                this.renderSalaryHistogramChart();
+                                this.renderSalaryCategoryChart();
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Failed to load data:', e);
+                    } finally {
+                        this.loading = false;
                     }
-                    throw new Error(`API Error: ${response.status}`);
-                }
+                },
 
-                const data = await response.json();
+                applyDatePreset(days) {
+                    this.activeDatePreset = days;
+                    if (days === 0) {
+                        this.filters.date_from = null;
+                        this.filters.date_to = null;
+                    } else {
+                        const to = new Date();
+                        const from = new Date();
+                        from.setDate(from.getDate() - days);
+                        this.filters.date_from = from.toISOString().split('T')[0];
+                        this.filters.date_to = to.toISOString().split('T')[0];
+                    }
+                    this.loadData();
+                },
 
-                // Update stat cards
-                document.getElementById('total-jobs').textContent = formatNumber(data.summary.active_jobs);
-                document.getElementById('total-views').textContent = formatNumber(data.summary.total_views);
-                document.getElementById('unique-visitors').textContent = formatNumber(data.summary.unique_visitors);
-                document.getElementById('searches').textContent = formatNumber(data.summary.searches);
+                clearFilters() {
+                    this.filters = {
+                        date_from: null,
+                        date_to: null,
+                        categories: [],
+                        regions: [],
+                        has_salary: false,
+                        is_vip: false,
+                    };
+                    this.activeDatePreset = 0;
+                    this.loadData();
+                },
 
-                // Update trends
-                updateTrend('jobs-trend', data.trends.jobs_change_pct);
-                updateTrend('views-trend', data.trends.views_change_pct);
-                updateTrend('searches-trend', data.trends.searches_change_pct);
+                exportCSV() {
+                    const params = new URLSearchParams();
+                    if (this.filters.date_from) params.set('date_from', this.filters.date_from);
+                    if (this.filters.date_to) params.set('date_to', this.filters.date_to);
+                    if (this.filters.categories.length) params.set('categories', this.filters.categories.join(','));
+                    if (this.filters.regions.length) params.set('regions', this.filters.regions.join(','));
+                    window.open(`/admin-api/analytics/export?${params.toString()}`, '_blank');
+                },
 
-                // Render charts
-                renderCategoriesChart(data.top_categories);
-                renderRegionsChart(data.top_regions);
+                formatNumber(num) {
+                    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+                    return num.toLocaleString();
+                },
 
-                // Render tables
-                renderSourcesTable(data.parser_health.sources);
+                destroyChart(id) {
+                    if (this.charts[id]) {
+                        this.charts[id].destroy();
+                        delete this.charts[id];
+                    }
+                },
 
-                // Show dashboard
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'grid';
+                renderTimeSeriesChart() {
+                    this.destroyChart('timeSeries');
+                    const ctx = document.getElementById('timeSeriesChart');
+                    if (!ctx || !this.data.time_series?.length) return;
 
-            } catch (error) {
-                showError(error.message);
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('loading').textContent = 'Failed to load data. Please try again.';
-            }
+                    this.charts.timeSeries = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: this.data.time_series.map(d => d.date),
+                            datasets: [{
+                                label: 'Jobs Posted',
+                                data: this.data.time_series.map(d => d.count),
+                                borderColor: CHART_COLORS[0],
+                                backgroundColor: CHART_COLORS[0] + '33',
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: {
+                                    type: 'category',
+                                    grid: { display: false },
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: '#374151' },
+                                }
+                            },
+                            interaction: { intersect: false, mode: 'index' },
+                        }
+                    });
+                },
+
+                renderCategoryChart() {
+                    this.destroyChart('category');
+                    const ctx = document.getElementById('categoryChart');
+                    if (!ctx || !this.data.by_category?.length) return;
+
+                    const top10 = this.data.by_category.slice(0, 10);
+
+                    this.charts.category = new Chart(ctx, {
+                        type: this.categoryChartType === 'bar' ? 'bar' : 'doughnut',
+                        data: {
+                            labels: top10.map(d => d.name),
+                            datasets: [{
+                                data: top10.map(d => d.count),
+                                backgroundColor: CHART_COLORS,
+                                borderColor: this.categoryChartType === 'bar' ? CHART_COLORS : '#1f2937',
+                                borderWidth: this.categoryChartType === 'bar' ? 0 : 2,
+                                borderRadius: this.categoryChartType === 'bar' ? 4 : 0,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: this.categoryChartType === 'bar' ? 'y' : undefined,
+                            plugins: {
+                                legend: { display: this.categoryChartType !== 'bar', position: 'right' }
+                            },
+                            scales: this.categoryChartType === 'bar' ? {
+                                x: { beginAtZero: true, grid: { color: '#374151' } },
+                                y: { grid: { display: false } }
+                            } : {},
+                        }
+                    });
+                },
+
+                renderRegionChart() {
+                    this.destroyChart('region');
+                    const ctx = document.getElementById('regionChart');
+                    if (!ctx || !this.data.by_region?.length) return;
+
+                    const top10 = this.data.by_region.slice(0, 10);
+
+                    this.charts.region = new Chart(ctx, {
+                        type: this.regionChartType === 'bar' ? 'bar' : 'doughnut',
+                        data: {
+                            labels: top10.map(d => d.name),
+                            datasets: [{
+                                data: top10.map(d => d.count),
+                                backgroundColor: CHART_COLORS,
+                                borderColor: this.regionChartType === 'bar' ? CHART_COLORS : '#1f2937',
+                                borderWidth: this.regionChartType === 'bar' ? 0 : 2,
+                                borderRadius: this.regionChartType === 'bar' ? 4 : 0,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: this.regionChartType === 'bar' ? 'y' : undefined,
+                            plugins: {
+                                legend: { display: this.regionChartType !== 'bar', position: 'right' }
+                            },
+                            scales: this.regionChartType === 'bar' ? {
+                                x: { beginAtZero: true, grid: { color: '#374151' } },
+                                y: { grid: { display: false } }
+                            } : {},
+                        }
+                    });
+                },
+
+                renderEmploymentChart() {
+                    this.destroyChart('employment');
+                    const ctx = document.getElementById('employmentChart');
+                    if (!ctx || !this.data.by_employment?.length) return;
+
+                    this.charts.employment = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: this.data.by_employment.map(d => d.name.replace('_', ' ')),
+                            datasets: [{
+                                data: this.data.by_employment.map(d => d.count),
+                                backgroundColor: CHART_COLORS,
+                                borderColor: '#1f2937',
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'right' } },
+                        }
+                    });
+                },
+
+                renderRemoteChart() {
+                    this.destroyChart('remote');
+                    const ctx = document.getElementById('remoteChart');
+                    if (!ctx || !this.data.by_remote?.length) return;
+
+                    this.charts.remote = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: this.data.by_remote.map(d => d.name.replace('_', ' ')),
+                            datasets: [{
+                                data: this.data.by_remote.map(d => d.count),
+                                backgroundColor: [CHART_COLORS[1], CHART_COLORS[4], CHART_COLORS[2]],
+                                borderColor: '#1f2937',
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'right' } },
+                        }
+                    });
+                },
+
+                renderSalaryHistogramChart() {
+                    this.destroyChart('salaryHistogram');
+                    const ctx = document.getElementById('salaryHistogramChart');
+                    if (!ctx || !this.data.salary_histogram?.length) return;
+
+                    this.charts.salaryHistogram = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: this.data.salary_histogram.map(d => d.range),
+                            datasets: [{
+                                label: 'Jobs',
+                                data: this.data.salary_histogram.map(d => d.count),
+                                backgroundColor: CHART_COLORS[4],
+                                borderRadius: 4,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { beginAtZero: true, grid: { color: '#374151' } }
+                            }
+                        }
+                    });
+                },
+
+                renderSalaryCategoryChart() {
+                    this.destroyChart('salaryCategory');
+                    const ctx = document.getElementById('salaryCategoryChart');
+                    if (!ctx || !this.data.salary_by_category?.length) return;
+
+                    const top8 = this.data.salary_by_category.slice(0, 8);
+
+                    this.charts.salaryCategory = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: top8.map(d => d.name),
+                            datasets: [
+                                {
+                                    label: 'Min Salary',
+                                    data: top8.map(d => d.avg_min),
+                                    backgroundColor: CHART_COLORS[1],
+                                    borderRadius: 4,
+                                },
+                                {
+                                    label: 'Max Salary',
+                                    data: top8.map(d => d.avg_max),
+                                    backgroundColor: CHART_COLORS[0],
+                                    borderRadius: 4,
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            plugins: { legend: { position: 'top' } },
+                            scales: {
+                                x: { beginAtZero: true, grid: { color: '#374151' } },
+                                y: { grid: { display: false } }
+                            }
+                        }
+                    });
+                },
+            };
         }
-
-        // Auto-load if API key is saved
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedKey = localStorage.getItem('admin_api_key');
-            if (savedKey) {
-                document.getElementById('api-key').value = savedKey;
-            }
-        });
     </script>
 </body>
 </html>
