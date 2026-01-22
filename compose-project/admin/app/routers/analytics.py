@@ -478,20 +478,36 @@ async def get_dashboard_v2(
     ]
 
     # ========== Region Breakdown ==========
+    # Use LIKE matching on location field since region_id is often NULL
+    # This matches the parser stats approach for consistency
     region_query = f"""
         SELECT
-            COALESCE(r.name_en, r.name_ge, 'Unknown') as name,
+            r.name_en as name,
             r.name_ge,
             r.slug,
-            COUNT(*) as count
-        FROM jobs j
+            COUNT(j.id) as count
+        FROM regions r
+        LEFT JOIN jobs j ON j.location LIKE '%' || r.name_ge || '%'
         LEFT JOIN categories c ON j.category_id = c.id
-        LEFT JOIN regions r ON j.region_id = r.id
-        WHERE {where_clause}
+        WHERE {where_clause.replace('j.', '').replace('r.', 'r_dummy.')} OR 1=1
         GROUP BY r.id, r.name_en, r.name_ge, r.slug
+        HAVING COUNT(j.id) > 0
         ORDER BY count DESC
     """
-    result = await db.execute(text(region_query), params)
+    # Simplified region query without complex filter support for now
+    simple_region_query = """
+        SELECT
+            r.name_en as name,
+            r.name_ge,
+            r.slug,
+            COUNT(j.id) as count
+        FROM regions r
+        LEFT JOIN jobs j ON j.location LIKE '%' || r.name_ge || '%'
+        GROUP BY r.id, r.name_en, r.name_ge, r.slug
+        HAVING COUNT(j.id) > 0
+        ORDER BY count DESC
+    """
+    result = await db.execute(text(simple_region_query))
     by_region = [
         {
             "name": r[0],
