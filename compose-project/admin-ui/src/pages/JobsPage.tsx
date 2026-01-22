@@ -25,7 +25,7 @@ import { Search, ChevronLeft, ChevronRight, Trash2, Eye } from 'lucide-react'
 import type { Job } from '@/types'
 
 const STATUS_OPTIONS = [
-  { value: '', label: 'All Statuses' },
+  { value: 'all', label: 'All Statuses' },
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
   { value: 'expired', label: 'Expired' },
@@ -34,17 +34,17 @@ const STATUS_OPTIONS = [
 export function JobsPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
-  const [category, setCategory] = useState('')
+  const [status, setStatus] = useState('all')
+  const [category, setCategory] = useState('all')
 
-  const { data: jobs, isLoading } = useJobs({
+  const { data: jobs, isLoading, error: jobsError } = useJobs({
     page,
     page_size: 20,
     q: search || undefined,
-    status: status || undefined,
-    category: category || undefined,
+    status: status === 'all' ? undefined : status,
+    category: category === 'all' ? undefined : category,
   })
-  const { data: categories } = useCategories()
+  const { data: categories, isLoading: categoriesLoading } = useCategories()
   const updateStatus = useUpdateJobStatus()
   const deleteJob = useDeleteJob()
 
@@ -113,12 +113,16 @@ export function JobsPage() {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
-                  {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.slug}>
-                      {cat.name_en}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categoriesLoading ? (
+                    <SelectItem value="loading" disabled>Loading...</SelectItem>
+                  ) : (
+                    categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.slug}>
+                        {cat.name_en}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -150,6 +154,12 @@ export function JobsPage() {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
                       Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : jobsError ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-destructive">
+                      Failed to load jobs. Please try refreshing the page.
                     </TableCell>
                   </TableRow>
                 ) : jobs?.data?.length === 0 ? (

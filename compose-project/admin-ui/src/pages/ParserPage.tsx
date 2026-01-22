@@ -12,16 +12,22 @@ import {
 } from '@/components/ui/table'
 import { useParserConfig, useParseJobs, useParserProgress, useParserStats, useTriggerParser, useControlJob } from '@/hooks/useParser'
 import { formatDateTime } from '@/lib/utils'
-import { Bot, RefreshCw, CheckCircle, XCircle, Clock, Pause, Play, Square, RotateCcw } from 'lucide-react'
+import { Bot, RefreshCw, CheckCircle, XCircle, Clock, Pause, Play, Square, RotateCcw, AlertCircle } from 'lucide-react'
 import type { ParseJob } from '@/types'
 
 export function ParserPage() {
-  const { data: config, isLoading: configLoading } = useParserConfig()
-  const { data: jobsData, isLoading: jobsLoading } = useParseJobs(20)
-  const { data: progress } = useParserProgress()
-  const { data: stats } = useParserStats()
+  const { data: config, isLoading: configLoading, error: configError } = useParserConfig()
+  const { data: jobsData, isLoading: jobsLoading, error: jobsError } = useParseJobs(20)
+  const { data: progress, error: progressError } = useParserProgress()
+  const { data: stats, error: statsError } = useParserStats()
   const triggerParser = useTriggerParser()
   const controlJob = useControlJob()
+
+  // Debug: Log any errors
+  if (configError) console.error('Config error:', configError)
+  if (jobsError) console.error('Jobs error:', jobsError)
+  if (progressError) console.error('Progress error:', progressError)
+  if (statsError) console.error('Stats error:', statsError)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -51,6 +57,18 @@ export function ParserPage() {
       <Header title="Parser" />
 
       <div className="flex-1 p-6 space-y-6 overflow-auto">
+        {/* Error Banner */}
+        {(configError || jobsError || statsError) && (
+          <Card className="border-destructive bg-destructive/10">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertCircle className="h-5 w-5" />
+                <span>Some data failed to load. Please refresh the page.</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Parser Status */}
         <Card>
           <CardHeader>

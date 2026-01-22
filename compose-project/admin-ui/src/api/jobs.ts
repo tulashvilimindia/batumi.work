@@ -95,11 +95,25 @@ export async function updateJobStatus(id: string, status: string): Promise<Job> 
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const { data } = await apiClient.get('/categories')
-  return data.data || data
+  // Categories come from parser config endpoint (no dedicated /categories endpoint)
+  const { data } = await apiClient.get('/parser/config')
+  return (data.categories || []).map((cat: { id: string; name_en: string; name_ge: string; slug: string }) => ({
+    id: cat.id,
+    name_en: cat.name_en,
+    name_ge: cat.name_ge,
+    slug: cat.slug,
+    is_active: true,
+  }))
 }
 
 export async function getRegions(): Promise<Region[]> {
-  const { data } = await apiClient.get('/regions')
-  return data.data || data
+  // Regions come from parser config endpoint (no dedicated /regions endpoint)
+  const { data } = await apiClient.get('/parser/config')
+  return (data.regions || []).map((reg: { id: string; name_en: string; name_ge: string; slug: string; enabled: boolean }) => ({
+    id: reg.id,
+    name_en: reg.name_en,
+    name_ge: reg.name_ge,
+    slug: reg.slug,
+    is_active: reg.enabled,
+  }))
 }

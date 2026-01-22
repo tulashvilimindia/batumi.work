@@ -88,6 +88,8 @@ export function useCategories() {
     queryKey: ['categories'],
     queryFn: getCategories,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: 1, // Only retry once on failure
+    retryDelay: 1000,
   })
 }
 
@@ -96,5 +98,7 @@ export function useRegions() {
     queryKey: ['regions'],
     queryFn: getRegions,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: 1, // Only retry once on failure
+    retryDelay: 1000,
   })
 }
