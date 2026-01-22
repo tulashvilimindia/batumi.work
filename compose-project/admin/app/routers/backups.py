@@ -116,14 +116,23 @@ async def create_backup():
         raise HTTPException(status_code=500, detail="Invalid DATABASE_URL")
 
     try:
-        # Run pg_dump
-        cmd = f"PGPASSWORD={password} pg_dump -h {host} -p {port} -U {user} -d {dbname} | gzip > {filepath}"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        # Run pg_dump with pipefail to catch pg_dump errors
+        cmd = f"set -o pipefail && PGPASSWORD={password} pg_dump -h {host} -p {port} -U {user} -d {dbname} | gzip > {filepath}"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, executable='/bin/bash')
 
         if result.returncode != 0:
+            # Clean up empty file if created
+            if filepath.exists():
+                filepath.unlink()
             raise HTTPException(status_code=500, detail=f"Backup failed: {result.stderr}")
 
         stat = filepath.stat()
+
+        # Verify backup is not empty (minimum 100 bytes for a valid gzipped SQL)
+        if stat.st_size < 100:
+            filepath.unlink()
+            raise HTTPException(status_code=500, detail="Backup failed: empty or corrupted backup file")
+
         return {
             "success": True,
             "name": filename,

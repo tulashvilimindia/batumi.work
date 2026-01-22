@@ -117,6 +117,84 @@ async def get_salary_analytics(db: AsyncSession = Depends(get_db)):
     }
 
 
+@router.get("/dashboard")
+async def get_dashboard_analytics(db: AsyncSession = Depends(get_db)):
+    """Get combined dashboard analytics for the admin panel."""
+    # Summary stats
+    result = await db.execute(text("SELECT COUNT(*) FROM jobs WHERE status = 'active'"))
+    active_jobs = result.scalar() or 0
+
+    result = await db.execute(text("SELECT COUNT(*) FROM jobs WHERE has_salary = true"))
+    with_salary = result.scalar() or 0
+
+    result = await db.execute(text("SELECT COUNT(*) FROM jobs WHERE is_vip = true"))
+    vip_jobs = result.scalar() or 0
+
+    # Top categories
+    result = await db.execute(text("""
+        SELECT COALESCE(c.name_en, c.name_ge, 'Unknown') as name, COUNT(*) as jobs
+        FROM jobs j
+        LEFT JOIN categories c ON j.category_id = c.id
+        WHERE j.status = 'active'
+        GROUP BY c.id, c.name_en, c.name_ge
+        ORDER BY jobs DESC
+        LIMIT 8
+    """))
+    top_categories = [{"name": r[0], "jobs": r[1]} for r in result.fetchall()]
+
+    # Top regions
+    result = await db.execute(text("""
+        SELECT COALESCE(r.name_en, r.name_ge, 'Unknown') as name, COUNT(*) as jobs
+        FROM jobs j
+        LEFT JOIN regions r ON j.region_id = r.id
+        WHERE j.status = 'active'
+        GROUP BY r.id, r.name_en, r.name_ge
+        ORDER BY jobs DESC
+        LIMIT 6
+    """))
+    top_regions = [{"name": r[0], "jobs": r[1]} for r in result.fetchall()]
+
+    # Parser health - check parse_jobs table
+    result = await db.execute(text("""
+        SELECT
+            'jobs.ge' as name,
+            CASE
+                WHEN MAX(completed_at) > NOW() - INTERVAL '1 hour' THEN 'healthy'
+                WHEN MAX(completed_at) > NOW() - INTERVAL '24 hours' THEN 'warning'
+                ELSE 'error'
+            END as status,
+            MAX(completed_at) as last_run,
+            COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) as jobs_today
+        FROM parse_jobs
+    """))
+    row = result.fetchone()
+    parser_sources = [{
+        "name": row[0],
+        "status": row[1] if row[1] else "pending",
+        "last_run": row[2].isoformat() if row[2] else None,
+        "jobs_today": row[3] or 0
+    }] if row else [{"name": "jobs.ge", "status": "pending", "last_run": None, "jobs_today": 0}]
+
+    return {
+        "summary": {
+            "active_jobs": active_jobs,
+            "total_views": 0,  # Not tracked yet
+            "unique_visitors": 0,  # Not tracked yet
+            "searches": 0,  # Not tracked yet
+        },
+        "trends": {
+            "jobs_change_pct": 0,  # Would need historical data
+            "views_change_pct": 0,
+            "searches_change_pct": 0,
+        },
+        "top_categories": top_categories,
+        "top_regions": top_regions,
+        "parser_health": {
+            "sources": parser_sources
+        }
+    }
+
+
 @router.get("/trends")
 async def get_job_trends(db: AsyncSession = Depends(get_db)):
     """Get job posting trends."""

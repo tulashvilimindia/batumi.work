@@ -323,7 +323,7 @@
             document.getElementById('dashboard').style.display = 'none';
 
             try {
-                const response = await fetch('/api/v1/admin/analytics/dashboard', {
+                const response = await fetch('/admin-api/analytics/dashboard', {
                     headers: { 'X-API-Key': apiKey }
                 });
 
