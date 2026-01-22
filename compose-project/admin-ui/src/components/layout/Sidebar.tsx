@@ -8,9 +8,7 @@ import {
   Database,
   HardDrive,
   ScrollText,
-  LogOut,
 } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -23,8 +21,6 @@ const navigation = [
 ]
 
 export function Sidebar() {
-  const clearApiKey = useAuthStore((state) => state.clearApiKey)
-
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r">
       {/* Logo */}
@@ -54,17 +50,6 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      {/* Logout */}
-      <div className="border-t p-3">
-        <button
-          onClick={clearApiKey}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          <LogOut className="h-5 w-5" />
-          Logout
-        </button>
-      </div>
     </div>
   )
 }
