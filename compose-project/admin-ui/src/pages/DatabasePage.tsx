@@ -10,18 +10,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useTableStats, useVacuum, useExecuteQuery } from '@/hooks/useDatabase'
+import { useTables, useExecuteQuery } from '@/hooks/useDatabase'
 import { Database, RefreshCw, Play, AlertTriangle } from 'lucide-react'
 
 export function DatabasePage() {
   const [query, setQuery] = useState('')
-  const { data: tables, isLoading } = useTableStats()
-  const vacuum = useVacuum()
-  const executeQuery = useExecuteQuery()
+  const { data: tablesData, isLoading, refetch } = useTables()
+  const executeQueryMutation = useExecuteQuery()
 
   const handleRunQuery = () => {
     if (query.trim()) {
-      executeQuery.mutate(query)
+      executeQueryMutation.mutate({ query })
     }
   }
 
@@ -39,15 +38,15 @@ export function DatabasePage() {
             </CardTitle>
             <Button
               variant="outline"
-              onClick={() => vacuum.mutate()}
-              disabled={vacuum.isPending}
+              onClick={() => refetch()}
+              disabled={isLoading}
             >
-              {vacuum.isPending ? (
+              {isLoading ? (
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <RefreshCw className="h-4 w-4 mr-2" />
               )}
-              Run VACUUM
+              Refresh
             </Button>
           </CardHeader>
           <CardContent>
@@ -56,28 +55,26 @@ export function DatabasePage() {
                 <TableRow>
                   <TableHead>Table Name</TableHead>
                   <TableHead className="text-right">Row Count</TableHead>
-                  <TableHead className="text-right">Size</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8">
+                    <TableCell colSpan={2} className="text-center py-8">
                       Loading...
                     </TableCell>
                   </TableRow>
-                ) : tables?.length === 0 ? (
+                ) : !tablesData?.tables?.length ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
                       No tables found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  tables?.map((table) => (
+                  tablesData.tables.map((table) => (
                     <TableRow key={table.name}>
                       <TableCell className="font-medium font-mono">{table.name}</TableCell>
                       <TableCell className="text-right">{table.row_count.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">{table.size_pretty}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -115,9 +112,9 @@ export function DatabasePage() {
             <div className="flex justify-between items-center">
               <Button
                 onClick={handleRunQuery}
-                disabled={!query.trim() || executeQuery.isPending}
+                disabled={!query.trim() || executeQueryMutation.isPending}
               >
-                {executeQuery.isPending ? (
+                {executeQueryMutation.isPending ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Play className="h-4 w-4 mr-2" />
@@ -125,20 +122,20 @@ export function DatabasePage() {
                 Run Query
               </Button>
 
-              {executeQuery.data && (
+              {executeQueryMutation.data && (
                 <span className="text-sm text-muted-foreground">
-                  {executeQuery.data.row_count} rows in {executeQuery.data.execution_time_ms}ms
+                  {executeQueryMutation.data.row_count} rows returned
                 </span>
               )}
             </div>
 
             {/* Query Results */}
-            {executeQuery.data && executeQuery.data.rows.length > 0 && (
+            {executeQueryMutation.data && executeQueryMutation.data.rows.length > 0 && (
               <div className="border rounded-lg overflow-auto max-h-[400px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      {executeQuery.data.columns.map((col) => (
+                      {executeQueryMutation.data.columns.map((col) => (
                         <TableHead key={col} className="font-mono text-xs whitespace-nowrap">
                           {col}
                         </TableHead>
@@ -146,9 +143,9 @@ export function DatabasePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {executeQuery.data.rows.map((row, i) => (
+                    {executeQueryMutation.data.rows.map((row, i) => (
                       <TableRow key={i}>
-                        {executeQuery.data!.columns.map((col) => (
+                        {executeQueryMutation.data!.columns.map((col) => (
                           <TableCell key={col} className="font-mono text-xs whitespace-nowrap">
                             {String(row[col] ?? 'NULL')}
                           </TableCell>
@@ -160,10 +157,10 @@ export function DatabasePage() {
               </div>
             )}
 
-            {executeQuery.error && (
+            {executeQueryMutation.error && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-sm text-destructive">
-                  {(executeQuery.error as Error).message || 'Query execution failed'}
+                  {(executeQueryMutation.error as Error).message || 'Query execution failed'}
                 </p>
               </div>
             )}

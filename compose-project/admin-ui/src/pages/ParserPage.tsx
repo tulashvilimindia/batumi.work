@@ -10,34 +10,47 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useParserSources, useParserRuns, useParserStatus, useTriggerParser } from '@/hooks/useParser'
+import { useParserConfig, useParseJobs, useParserProgress, useParserStats, useTriggerParser, useControlJob } from '@/hooks/useParser'
 import { formatDateTime } from '@/lib/utils'
-import { Bot, RefreshCw, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Bot, RefreshCw, CheckCircle, XCircle, Clock, Pause, Play, Square, RotateCcw } from 'lucide-react'
+import type { ParseJob } from '@/types'
 
 export function ParserPage() {
-  const { data: sources, isLoading: sourcesLoading } = useParserSources()
-  const { data: runs, isLoading: runsLoading } = useParserRuns(20)
-  const { data: status } = useParserStatus()
+  const { data: config, isLoading: configLoading } = useParserConfig()
+  const { data: jobsData, isLoading: jobsLoading } = useParseJobs(20)
+  const { data: progress } = useParserProgress()
+  const { data: stats } = useParserStats()
   const triggerParser = useTriggerParser()
+  const controlJob = useControlJob()
 
-  const getStatusBadge = (runStatus: string) => {
-    switch (runStatus) {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
       case 'completed':
         return <Badge variant="success"><CheckCircle className="h-3 w-3 mr-1" /> Completed</Badge>
       case 'running':
         return <Badge variant="warning"><RefreshCw className="h-3 w-3 mr-1 animate-spin" /> Running</Badge>
+      case 'paused':
+        return <Badge variant="secondary"><Pause className="h-3 w-3 mr-1" /> Paused</Badge>
+      case 'stopping':
+        return <Badge variant="warning"><Square className="h-3 w-3 mr-1" /> Stopping</Badge>
       case 'failed':
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> Failed</Badge>
+      case 'cancelled':
+        return <Badge variant="outline"><XCircle className="h-3 w-3 mr-1" /> Cancelled</Badge>
       default:
-        return <Badge variant="outline">{runStatus}</Badge>
+        return <Badge variant="outline">{status}</Badge>
     }
+  }
+
+  const handleControl = (jobId: string, action: 'pause' | 'resume' | 'stop' | 'cancel' | 'restart') => {
+    controlJob.mutate({ jobId, action })
   }
 
   return (
     <div className="flex flex-col h-full">
       <Header title="Parser" />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-6 space-y-6 overflow-auto">
         {/* Parser Status */}
         <Card>
           <CardHeader>
@@ -51,29 +64,41 @@ export function ParserPage() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Status:</span>
-                  <Badge variant={status?.is_running ? 'warning' : 'success'}>
-                    {status?.is_running ? 'Running' : 'Idle'}
+                  <Badge variant={progress?.running ? 'warning' : 'success'}>
+                    {progress?.running ? 'Running' : 'Idle'}
                   </Badge>
                 </div>
-                {status?.current_source && (
+                {progress?.running && progress.jobs.length > 0 && (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Current Source:</span>
-                    <span className="text-sm">{status.current_source}</span>
+                    <span className="text-sm text-muted-foreground">Current:</span>
+                    <span className="text-sm">
+                      {progress.jobs[0].scope.region || 'all regions'} - {progress.jobs[0].progress.percentage}%
+                    </span>
                   </div>
                 )}
-                {status?.last_run && (
+                {stats?.last_parsed && (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Last Run:</span>
-                    <span className="text-sm">{formatDateTime(status.last_run.started_at)}</span>
+                    <span className="text-sm text-muted-foreground">Last Parsed:</span>
+                    <span className="text-sm">{formatDateTime(stats.last_parsed)}</span>
+                  </div>
+                )}
+                {stats && (
+                  <div className="flex items-center gap-4 pt-2">
+                    <span className="text-sm">
+                      <span className="text-muted-foreground">Total Jobs:</span> {stats.total_jobs.toLocaleString()}
+                    </span>
+                    <span className="text-sm">
+                      <span className="text-muted-foreground">Parsed Today:</span> {stats.parsed_today}
+                    </span>
                   </div>
                 )}
               </div>
               <Button
                 onClick={() => triggerParser.mutate(undefined)}
-                disabled={triggerParser.isPending || status?.is_running}
+                disabled={triggerParser.isPending || progress?.running}
                 size="lg"
               >
-                {triggerParser.isPending || status?.is_running ? (
+                {triggerParser.isPending || progress?.running ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Bot className="h-4 w-4 mr-2" />
@@ -84,43 +109,28 @@ export function ParserPage() {
           </CardContent>
         </Card>
 
-        {/* Parser Sources */}
+        {/* Parser Regions */}
         <Card>
           <CardHeader>
-            <CardTitle>Parser Sources</CardTitle>
+            <CardTitle>Parser Regions</CardTitle>
           </CardHeader>
           <CardContent>
-            {sourcesLoading ? (
-              <p className="text-muted-foreground">Loading sources...</p>
-            ) : sources?.length === 0 ? (
-              <p className="text-muted-foreground">No parser sources configured</p>
+            {configLoading ? (
+              <p className="text-muted-foreground">Loading regions...</p>
+            ) : !config?.regions?.length ? (
+              <p className="text-muted-foreground">No regions configured</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sources?.map((source) => (
-                  <Card key={source.id} className="bg-muted/50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{source.name}</h4>
-                        <Badge variant={source.is_enabled ? 'success' : 'secondary'}>
-                          {source.is_enabled ? 'Enabled' : 'Disabled'}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {config.regions.map((region) => (
+                  <Card key={region.id} className="bg-muted/50">
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-medium text-sm">{region.name_en}</h4>
+                        <Badge variant={region.enabled ? 'success' : 'secondary'} className="text-xs">
+                          {region.enabled ? 'Active' : 'Disabled'}
                         </Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p>Slug: {source.slug}</p>
-                        <p>Total Parsed: {source.total_jobs_parsed}</p>
-                        {source.last_run_at && (
-                          <p>Last Run: {formatDateTime(source.last_run_at)}</p>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3 w-full"
-                        onClick={() => triggerParser.mutate(source.slug)}
-                        disabled={!source.is_enabled || triggerParser.isPending}
-                      >
-                        Parse {source.name}
-                      </Button>
+                      <p className="text-xs text-muted-foreground">{region.name_ge}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -129,52 +139,120 @@ export function ParserPage() {
           </CardContent>
         </Card>
 
-        {/* Parser Runs */}
+        {/* Current Running Jobs */}
+        {progress?.running && progress.jobs.length > 0 && (
+          <Card className="border-warning/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-warning">
+                <RefreshCw className="h-5 w-5 animate-spin" />
+                Running Jobs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {progress.jobs.map((job) => (
+                  <div key={job.id} className="p-4 bg-muted rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(job.status)}
+                        <span className="text-sm font-medium">{job.scope.region || 'All Regions'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {job.controls.can_pause && (
+                          <Button size="sm" variant="outline" onClick={() => handleControl(job.id, 'pause')}>
+                            <Pause className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {job.controls.can_resume && (
+                          <Button size="sm" variant="outline" onClick={() => handleControl(job.id, 'resume')}>
+                            <Play className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {job.controls.can_stop && (
+                          <Button size="sm" variant="destructive" onClick={() => handleControl(job.id, 'stop')}>
+                            <Square className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="w-full bg-muted-foreground/20 rounded-full h-2 mb-2">
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all"
+                        style={{ width: `${job.progress.percentage}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{job.progress.processed} / {job.progress.total} processed</span>
+                      <span className="text-green-500">+{job.progress.new} new</span>
+                      <span className="text-blue-500">{job.progress.updated} updated</span>
+                      <span>{job.progress.skipped} skipped</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Parse Job History */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Recent Runs
+              Recent Parse Jobs
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Source</TableHead>
+                  <TableHead>Region</TableHead>
                   <TableHead>Started</TableHead>
-                  <TableHead>Finished</TableHead>
+                  <TableHead>Completed</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Found</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Progress</TableHead>
+                  <TableHead>New</TableHead>
                   <TableHead>Updated</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {runsLoading ? (
+                {jobsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       Loading...
                     </TableCell>
                   </TableRow>
-                ) : runs?.length === 0 ? (
+                ) : !jobsData?.jobs?.length ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No parser runs yet
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      No parse jobs yet
                     </TableCell>
                   </TableRow>
                 ) : (
-                  runs?.map((run) => (
-                    <TableRow key={run.id}>
-                      <TableCell className="font-medium">{run.source}</TableCell>
-                      <TableCell>{formatDateTime(run.started_at)}</TableCell>
+                  jobsData.jobs.map((job: ParseJob) => (
+                    <TableRow key={job.id}>
+                      <TableCell className="font-medium">{job.scope.region || 'All'}</TableCell>
+                      <TableCell>{job.timing.started_at ? formatDateTime(job.timing.started_at) : '-'}</TableCell>
                       <TableCell>
-                        {run.finished_at ? formatDateTime(run.finished_at) : '-'}
+                        {job.timing.completed_at ? formatDateTime(job.timing.completed_at) : '-'}
                       </TableCell>
-                      <TableCell>{getStatusBadge(run.status)}</TableCell>
-                      <TableCell>{run.jobs_found}</TableCell>
-                      <TableCell className="text-green-500">+{run.jobs_created}</TableCell>
-                      <TableCell className="text-blue-500">{run.jobs_updated}</TableCell>
+                      <TableCell>{getStatusBadge(job.status)}</TableCell>
+                      <TableCell>{job.progress.percentage}%</TableCell>
+                      <TableCell className="text-green-500">+{job.progress.new}</TableCell>
+                      <TableCell className="text-blue-500">{job.progress.updated}</TableCell>
+                      <TableCell>
+                        {job.controls.can_restart && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleControl(job.id, 'restart')}
+                            disabled={controlJob.isPending}
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -182,6 +260,35 @@ export function ParserPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* 7-Day Statistics */}
+        {stats?.parse_jobs_7d && (
+          <Card>
+            <CardHeader>
+              <CardTitle>7-Day Statistics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">Total Jobs</p>
+                  <p className="text-2xl font-bold">{stats.parse_jobs_7d.total}</p>
+                </div>
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="text-2xl font-bold text-green-500">{stats.parse_jobs_7d.completed}</p>
+                </div>
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">New Items</p>
+                  <p className="text-2xl font-bold text-blue-500">{stats.parse_jobs_7d.new_items}</p>
+                </div>
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">Updated Items</p>
+                  <p className="text-2xl font-bold text-purple-500">{stats.parse_jobs_7d.updated_items}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

@@ -2,14 +2,14 @@ import { Header } from '@/components/layout/Header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useDashboardStats, useHealthStatus } from '@/hooks/useDashboard'
-import { useParserStatus, useTriggerParser } from '@/hooks/useParser'
+import { useDashboardData, useHealthStatus } from '@/hooks/useDashboard'
+import { useParserProgress, useTriggerParser } from '@/hooks/useParser'
 import { formatNumber } from '@/lib/utils'
 import {
   Briefcase,
   CheckCircle,
   DollarSign,
-  Eye,
+  CalendarPlus,
   Bot,
   Database,
   RefreshCw,
@@ -17,34 +17,34 @@ import {
 } from 'lucide-react'
 
 export function DashboardPage() {
-  const { data: stats, isLoading: statsLoading } = useDashboardStats()
+  const { data: dashboard, isLoading } = useDashboardData()
   const { data: health } = useHealthStatus()
-  const { data: parserStatus } = useParserStatus()
+  const { data: parserProgress } = useParserProgress()
   const triggerParser = useTriggerParser()
 
   const statsCards = [
     {
       title: 'Total Jobs',
-      value: stats?.total_jobs ?? 0,
+      value: dashboard?.stats?.total_jobs ?? 0,
       icon: Briefcase,
       color: 'text-blue-500',
     },
     {
       title: 'Active Jobs',
-      value: stats?.active_jobs ?? 0,
+      value: dashboard?.stats?.active_jobs ?? 0,
       icon: CheckCircle,
       color: 'text-green-500',
     },
     {
       title: 'Jobs with Salary',
-      value: stats?.jobs_with_salary ?? 0,
+      value: dashboard?.stats?.jobs_with_salary ?? 0,
       icon: DollarSign,
       color: 'text-yellow-500',
     },
     {
-      title: 'Total Views',
-      value: stats?.total_views ?? 0,
-      icon: Eye,
+      title: 'Added Today',
+      value: dashboard?.stats?.jobs_today ?? 0,
+      icon: CalendarPlus,
       color: 'text-purple-500',
     },
   ]
@@ -53,7 +53,7 @@ export function DashboardPage() {
     <div className="flex flex-col h-full">
       <Header title="Dashboard" />
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-6 space-y-6 overflow-auto">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {statsCards.map((card) => (
@@ -63,7 +63,7 @@ export function DashboardPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">{card.title}</p>
                     <p className="text-2xl font-bold">
-                      {statsLoading ? '...' : formatNumber(card.value)}
+                      {isLoading ? '...' : formatNumber(card.value)}
                     </p>
                   </div>
                   <card.icon className={`h-8 w-8 ${card.color}`} />
@@ -90,16 +90,16 @@ export function DashboardPage() {
                   {health?.status || 'Unknown'}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Database</span>
-                <Badge variant={health?.database === 'connected' ? 'success' : 'destructive'}>
-                  {health?.database || 'Unknown'}
-                </Badge>
-              </div>
               {health?.version && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Version</span>
                   <span className="text-sm text-muted-foreground">{health.version}</span>
+                </div>
+              )}
+              {dashboard?.backup && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Backups</span>
+                  <span className="text-sm text-muted-foreground">{dashboard.backup.count} files</span>
                 </div>
               )}
             </CardContent>
@@ -116,32 +116,32 @@ export function DashboardPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Status</span>
-                <Badge variant={parserStatus?.is_running ? 'warning' : 'success'}>
-                  {parserStatus?.is_running ? 'Running' : 'Idle'}
+                <Badge variant={parserProgress?.running ? 'warning' : 'success'}>
+                  {parserProgress?.running ? 'Running' : 'Idle'}
                 </Badge>
               </div>
-              {parserStatus?.current_source && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Current Source</span>
-                  <span className="text-sm text-muted-foreground">
-                    {parserStatus.current_source}
-                  </span>
-                </div>
-              )}
-              {parserStatus?.last_run && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Last Run</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(parserStatus.last_run.started_at).toLocaleString()}
-                  </span>
-                </div>
+              {parserProgress?.running && parserProgress.jobs.length > 0 && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Current Region</span>
+                    <span className="text-sm text-muted-foreground">
+                      {parserProgress.jobs[0].scope.region || 'All'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Progress</span>
+                    <span className="text-sm text-muted-foreground">
+                      {parserProgress.jobs[0].progress.percentage}%
+                    </span>
+                  </div>
+                </>
               )}
               <Button
                 onClick={() => triggerParser.mutate(undefined)}
-                disabled={triggerParser.isPending || parserStatus?.is_running}
+                disabled={triggerParser.isPending || parserProgress?.running}
                 className="w-full"
               >
-                {triggerParser.isPending ? (
+                {triggerParser.isPending || parserProgress?.running ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Bot className="h-4 w-4 mr-2" />
@@ -182,8 +182,8 @@ export function DashboardPage() {
             <div>
               <p className="text-sm font-medium text-blue-400">React Admin Dashboard</p>
               <p className="text-xs text-muted-foreground">
-                This is the new React-based admin interface running on port 9001.
-                The original Alpine.js admin is still available at /admin/.
+                This is the new React-based admin interface running on port 20001.
+                The original Alpine.js admin is still available at port 9000.
               </p>
             </div>
           </CardContent>

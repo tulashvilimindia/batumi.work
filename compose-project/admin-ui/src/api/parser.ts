@@ -1,26 +1,32 @@
 import apiClient from './client'
-import type { ParserSource, ParserRun } from '@/types'
+import type { ParserConfig, ParseJob, ParserProgress, ParserStats } from '@/types'
 
-export async function getParserSources(): Promise<ParserSource[]> {
-  const { data } = await apiClient.get('/parser/sources')
+export async function getParserConfig(): Promise<ParserConfig> {
+  const { data } = await apiClient.get('/parser/config')
   return data
 }
 
-export async function getParserRuns(limit: number = 20): Promise<ParserRun[]> {
-  const { data } = await apiClient.get(`/parser/runs?limit=${limit}`)
+export async function getParseJobs(limit: number = 20): Promise<{ jobs: ParseJob[]; total: number }> {
+  const { data } = await apiClient.get(`/parser/jobs?limit=${limit}`)
   return data
 }
 
-export async function triggerParser(source?: string): Promise<{ message: string }> {
-  const { data } = await apiClient.post('/parser/trigger', { source })
+export async function triggerParser(source?: string): Promise<{ success: boolean; message: string; job_id?: string }> {
+  const { data } = await apiClient.post('/parser/trigger', { source: source || 'jobs.ge' })
   return data
 }
 
-export async function getParserStatus(): Promise<{
-  is_running: boolean
-  current_source?: string
-  last_run?: ParserRun
-}> {
-  const { data } = await apiClient.get('/parser/status')
+export async function getParserProgress(): Promise<ParserProgress> {
+  const { data } = await apiClient.get('/parser/progress')
+  return data
+}
+
+export async function getParserStats(): Promise<ParserStats> {
+  const { data } = await apiClient.get('/parser/stats')
+  return data
+}
+
+export async function controlJob(jobId: string, action: 'pause' | 'resume' | 'stop' | 'cancel' | 'restart'): Promise<{ success: boolean; message: string }> {
+  const { data } = await apiClient.post(`/parser/jobs/${jobId}/control`, { action })
   return data
 }

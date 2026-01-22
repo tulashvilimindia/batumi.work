@@ -1,26 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getParserSources, getParserRuns, triggerParser, getParserStatus } from '@/api/parser'
+import { getParserConfig, getParseJobs, triggerParser, getParserProgress, getParserStats, controlJob } from '@/api/parser'
 
-export function useParserSources() {
+export function useParserConfig() {
   return useQuery({
-    queryKey: ['parser', 'sources'],
-    queryFn: getParserSources,
+    queryKey: ['parser', 'config'],
+    queryFn: getParserConfig,
   })
 }
 
-export function useParserRuns(limit: number = 20) {
+export function useParseJobs(limit: number = 20) {
   return useQuery({
-    queryKey: ['parser', 'runs', limit],
-    queryFn: () => getParserRuns(limit),
+    queryKey: ['parser', 'jobs', limit],
+    queryFn: () => getParseJobs(limit),
     refetchInterval: 10000, // Refresh every 10 seconds
   })
 }
 
-export function useParserStatus() {
+export function useParserProgress() {
   return useQuery({
-    queryKey: ['parser', 'status'],
-    queryFn: getParserStatus,
-    refetchInterval: 5000, // Refresh every 5 seconds when parser might be running
+    queryKey: ['parser', 'progress'],
+    queryFn: getParserProgress,
+    refetchInterval: 3000, // Refresh every 3 seconds when parser might be running
+  })
+}
+
+export function useParserStats() {
+  return useQuery({
+    queryKey: ['parser', 'stats'],
+    queryFn: getParserStats,
   })
 }
 
@@ -29,6 +36,18 @@ export function useTriggerParser() {
 
   return useMutation({
     mutationFn: (source?: string) => triggerParser(source),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['parser'] })
+    },
+  })
+}
+
+export function useControlJob() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId, action }: { jobId: string; action: 'pause' | 'resume' | 'stop' | 'cancel' | 'restart' }) =>
+      controlJob(jobId, action),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['parser'] })
     },

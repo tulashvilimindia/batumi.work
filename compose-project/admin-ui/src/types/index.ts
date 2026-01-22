@@ -70,35 +70,119 @@ export interface Region {
 }
 
 // Parser types
-export interface ParserSource {
+export interface ParserRegion {
   id: string
-  name: string
+  name_en: string
+  name_ge: string
   slug: string
-  is_enabled: boolean
-  last_run_at?: string
-  total_jobs_parsed: number
+  enabled: boolean
+  display_order: number
 }
 
-export interface ParserRun {
+export interface ParserCategory {
   id: string
+  name_en: string
+  name_ge: string
+  slug: string
+}
+
+export interface ParserConfig {
+  regions: ParserRegion[]
+  categories: ParserCategory[]
+  sources: string[]
+}
+
+export interface ParseJobProgress {
+  total: number
+  processed: number
+  successful: number
+  failed: number
+  skipped: number
+  new: number
+  updated: number
+  percentage: number
+}
+
+export interface ParseJobCurrent {
+  region?: string
+  category?: string
+  page?: number
+  item?: string
+}
+
+export interface ParseJobTiming {
+  created_at?: string
+  started_at?: string
+  paused_at?: string
+  resumed_at?: string
+  completed_at?: string
+  pause_duration_seconds: number
+}
+
+export interface ParseJobControls {
+  should_pause: boolean
+  should_stop: boolean
+  can_pause: boolean
+  can_resume: boolean
+  can_stop: boolean
+  can_restart: boolean
+}
+
+export interface ParseJob {
+  id: string
+  batch_id?: string
+  job_type: string
   source: string
-  started_at: string
-  finished_at?: string
-  status: 'running' | 'completed' | 'failed'
-  jobs_found: number
-  jobs_created: number
-  jobs_updated: number
-  errors?: string[]
+  status: 'pending' | 'running' | 'paused' | 'stopping' | 'completed' | 'failed' | 'cancelled'
+  config?: Record<string, unknown>
+  scope: {
+    region?: string
+    category?: string
+  }
+  progress: ParseJobProgress
+  current: ParseJobCurrent
+  timing: ParseJobTiming
+  error_message?: string
+  triggered_by?: string
+  controls: ParseJobControls
+}
+
+export interface ParserProgress {
+  running: boolean
+  jobs: ParseJob[]
+}
+
+export interface ParserStats {
+  total_jobs: number
+  total_regions: number
+  total_categories: number
+  parsed_today: number
+  last_parsed?: string
+  by_region: Array<{ name_en: string; name_ge: string; slug: string; count: number }>
+  by_category: Array<{ name_en: string; name_ge: string; slug: string; count: number }>
+  by_source: Array<{ source: string; count: number }>
+  parse_jobs_7d: {
+    total: number
+    completed: number
+    failed: number
+    running: number
+    new_items: number
+    updated_items: number
+    skipped_items: number
+    failed_items: number
+  }
+  skip_reasons_7d: Array<{ reason: string; count: number }>
 }
 
 // Analytics types
-export interface DashboardStats {
+export interface DashboardSummary {
   total_jobs: number
   active_jobs: number
-  inactive_jobs: number
-  jobs_with_salary: number
-  total_views: number
-  avg_salary?: number
+  new_in_period: number
+  with_salary: number
+  vip_jobs: number
+  avg_salary_min?: number
+  avg_salary_max?: number
 }
 
 export interface AnalyticsFilters {
@@ -112,11 +196,23 @@ export interface AnalyticsFilters {
   source?: string
 }
 
+export interface FilterOption {
+  value: string
+  label: string
+  label_ge?: string
+  count: number
+}
+
 export interface FilterOptions {
-  categories: Array<{ slug: string; name: string; count: number }>
-  regions: Array<{ slug: string; lid: number; name: string; count: number }>
-  employment_types: Array<{ value: string; label: string; count: number }>
-  sources: Array<{ value: string; label: string; count: number }>
+  categories: FilterOption[]
+  regions: FilterOption[]
+  employment_types: FilterOption[]
+  remote_types: FilterOption[]
+  sources: FilterOption[]
+  date_range: {
+    min_date?: string
+    max_date?: string
+  }
 }
 
 export interface TimeSeriesPoint {
@@ -124,30 +220,37 @@ export interface TimeSeriesPoint {
   count: number
 }
 
-export interface CategoryBreakdown {
-  slug: string
+export interface BreakdownItem {
   name: string
+  name_ge?: string
+  slug?: string
   count: number
   percentage: number
 }
 
-export interface RegionBreakdown {
-  slug: string
-  lid: number
-  name: string
+export interface SalaryHistogramBin {
+  range: string
+  min_val: number
+  max_val: number
   count: number
-  percentage: number
+}
+
+export interface SalaryCategoryItem {
+  name: string
+  avg_min: number
+  avg_max: number
+  count: number
 }
 
 export interface AnalyticsDashboard {
-  summary: DashboardStats
+  summary: DashboardSummary
   time_series: TimeSeriesPoint[]
-  by_category: CategoryBreakdown[]
-  by_region: RegionBreakdown[]
-  salary_distribution: {
-    histogram: Array<{ range: string; count: number }>
-    by_category: Array<{ name: string; avg_salary: number }>
-  }
+  by_category: BreakdownItem[]
+  by_region: BreakdownItem[]
+  by_employment: BreakdownItem[]
+  by_remote: BreakdownItem[]
+  salary_histogram: SalaryHistogramBin[]
+  salary_by_category: SalaryCategoryItem[]
 }
 
 // Backup types
@@ -171,18 +274,27 @@ export interface BackupStatus {
 }
 
 // Database types
-export interface TableStats {
+export interface TableInfo {
   name: string
   row_count: number
-  size_bytes: number
-  size_pretty: string
+}
+
+export interface TableDetails {
+  name: string
+  columns: Array<{
+    name: string
+    type: string
+    nullable: boolean
+    default?: string
+  }>
+  row_count: number
+  sample_rows: Record<string, unknown>[]
 }
 
 export interface QueryResult {
   columns: string[]
   rows: Record<string, unknown>[]
   row_count: number
-  execution_time_ms: number
 }
 
 // Logs types
@@ -207,7 +319,29 @@ export interface PaginatedResponse<T> {
 // Health
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy'
-  database: 'connected' | 'disconnected'
+  service?: string
   version?: string
-  uptime?: string
+  database?: 'connected' | 'disconnected'
+}
+
+// Dashboard
+export interface DashboardData {
+  stats: {
+    total_jobs: number
+    active_jobs: number
+    jobs_today: number
+    jobs_with_salary: number
+    total_regions: number
+    total_categories: number
+  }
+  by_region: Array<{ name_en: string; name_ge: string; count: number }>
+  by_category: Array<{ name_en: string; name_ge: string; count: number }>
+  parser: {
+    last_run?: string
+  }
+  backup: {
+    count: number
+    last_backup?: string
+  }
+  timestamp: string
 }

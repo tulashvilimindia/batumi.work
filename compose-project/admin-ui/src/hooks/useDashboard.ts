@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { getDashboardStats, getHealthStatus } from '@/api/dashboard'
+import { getDashboardData, getHealthStatus } from '@/api/dashboard'
 
-export function useDashboardStats() {
+export function useDashboardData() {
   return useQuery({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: getDashboardStats,
+    queryKey: ['dashboard'],
+    queryFn: getDashboardData,
     refetchInterval: 30000, // Refresh every 30 seconds
   })
 }

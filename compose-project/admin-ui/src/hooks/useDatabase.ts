@@ -1,12 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getTableStats, getTables, runVacuum, executeQuery } from '@/api/database'
-
-export function useTableStats() {
-  return useQuery({
-    queryKey: ['database', 'stats'],
-    queryFn: getTableStats,
-  })
-}
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { getTables, getTableDetails, executeQuery } from '@/api/database'
 
 export function useTables() {
   return useQuery({
@@ -15,19 +8,16 @@ export function useTables() {
   })
 }
 
-export function useVacuum() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: runVacuum,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['database'] })
-    },
+export function useTableDetails(tableName: string) {
+  return useQuery({
+    queryKey: ['database', 'tables', tableName],
+    queryFn: () => getTableDetails(tableName),
+    enabled: !!tableName,
   })
 }
 
 export function useExecuteQuery() {
   return useMutation({
-    mutationFn: (query: string) => executeQuery(query),
+    mutationFn: ({ query, limit = 100 }: { query: string; limit?: number }) => executeQuery(query, limit),
   })
 }

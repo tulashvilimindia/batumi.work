@@ -66,8 +66,8 @@ export function AnalyticsPage() {
   const summaryCards = [
     { title: 'Total Jobs', value: analytics?.summary?.total_jobs ?? 0, icon: Briefcase, color: 'text-blue-500' },
     { title: 'Active Jobs', value: analytics?.summary?.active_jobs ?? 0, icon: CheckCircle, color: 'text-green-500' },
-    { title: 'With Salary', value: analytics?.summary?.jobs_with_salary ?? 0, icon: DollarSign, color: 'text-yellow-500' },
-    { title: 'Avg Salary', value: analytics?.summary?.avg_salary ?? 0, icon: TrendingUp, color: 'text-purple-500', isCurrency: true },
+    { title: 'With Salary', value: analytics?.summary?.with_salary ?? 0, icon: DollarSign, color: 'text-yellow-500' },
+    { title: 'Avg Salary', value: analytics?.summary?.avg_salary_max ?? 0, icon: TrendingUp, color: 'text-purple-500', isCurrency: true },
   ]
 
   return (
@@ -113,18 +113,18 @@ export function AnalyticsPage() {
               <div className="flex flex-wrap gap-2 mt-4">
                 {filterOptions?.categories?.slice(0, 6).map((cat) => (
                   <Badge
-                    key={cat.slug}
-                    variant={selectedCategories.includes(cat.slug) ? 'default' : 'outline'}
+                    key={cat.value}
+                    variant={selectedCategories.includes(cat.value) ? 'default' : 'outline'}
                     className="cursor-pointer"
                     onClick={() => {
                       setSelectedCategories((prev) =>
-                        prev.includes(cat.slug)
-                          ? prev.filter((c) => c !== cat.slug)
-                          : [...prev, cat.slug]
+                        prev.includes(cat.value)
+                          ? prev.filter((c) => c !== cat.value)
+                          : [...prev, cat.value]
                       )
                     }}
                   >
-                    {cat.name} ({cat.count})
+                    {cat.label} ({cat.count})
                   </Badge>
                 ))}
               </div>
@@ -258,9 +258,9 @@ export function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
-                {analytics?.salary_distribution?.histogram?.length ? (
+                {analytics?.salary_histogram?.length ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={analytics.salary_distribution.histogram}>
+                    <BarChart data={analytics.salary_histogram}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="range" stroke="#9ca3af" fontSize={10} />
                       <YAxis stroke="#9ca3af" fontSize={12} />
