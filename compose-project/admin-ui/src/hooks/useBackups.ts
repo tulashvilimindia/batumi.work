@@ -12,6 +12,7 @@ export function useBackups() {
   return useQuery({
     queryKey: ['backups', 'list'],
     queryFn: getBackups,
+    staleTime: 0, // Always consider data stale to ensure fresh data after mutations
   })
 }
 
@@ -29,7 +30,12 @@ export function useTriggerBackup() {
   return useMutation({
     mutationFn: triggerBackup,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backups'] })
+      // Invalidate both list and status queries
+      queryClient.invalidateQueries({ queryKey: ['backups', 'list'] })
+      queryClient.invalidateQueries({ queryKey: ['backups', 'status'] })
+    },
+    onError: (error) => {
+      console.error('Failed to create backup:', error)
     },
   })
 }

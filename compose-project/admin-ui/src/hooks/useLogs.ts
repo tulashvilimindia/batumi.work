@@ -13,6 +13,8 @@ export function useLogs(filters: LogFilters = {}, autoRefresh: boolean = false) 
     queryKey: ['logs', filters],
     queryFn: () => getLogs(filters),
     refetchInterval: autoRefresh ? 5000 : false, // Refresh every 5 seconds if auto-refresh enabled
+    enabled: !!filters.service, // Only fetch when service is selected
+    retry: 1,
   })
 }
 

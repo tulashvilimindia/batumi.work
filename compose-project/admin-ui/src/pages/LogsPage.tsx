@@ -15,7 +15,7 @@ import { useLogs, useServices } from '@/hooks/useLogs'
 import { ScrollText, RefreshCw, Search, Pause, Play } from 'lucide-react'
 
 const LOG_LEVELS = [
-  { value: '', label: 'All Levels' },
+  { value: 'all', label: 'All Levels' },
   { value: 'debug', label: 'Debug' },
   { value: 'info', label: 'Info' },
   { value: 'warning', label: 'Warning' },
@@ -24,15 +24,15 @@ const LOG_LEVELS = [
 
 export function LogsPage() {
   const [service, setService] = useState('admin')
-  const [level, setLevel] = useState('')
+  const [level, setLevel] = useState('all')
   const [search, setSearch] = useState('')
   const [autoRefresh, setAutoRefresh] = useState(false)
 
-  const { data: services } = useServices()
+  const { data: services, isLoading: servicesLoading } = useServices()
   const { data: logs, isLoading, refetch } = useLogs(
     {
-      service: service || 'admin',
-      level: level || undefined,
+      service: service,
+      level: level === 'all' ? undefined : level,
       search: search || undefined,
       limit: 200,
     },
@@ -65,15 +65,20 @@ export function LogsPage() {
             <div className="flex flex-wrap items-center gap-4">
               <Select value={service} onValueChange={setService}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Service" />
+                  <SelectValue placeholder="Select service" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Services</SelectItem>
-                  {services?.map((svc) => (
-                    <SelectItem key={svc} value={svc}>
-                      {svc}
-                    </SelectItem>
-                  ))}
+                  {servicesLoading ? (
+                    <SelectItem value="admin" disabled>Loading...</SelectItem>
+                  ) : services?.length === 0 ? (
+                    <SelectItem value="admin" disabled>No services</SelectItem>
+                  ) : (
+                    services?.map((svc) => (
+                      <SelectItem key={svc} value={svc}>
+                        {svc}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
 
