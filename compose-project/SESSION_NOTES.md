@@ -5,6 +5,57 @@
 
 ---
 
+## 🚀 QUICK START FOR NEW AGENTS
+
+**Read these files first:**
+1. `compose-project/SESSION_NOTES.md` (this file) - Project overview
+2. `compose-project/admin-ui/BUGFIX_LOG.md` - Recent bug fixes
+3. `compose-project/README.md` - Docker setup instructions
+
+**Key URLs:**
+- Production Website: https://batumi.work
+- React Admin Panel: http://38.242.143.10:20001
+- Legacy Admin API: http://38.242.143.10:9000
+- Server SSH: `ssh root@38.242.143.10`
+- Project on Server: `/opt/batumi-work/compose-project`
+
+**Architecture:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    BATUMI.WORK STACK                        │
+├─────────────────────────────────────────────────────────────┤
+│  Frontend (Port 20001)     │  Backend Services              │
+│  ├── React Admin UI        │  ├── API (8101) - FastAPI      │
+│  │   └── nginx proxy       │  ├── Admin (9000) - FastAPI    │
+│  │       → /api/ → :8000   │  ├── Worker - Parser service   │
+│  └── Vite + TanStack Query │  └── PostgreSQL (5433)         │
+├─────────────────────────────────────────────────────────────┤
+│  Docker Containers:                                          │
+│  jobboard-admin-ui, jobboard-admin, jobboard-api,           │
+│  jobboard-web, jobboard-worker, jobboard-db                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Common Commands:**
+```bash
+# SSH to server
+ssh root@38.242.143.10
+
+# View logs
+docker logs jobboard-admin-ui -f
+docker logs jobboard-admin -f
+
+# Rebuild and deploy admin-ui
+cd /opt/batumi-work/compose-project
+docker compose build admin-ui
+docker compose up -d admin-ui
+
+# Check container status
+docker ps --format 'table {{.Names}}\t{{.Status}}'
+```
+
+---
+
 ## Deployment Status
 
 **LIVE URL:** https://batumi.work
@@ -17,7 +68,8 @@
 | API Docs | ✅ Live | https://batumi.work/docs |
 | Health Check | ✅ Live | https://batumi.work/health |
 | Parser Stats | ✅ Live | https://batumi.work/api/v1/stats |
-| Admin Dashboard | ✅ Live | http://38.242.143.10:9000 (direct) |
+| React Admin Panel | ✅ Live | http://38.242.143.10:20001 |
+| Admin API | ✅ Live | http://38.242.143.10:9000 |
 
 ---
 
@@ -530,6 +582,77 @@ DNS is managed through Cloudflare with proxy enabled.
 - Initial deployment to production server
 - All core services running (web, api, db, worker)
 - SSL configured via Cloudflare
+
+---
+
+---
+
+### January 22, 2026 (Session 3) - React Admin UI Bugfixes
+
+**React Admin Panel Deployed at http://38.242.143.10:20001**
+
+All pages now working:
+- Dashboard - Overview stats
+- Jobs - Job listing with filters
+- Parser - Parser status, jobs, regions
+- Analytics - Grafana-style charts
+- Backups - Trigger/download/restore backups
+- Logs - View container logs
+- Database - Query explorer
+
+**Bugs Fixed:**
+1. Jobs page 404 on `/api/categories` - Now uses `/parser/config`
+2. Parser page crash on `controls.can_pause` - Added optional chaining
+3. Logs page Select errors - Changed defaults from `''` to `'all'`
+4. Backups API endpoints mismatch - Fixed all URLs
+5. Analytics region breakdown - Fixed to use LIKE on location field
+
+**Files Changed:**
+- `admin-ui/src/api/jobs.ts` - Categories from parser config
+- `admin-ui/src/api/backups.ts` - Fixed endpoint URLs
+- `admin-ui/src/pages/ParserPage.tsx` - Optional chaining for controls
+- `admin-ui/src/pages/JobsPage.tsx` - Select defaults
+- `admin-ui/src/pages/LogsPage.tsx` - Select defaults
+- `admin/app/routers/analytics.py` - Region query fix
+- `admin/app/routers/backups.py` - Added delete/restore endpoints
+
+See `admin-ui/BUGFIX_LOG.md` for detailed bug analysis.
+
+---
+
+## React Admin UI Structure
+
+```
+admin-ui/
+├── src/
+│   ├── api/           # API client functions
+│   │   ├── client.ts  # Axios instance (baseURL: /api)
+│   │   ├── jobs.ts    # Job CRUD operations
+│   │   ├── parser.ts  # Parser management
+│   │   ├── backups.ts # Backup operations
+│   │   └── logs.ts    # Log retrieval
+│   ├── hooks/         # TanStack Query hooks
+│   │   ├── useJobs.ts
+│   │   ├── useParser.ts
+│   │   └── useBackups.ts
+│   ├── pages/         # Page components
+│   │   ├── DashboardPage.tsx
+│   │   ├── JobsPage.tsx
+│   │   ├── ParserPage.tsx
+│   │   ├── AnalyticsPage.tsx
+│   │   ├── BackupsPage.tsx
+│   │   ├── LogsPage.tsx
+│   │   └── DatabasePage.tsx
+│   └── components/    # Reusable UI components
+├── nginx.conf         # Proxy config (/api → admin:8000)
+└── Dockerfile         # Multi-stage build
+```
+
+**Key Points:**
+- Uses TanStack Query for server state
+- Radix UI components (Select, Dialog, etc.)
+- Tailwind CSS for styling
+- Nginx proxies `/api/` to admin service at port 8000
 
 ---
 

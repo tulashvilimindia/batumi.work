@@ -176,17 +176,17 @@ export function ParserPage() {
                         <span className="text-sm font-medium">{job.scope.region || 'All Regions'}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {job.controls.can_pause && (
+                        {job.controls?.can_pause && (
                           <Button size="sm" variant="outline" onClick={() => handleControl(job.id, 'pause')}>
                             <Pause className="h-3 w-3" />
                           </Button>
                         )}
-                        {job.controls.can_resume && (
+                        {job.controls?.can_resume && (
                           <Button size="sm" variant="outline" onClick={() => handleControl(job.id, 'resume')}>
                             <Play className="h-3 w-3" />
                           </Button>
                         )}
-                        {job.controls.can_stop && (
+                        {job.controls?.can_stop && (
                           <Button size="sm" variant="destructive" onClick={() => handleControl(job.id, 'stop')}>
                             <Square className="h-3 w-3" />
                           </Button>
@@ -260,7 +260,7 @@ export function ParserPage() {
                       <TableCell className="text-green-500">+{job.progress.new}</TableCell>
                       <TableCell className="text-blue-500">{job.progress.updated}</TableCell>
                       <TableCell>
-                        {job.controls.can_restart && (
+                        {job.controls?.can_restart && (
                           <Button
                             size="sm"
                             variant="ghost"
