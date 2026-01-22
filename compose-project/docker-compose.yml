@@ -160,6 +160,23 @@ services:
       retries: 3
       start_period: 10s
 
+  # React Admin UI (New admin frontend)
+  admin-ui:
+    build:
+      context: ./admin-ui
+      dockerfile: Dockerfile
+    container_name: jobboard-admin-ui
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:20001:80"
+    depends_on:
+      - admin
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Channel Sender Service
   sender:
     build:

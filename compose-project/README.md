@@ -87,7 +87,8 @@ docker-compose exec api python -m app.seed
 | Website (English) | http://localhost/en/ |
 | API Documentation | http://localhost/docs |
 | Health Check | http://localhost/health |
-| Analytics Dashboard | http://localhost/admin/analytics.html |
+| **React Admin UI** | http://localhost:20001/ |
+| Legacy Admin Dashboard | http://localhost/admin/analytics.html |
 
 ## Services
 
@@ -98,7 +99,8 @@ docker-compose exec api python -m app.seed
 | web | jobboard-web | 80 | Nginx static frontend |
 | api | jobboard-api | 8000 | FastAPI backend |
 | db | jobboard-db | 5432 | PostgreSQL database |
-| admin | jobboard-admin | 9000 | Admin dashboard (direct access) |
+| admin | jobboard-admin | 9000 | Admin API service |
+| admin-ui | jobboard-admin-ui | 9001 | **React Admin Dashboard** (new) |
 
 ### Optional Services (Profiles)
 
@@ -112,8 +114,24 @@ docker-compose exec api python -m app.seed
 
 ### Admin Dashboard
 
-The admin dashboard provides a web-based management interface accessible directly on port 9000 (not through nginx). Features include:
+Two admin interfaces are available:
 
+#### React Admin UI (Recommended)
+Modern React/TypeScript admin dashboard on port 9001:
+- Built with React 18, TypeScript, TanStack Query, Recharts
+- Dark theme with responsive design
+- Real-time data updates
+
+```bash
+docker compose build admin-ui
+docker compose up -d admin-ui
+# Access: http://localhost:20001
+```
+
+See [docs/REACT_ADMIN_PLAN.md](docs/REACT_ADMIN_PLAN.md) for details.
+
+#### Legacy Admin Dashboard
+Alpine.js-based admin dashboard on port 9000:
 - Job management (CRUD operations)
 - Parser control and statistics
 - Analytics dashboard

@@ -24,9 +24,31 @@ This guide covers all administrative functions for managing the Georgia Job Boar
 ### Admin Access
 
 Administration is performed through:
-1. **Swagger UI**: `http://your-domain.com/docs`
-2. **Direct API calls**: Using curl, Postman, or similar tools
-3. **Analytics Dashboard**: `http://your-domain.com/admin/analytics.html`
+1. **React Admin UI** (Recommended): `http://localhost:20001` - Modern React-based dashboard
+2. **Legacy Admin Dashboard**: `http://your-domain.com/admin/` - Alpine.js-based admin
+3. **Swagger UI**: `http://your-domain.com/docs` - API documentation
+4. **Direct API calls**: Using curl, Postman, or similar tools
+
+### Admin Interfaces
+
+| Interface | URL | Port | Description |
+|-----------|-----|------|-------------|
+| React Admin | `http://localhost:20001` | 20001 | Modern React/TypeScript dashboard with Recharts |
+| Legacy Admin | `http://localhost/admin/` | 80 | Original Alpine.js dashboard |
+| Admin API | `http://localhost:9000` | 9000 | FastAPI backend for both interfaces |
+| Swagger UI | `http://localhost:8000/docs` | 8000 | API documentation |
+
+### Starting the React Admin
+
+```bash
+# Build and start the React admin container
+docker compose build admin-ui
+docker compose up -d admin-ui
+
+# Access at http://localhost:20001
+```
+
+For detailed React admin documentation, see [REACT_ADMIN_PLAN.md](REACT_ADMIN_PLAN.md).
 
 ### Required Credentials
 
