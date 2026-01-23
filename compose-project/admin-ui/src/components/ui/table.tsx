@@ -2,13 +2,31 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Accessible table component.
+ *
+ * Usage: Consumers MUST include TableHeader with TableHead elements for accessibility.
+ * Example:
+ * ```tsx
+ * <Table>
+ *   <TableHeader>
+ *     <TableRow>
+ *       <TableHead>Column 1</TableHead>
+ *       <TableHead>Column 2</TableHead>
+ *     </TableRow>
+ *   </TableHeader>
+ *   <TableBody>...</TableBody>
+ * </Table>
+ * ```
+ */
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-auto" role="region" aria-label="Data table">
     <table
       ref={ref}
+      role="table"
       className={cn("w-full caption-bottom text-sm", className)}
       {...props}
     />

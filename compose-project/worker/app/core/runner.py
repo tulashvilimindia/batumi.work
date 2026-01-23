@@ -537,7 +537,8 @@ class ParserRunner:
                 )
 
             except asyncio.CancelledError:
-                # Job was stopped
+                # Job was stopped - perform cleanup then re-raise
+                # IMPORTANT: CancelledError must be re-raised to properly propagate cancellation
                 await self._update_parse_job(
                     parse_job_id,
                     status="cancelled",
@@ -546,6 +547,7 @@ class ParserRunner:
                 )
                 await job_logger.warning("Job stopped by user")
                 logger.info("job_stopped", job_id=str(parse_job_id))
+                raise  # Re-raise CancelledError after cleanup
 
             except Exception as e:
                 await self._update_parse_job(

@@ -720,11 +720,13 @@ class JobsGeAdapter(BaseAdapter):
 
         The new implementation uses run() directly which iterates
         through region/category combinations.
+
+        This is an async generator that yields nothing - kept for interface compatibility.
         """
-        # This method is not used in the new implementation
-        # but kept for interface compatibility
-        return
-        yield  # Make it a generator
+        # Empty async generator pattern - yields nothing but maintains generator interface
+        # Using 'if False: yield' pattern to create valid empty async generator
+        if False:
+            yield ""  # Never executed, but makes this a valid async generator
 
     async def parse_job(self, url: str) -> Optional[JobData]:
         """Legacy interface - parse a single job without context.

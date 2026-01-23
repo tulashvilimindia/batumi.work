@@ -30,7 +30,9 @@ export async function getLogs(filters: LogFilters = {}): Promise<LogEntry[]> {
   const entries: LogEntry[] = (data.lines || []).map((line: string) => {
     // Parse timestamp and message from Docker log format
     // Format: 2026-01-22T14:30:00.000Z message here
-    const match = line.match(/^(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)\s+(.*)$/)
+    // Fixed regex: More specific pattern to prevent ReDoS (catastrophic backtracking)
+    // Pattern breakdown: YYYY-MM-DDTHH:MM:SS(.mmm)?Z? followed by whitespace and message
+    const match = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z?)\s+(.*)$/)
     if (match) {
       const message = match[2]
       // Try to detect log level from message

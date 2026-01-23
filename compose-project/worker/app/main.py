@@ -196,9 +196,17 @@ async def main():
     # Set up signal handlers
     loop = asyncio.get_event_loop()
 
+    # Store background tasks to prevent garbage collection
+    # This is important: tasks not stored in a variable may be GC'd before completion
+    _background_tasks: set[asyncio.Task] = set()
+
     def signal_handler():
         logger.info("shutdown_signal_received")
-        asyncio.create_task(worker.stop())
+        # Create task and store reference to prevent premature GC
+        task = asyncio.create_task(worker.stop())
+        _background_tasks.add(task)
+        # Remove from set when done to allow cleanup
+        task.add_done_callback(_background_tasks.discard)
 
     for sig in (signal.SIGTERM, signal.SIGINT):
         try:
