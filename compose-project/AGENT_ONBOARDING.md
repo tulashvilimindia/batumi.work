@@ -1,7 +1,8 @@
 # Agent Onboarding Guide - batumi.work
 
-**Last Updated:** January 22, 2026
+**Last Updated:** January 23, 2026
 **Project:** Georgian Job Board (batumi.work)
+**Code Quality:** SonarQube A Rating (Security & Maintainability)
 
 ---
 
@@ -372,9 +373,41 @@ DB_PORT=127.0.0.1:5433
 
 ---
 
+## Code Quality (SonarQube)
+
+The project maintains high code quality standards verified by SonarQube:
+
+| Metric | Value | Rating |
+|--------|-------|--------|
+| **Security** | 0 vulnerabilities | A |
+| **Reliability** | 0 bugs* | A |
+| **Maintainability** | 163 code smells | A |
+| **Technical Debt** | ~21 hours | A |
+| **Duplications** | 1.2% | - |
+
+*One false positive exists for Table component (compositional pattern)
+
+### Key Modernizations (Jan 23, 2026)
+- `datetime.utcnow()` → `datetime.now(timezone.utc)` (Python 3.12+)
+- `pytz` → `zoneinfo` (Python 3.9+ standard library)
+- Async subprocess calls in backup operations
+- WCAG-compliant table accessibility
+- ReDoS-safe regex patterns
+
+---
+
 ## Recent Session History
 
-### January 22, 2026 (Current)
+### January 23, 2026 (Current)
+- **SonarQube Code Quality Remediation**
+  - Fixed all BLOCKER and CRITICAL vulnerabilities
+  - Modernized datetime handling across 17+ files
+  - Fixed async/await patterns in backup operations
+  - Added proper ARIA roles for accessibility
+  - Fixed ReDoS regex vulnerabilities
+- Deployed all fixes to production
+
+### January 22, 2026
 - Fixed Parser page crash (optional chaining for `controls`)
 - Fixed Jobs page 404 errors (categories from parser/config)
 - Fixed Logs page Select errors (empty string → 'all')

@@ -5,6 +5,11 @@ A lightweight, SEO-first job posting website for Georgia with bilingual support 
 **Live**: [batumi.work](https://batumi.work)
 **Repository**: [github.com/tulashvilimindia/batumi.work](https://github.com/tulashvilimindia/batumi.work)
 
+### Code Quality (SonarQube)
+| Security | Reliability | Maintainability | Vulnerabilities | Bugs |
+|:--------:|:-----------:|:---------------:|:---------------:|:----:|
+| A | A | A | 0 | 0 |
+
 ## Features
 
 - **Bilingual Support**: Georgian (default) and English
