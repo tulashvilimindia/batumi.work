@@ -29,6 +29,16 @@ class JobService:
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_job_by_external_id(self, external_id: str) -> Optional[Job]:
+        """Get a job by external_id (jobs.ge ID)."""
+        query = (
+            select(Job)
+            .options(selectinload(Job.category), selectinload(Job.region))
+            .where(Job.external_id == external_id)
+        )
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
     async def list_jobs(self, params: JobSearchParams) -> PaginatedResponse:
         """List jobs with filters and pagination."""
         query = select(Job).options(

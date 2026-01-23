@@ -164,6 +164,7 @@ class JobListItem(BaseSchema):
     """Simplified job for list views."""
 
     id: UUID
+    external_id: Optional[str]  # jobs.ge ID for URL-friendly links
     title_ge: str
     title_en: Optional[str]
     company_name: Optional[str]

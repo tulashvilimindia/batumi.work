@@ -51,7 +51,7 @@ export function JobRow({ job, onClick, className }: JobRowProps) {
       {/* Title Column (45%) */}
       <td className="p-3 border-b border-[var(--color-table-border)]">
         <Link
-          to={`/${lang}/job/${job.id}`}
+          to={`/${lang}/job/${job.external_id}`}
           onClick={handleClick}
           className={cn(
             'text-[var(--color-text-primary)]',

@@ -69,15 +69,22 @@ async def list_jobs(
     "/{job_id}",
     response_model=JobResponse,
     summary="Get job detail",
-    description="Get detailed information about a specific job",
+    description="Get detailed information about a specific job. Accepts UUID or numeric external_id.",
 )
 async def get_job(
-    job_id: UUID,
+    job_id: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a single job by ID."""
+    """Get a single job by ID (UUID) or external_id (numeric)."""
     service = JobService(db)
-    job = await service.get_job(job_id)
+
+    # Try to parse as UUID first
+    try:
+        uuid_id = UUID(job_id)
+        job = await service.get_job(uuid_id)
+    except ValueError:
+        # Not a UUID, try as external_id (numeric)
+        job = await service.get_job_by_external_id(job_id)
 
     if not job:
         raise HTTPException(

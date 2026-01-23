@@ -13,6 +13,7 @@
  */
 export interface Job {
   id: string; // UUID
+  external_id: string; // jobs.ge ID (numeric string)
   title_ge: string;
   title_en: string;
   company_name: string;
@@ -59,7 +60,6 @@ export interface Job {
 export interface JobDetail extends Job {
   body_ge: string; // Full description in Georgian (HTML)
   body_en: string; // Full description in English (HTML)
-  external_id: string; // Original source ID
   views_count: number;
 }
 
