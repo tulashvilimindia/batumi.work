@@ -36,18 +36,23 @@ CATEGORIES = [
     {"code": "other", "slug": "other", "name_ge": "სხვა", "name_en": "Other", "sort_order": 99},
 ]
 
-# Georgian Regions
+# Georgian Regions - matching jobs.ge naming (lid values)
 REGIONS = [
     # Country level
     {"slug": "georgia", "name_ge": "საქართველო", "name_en": "Georgia", "level": 1, "parent_slug": None, "sort_order": 0},
-    # Region/State level
-    {"slug": "tbilisi", "name_ge": "თბილისი", "name_en": "Tbilisi", "level": 2, "parent_slug": "georgia", "sort_order": 1},
-    {"slug": "adjara", "name_ge": "აჭარა", "name_en": "Adjara", "level": 2, "parent_slug": "georgia", "sort_order": 2},
-    {"slug": "imereti", "name_ge": "იმერეთი", "name_en": "Imereti", "level": 2, "parent_slug": "georgia", "sort_order": 3},
-    {"slug": "kakheti", "name_ge": "კახეთი", "name_en": "Kakheti", "level": 2, "parent_slug": "georgia", "sort_order": 4},
-    {"slug": "samegrelo", "name_ge": "სამეგრელო", "name_en": "Samegrelo", "level": 2, "parent_slug": "georgia", "sort_order": 5},
-    {"slug": "kvemo-kartli", "name_ge": "ქვემო ქართლი", "name_en": "Kvemo Kartli", "level": 2, "parent_slug": "georgia", "sort_order": 6},
-    {"slug": "shida-kartli", "name_ge": "შიდა ქართლი", "name_en": "Shida Kartli", "level": 2, "parent_slug": "georgia", "sort_order": 7},
+    # Region/State level - names match jobs.ge exactly
+    {"slug": "tbilisi", "name_ge": "თბილისი", "name_en": "Tbilisi", "level": 2, "parent_slug": "georgia", "sort_order": 1},  # lid=1
+    {"slug": "adjara", "name_ge": "აჭარის ა/რ", "name_en": "Adjara AR", "level": 2, "parent_slug": "georgia", "sort_order": 2},  # lid=14
+    {"slug": "kakheti", "name_ge": "კახეთი", "name_en": "Kakheti", "level": 2, "parent_slug": "georgia", "sort_order": 3},  # lid=3
+    {"slug": "mtskheta-mtianeti", "name_ge": "მცხეთა-მთიანეთი", "name_en": "Mtskheta-Mtianeti", "level": 2, "parent_slug": "georgia", "sort_order": 4},  # lid=4
+    {"slug": "kvemo-kartli", "name_ge": "ქვემო ქართლი", "name_en": "Kvemo Kartli", "level": 2, "parent_slug": "georgia", "sort_order": 5},  # lid=5
+    {"slug": "shida-kartli", "name_ge": "შიდა ქართლი", "name_en": "Shida Kartli", "level": 2, "parent_slug": "georgia", "sort_order": 6},  # lid=6
+    {"slug": "samtskhe-javakheti", "name_ge": "სამცხე-ჯავახეთი", "name_en": "Samtskhe-Javakheti", "level": 2, "parent_slug": "georgia", "sort_order": 7},  # lid=7
+    {"slug": "imereti", "name_ge": "იმერეთი", "name_en": "Imereti", "level": 2, "parent_slug": "georgia", "sort_order": 8},  # lid=8
+    {"slug": "guria", "name_ge": "გურია", "name_en": "Guria", "level": 2, "parent_slug": "georgia", "sort_order": 9},  # lid=9
+    {"slug": "racha-lechkhumi", "name_ge": "რაჭა-ლეჩხუმი, ქვ. სვანეთი", "name_en": "Racha-Lechkhumi", "level": 2, "parent_slug": "georgia", "sort_order": 10},  # lid=12
+    {"slug": "samegrelo", "name_ge": "სამეგრელო-ზემო სვანეთი", "name_en": "Samegrelo-Zemo Svaneti", "level": 2, "parent_slug": "georgia", "sort_order": 11},  # lid=13
+    {"slug": "remote", "name_ge": "დისტანციური", "name_en": "Remote", "level": 2, "parent_slug": "georgia", "sort_order": 12},  # lid=17
     # City level
     {"slug": "batumi", "name_ge": "ბათუმი", "name_en": "Batumi", "level": 3, "parent_slug": "adjara", "sort_order": 1},
     {"slug": "kutaisi", "name_ge": "ქუთაისი", "name_en": "Kutaisi", "level": 3, "parent_slug": "imereti", "sort_order": 1},

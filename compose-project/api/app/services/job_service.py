@@ -73,23 +73,26 @@ class JobService:
             filters.append(Job.jobsge_cid == params.cid)
 
         # Region filter (by slug)
-        # Maps region slugs to jobs.ge location IDs since jobs don't have region_id populated
+        # Maps region slugs to jobs.ge location IDs (lid parameter)
+        # Based on jobsge_config.py JOBSGE_REGIONS mapping
         REGION_SLUG_TO_LID = {
             "tbilisi": 1,
             "adjara": 14,
             "batumi": 14,  # Batumi is in Adjara
-            "imereti": 3,
-            "kutaisi": 3,  # Kutaisi is in Imereti
-            "kakheti": 4,
-            "samegrelo": 5,
-            "kvemo-kartli": 6,
-            "rustavi": 6,  # Rustavi is in Kvemo Kartli
-            "shida-kartli": 7,
-            "gori": 7,  # Gori is in Shida Kartli
-            "samtskhe-javakheti": 8,
-            "mtskheta-mtianeti": 9,
-            "racha-lechkhumi": 10,
-            "guria": 11,
+            "imereti": 8,
+            "kutaisi": 8,  # Kutaisi is in Imereti
+            "kakheti": 3,
+            "samegrelo": 13,
+            "zugdidi": 13,  # Zugdidi is in Samegrelo
+            "kvemo-kartli": 5,
+            "rustavi": 5,  # Rustavi is in Kvemo Kartli
+            "shida-kartli": 6,
+            "gori": 6,  # Gori is in Shida Kartli
+            "samtskhe-javakheti": 7,
+            "mtskheta-mtianeti": 4,
+            "racha-lechkhumi": 12,
+            "guria": 9,
+            "remote": 17,
             "georgia": None,  # All of Georgia - no filter
         }
         if params.region:
