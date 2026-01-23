@@ -23,7 +23,8 @@ export interface SearchInputProps
 /**
  * Debounce hook for delayed value updates
  */
-function useDebouncedCallback<T extends (...args: unknown[]) => void>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function useDebouncedCallback<T extends (...args: any[]) => void>(
   callback: T,
   delay: number
 ): T {
