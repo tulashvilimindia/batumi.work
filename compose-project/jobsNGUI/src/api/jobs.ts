@@ -82,18 +82,26 @@ export function getJobTitle(job: Job | JobDetail, language: 'ge' | 'en'): string
  * Helper to get localized category name
  */
 export function getCategoryName(job: Job | JobDetail, language: 'ge' | 'en'): string {
-  return language === 'en' && job.category_name_en
+  // Handle nested category object or flat fields
+  if (job.category) {
+    return language === 'en' ? job.category.name_en : job.category.name_ge;
+  }
+  return (language === 'en' && job.category_name_en
     ? job.category_name_en
-    : job.category_name_ge;
+    : job.category_name_ge) || '';
 }
 
 /**
  * Helper to get localized region name
  */
 export function getRegionName(job: Job | JobDetail, language: 'ge' | 'en'): string {
-  return language === 'en' && job.region_name_en
+  // Handle nested region object or flat fields
+  if (job.region) {
+    return language === 'en' ? job.region.name_en : job.region.name_ge;
+  }
+  return (language === 'en' && job.region_name_en
     ? job.region_name_en
-    : job.region_name_ge;
+    : job.region_name_ge) || '';
 }
 
 /**

@@ -83,7 +83,7 @@ export function HomePage() {
   };
 
   // Handle job click for analytics
-  const handleJobClick = (job: { id: number }, index: number) => {
+  const handleJobClick = (job: { id: string }, index: number) => {
     // Analytics tracking could be added here
     console.log('Job clicked:', job.id, 'at position:', index);
   };

@@ -129,13 +129,17 @@ export function JobMetadata({
   const locale = lang === 'en' ? 'en' : 'ge';
   const t = translations[locale];
 
-  // Get localized values
-  const categoryName = lang === 'en' ? job.category_name_en : job.category_name_ge;
-  const regionName = lang === 'en' ? job.region_name_en : job.region_name_ge;
+  // Get localized values - handle both flat and nested category/region
+  const categoryName = job.category
+    ? (lang === 'en' ? job.category.name_en : job.category.name_ge)
+    : (lang === 'en' ? job.category_name_en : job.category_name_ge) || '-';
+  const regionName = job.region
+    ? (lang === 'en' ? job.region.name_en : job.region.name_ge)
+    : (lang === 'en' ? job.region_name_en : job.region_name_ge);
 
   // Format dates
   const publishedDate = formatDate(job.published_at, locale);
-  const deadlineDate = job.deadline ? formatDate(job.deadline, locale) : t.noDeadline;
+  const deadlineDate = job.deadline_at ? formatDate(job.deadline_at, locale) : t.noDeadline;
 
   return (
     <div
@@ -191,7 +195,7 @@ export function JobMetadata({
       )}
 
       {/* Source */}
-      {showSource && (
+      {showSource && job.source_name && (
         <MetadataItem
           icon={<Globe size={20} />}
           label={t.source}
