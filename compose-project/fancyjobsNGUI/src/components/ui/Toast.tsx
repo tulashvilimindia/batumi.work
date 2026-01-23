@@ -1,5 +1,10 @@
-import React, { useEffect, useCallback } from 'react';
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+/**
+ * Toast Component - Cyberpunk Neon Edition
+ * Notification toasts with neon glow effects
+ */
+
+import React, { useEffect, useCallback, useState } from 'react';
+import { X, CheckCircle, AlertCircle, AlertTriangle, Info, Zap } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface ToastProps {
@@ -20,31 +25,39 @@ export interface ToastProps {
   onClose: (id: string) => void;
 }
 
-const typeStyles = {
+const typeConfig = {
   success: {
-    container: 'border-[var(--color-success)]',
-    icon: 'text-[var(--color-success)]',
     Icon: CheckCircle,
+    color: '#39FF14',
+    glow: 'rgba(57, 255, 20, 0.5)',
+    bgGlow: 'rgba(57, 255, 20, 0.1)',
+    label: 'SUCCESS',
   },
   error: {
-    container: 'border-[var(--color-error)]',
-    icon: 'text-[var(--color-error)]',
     Icon: AlertCircle,
+    color: '#FF006E',
+    glow: 'rgba(255, 0, 110, 0.5)',
+    bgGlow: 'rgba(255, 0, 110, 0.1)',
+    label: 'ERROR',
   },
   warning: {
-    container: 'border-[var(--color-warning)]',
-    icon: 'text-[var(--color-warning)]',
     Icon: AlertTriangle,
+    color: '#FFE600',
+    glow: 'rgba(255, 230, 0, 0.5)',
+    bgGlow: 'rgba(255, 230, 0, 0.1)',
+    label: 'WARNING',
   },
   info: {
-    container: 'border-[var(--color-info)]',
-    icon: 'text-[var(--color-info)]',
     Icon: Info,
+    color: '#00F5FF',
+    glow: 'rgba(0, 245, 255, 0.5)',
+    bgGlow: 'rgba(0, 245, 255, 0.1)',
+    label: 'INFO',
   },
 };
 
 /**
- * Individual Toast notification component
+ * Cyberpunk Toast notification component
  */
 export function Toast({
   id,
@@ -54,10 +67,13 @@ export function Toast({
   action,
   onClose,
 }: ToastProps) {
-  const { container: containerStyle, icon: iconStyle, Icon } = typeStyles[type];
+  const [isExiting, setIsExiting] = useState(false);
+  const config = typeConfig[type];
+  const { Icon } = config;
 
   const handleClose = useCallback(() => {
-    onClose(id);
+    setIsExiting(true);
+    setTimeout(() => onClose(id), 300);
   }, [id, onClose]);
 
   // Auto-dismiss timer
@@ -73,21 +89,65 @@ export function Toast({
       role="status"
       aria-live="polite"
       className={cn(
-        'flex items-start gap-3',
+        'relative flex items-start gap-4',
         'w-full max-w-sm p-4',
-        'bg-[var(--color-surface)]',
-        'border-l-4 rounded shadow-lg',
-        'animate-in slide-in-from-bottom-2 fade-in duration-300',
-        containerStyle
+        'rounded-xl',
+        'transition-all duration-300',
+        isExiting ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
       )}
+      style={{
+        background: 'rgba(10, 10, 20, 0.95)',
+        backdropFilter: 'blur(20px)',
+        border: `1px solid ${config.color}40`,
+        boxShadow: `0 0 30px ${config.bgGlow}, inset 0 0 30px ${config.bgGlow}`,
+      }}
     >
-      <Icon
-        size={20}
-        className={cn('shrink-0 mt-0.5', iconStyle)}
-        aria-hidden="true"
+      {/* Left accent line */}
+      <div
+        className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full"
+        style={{
+          background: config.color,
+          boxShadow: `0 0 10px ${config.glow}`,
+        }}
       />
+
+      {/* Icon */}
+      <div
+        className="shrink-0 mt-0.5"
+        style={{
+          color: config.color,
+          filter: `drop-shadow(0 0 8px ${config.glow})`,
+        }}
+      >
+        <Icon size={20} aria-hidden="true" />
+      </div>
+
+      {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-[var(--color-text-primary)]">{message}</p>
+        {/* Type label */}
+        <div
+          className="text-[10px] font-bold tracking-[0.2em] mb-1"
+          style={{
+            fontFamily: 'Rajdhani, sans-serif',
+            color: config.color,
+            textShadow: `0 0 10px ${config.glow}`,
+          }}
+        >
+          {config.label}
+        </div>
+
+        {/* Message */}
+        <p
+          className="text-sm leading-relaxed"
+          style={{
+            fontFamily: 'Rajdhani, sans-serif',
+            color: '#E0E0E8',
+          }}
+        >
+          {message}
+        </p>
+
+        {/* Action button */}
         {action && (
           <button
             type="button"
@@ -95,33 +155,57 @@ export function Toast({
               action.onClick();
               handleClose();
             }}
-            className={cn(
-              'mt-2 text-sm font-medium',
-              'text-[var(--color-primary)]',
-              'hover:text-[var(--color-primary-hover)]',
-              'focus:outline-none focus-visible:underline'
-            )}
+            className="mt-3 text-sm font-semibold tracking-wider uppercase transition-all duration-300"
+            style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              color: config.color,
+              textShadow: `0 0 10px ${config.glow}`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateX(4px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateX(0)';
+            }}
           >
-            {action.label}
+            {action.label} →
           </button>
         )}
       </div>
+
+      {/* Close button */}
       <button
         type="button"
         onClick={handleClose}
-        className={cn(
-          'shrink-0 p-1 rounded',
-          'text-[var(--color-text-tertiary)]',
-          'hover:text-[var(--color-text-primary)]',
-          'hover:bg-[var(--color-surface-hover)]',
-          'focus:outline-none focus-visible:ring-2',
-          'focus-visible:ring-[var(--color-primary)]',
-          'transition-colors'
-        )}
+        className="shrink-0 p-1.5 rounded-lg transition-all duration-300"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          color: '#A0A0B0',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 0, 110, 0.2)';
+          e.currentTarget.style.color = '#FF006E';
+          e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 0, 110, 0.4)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+          e.currentTarget.style.color = '#A0A0B0';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
         aria-label="Dismiss notification"
       >
-        <X size={16} aria-hidden="true" />
+        <X size={14} aria-hidden="true" />
       </button>
+
+      {/* Corner accent */}
+      <div
+        className="absolute top-0 right-0 w-4 h-[1px]"
+        style={{ background: config.color, boxShadow: `0 0 5px ${config.glow}` }}
+      />
+      <div
+        className="absolute top-0 right-0 w-[1px] h-4"
+        style={{ background: config.color, boxShadow: `0 0 5px ${config.glow}` }}
+      />
     </div>
   );
 }
@@ -156,14 +240,21 @@ export function ToastContainer({
     <div
       className={cn(
         'fixed z-50',
-        'flex flex-col gap-2',
+        'flex flex-col gap-3',
         'pointer-events-none',
         positionStyles[position]
       )}
       aria-label="Notifications"
     >
-      {toasts.map((toast) => (
-        <div key={toast.id} className="pointer-events-auto">
+      {toasts.map((toast, index) => (
+        <div
+          key={toast.id}
+          className="pointer-events-auto"
+          style={{
+            animation: `fade-in 0.3s ease forwards`,
+            animationDelay: `${index * 0.1}s`,
+          }}
+        >
           <Toast {...toast} onClose={onRemove} />
         </div>
       ))}
