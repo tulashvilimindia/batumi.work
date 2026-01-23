@@ -14,7 +14,7 @@ interface SavedJobsState {
   /** Array of saved jobs */
   savedJobs: Job[];
   /** Set of saved job IDs for quick lookup */
-  savedIds: Set<number>;
+  savedIds: Set<string>;
 }
 
 /**
@@ -24,11 +24,11 @@ interface SavedJobsActions {
   /** Save a job */
   saveJob: (job: Job) => void;
   /** Remove a saved job by ID */
-  unsaveJob: (id: number) => void;
+  unsaveJob: (id: string) => void;
   /** Toggle save status of a job */
   toggleSave: (job: Job) => void;
   /** Check if a job is saved */
-  isSaved: (id: number) => boolean;
+  isSaved: (id: string) => boolean;
   /** Clear all saved jobs */
   clearAll: () => void;
 }
@@ -100,7 +100,7 @@ export const useSavedJobsStore = create<SavedJobsStore>()(
     (set, get) => ({
       // Initial state
       savedJobs: [],
-      savedIds: new Set<number>(),
+      savedIds: new Set<string>(),
 
       // Actions
       saveJob: (job: Job) => {
@@ -115,7 +115,7 @@ export const useSavedJobsStore = create<SavedJobsStore>()(
         });
       },
 
-      unsaveJob: (id: number) => {
+      unsaveJob: (id: string) => {
         const state = get();
         if (!state.savedIds.has(id)) {
           return; // Not saved
@@ -139,14 +139,14 @@ export const useSavedJobsStore = create<SavedJobsStore>()(
         }
       },
 
-      isSaved: (id: number) => {
+      isSaved: (id: string) => {
         return get().savedIds.has(id);
       },
 
       clearAll: () => {
         set({
           savedJobs: [],
-          savedIds: new Set<number>(),
+          savedIds: new Set<string>(),
         });
       },
     }),
@@ -176,4 +176,4 @@ export const useSavedJobsStore = create<SavedJobsStore>()(
 // Selector hooks for common patterns
 export const useSavedJobs = () => useSavedJobsStore((state) => state.savedJobs);
 export const useSavedJobIds = () => useSavedJobsStore((state) => state.savedIds);
-export const useIsSaved = (id: number) => useSavedJobsStore((state) => state.isSaved(id));
+export const useIsSaved = (id: string) => useSavedJobsStore((state) => state.isSaved(id));
