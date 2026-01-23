@@ -1,0 +1,97 @@
+{
+  "common": {
+    "search": "ძიება",
+    "filter": "ფილტრი",
+    "save": "შენახვა",
+    "share": "გაზიარება",
+    "loading": "იტვირთება...",
+    "noResults": "შედეგი ვერ მოიძებნა",
+    "error": "შეცდომა",
+    "retry": "ხელახლა ცდა",
+    "close": "დახურვა",
+    "back": "უკან",
+    "all": "ყველა",
+    "yes": "დიახ",
+    "no": "არა",
+    "cancel": "გაუქმება",
+    "confirm": "დადასტურება",
+    "apply": "გამოყენება",
+    "reset": "გასუფთავება"
+  },
+  "jobs": {
+    "title": "ვაკანსიები",
+    "jobTitle": "განცხადება",
+    "company": "კომპანია",
+    "published": "გამოქვეყნდა",
+    "deadline": "ბოლო ვადა",
+    "salary": "ხელფასი",
+    "category": "კატეგორია",
+    "region": "რეგიონი",
+    "location": "მდებარეობა",
+    "allCategories": "ყველა კატეგორია",
+    "allRegions": "ყველა რეგიონი",
+    "withSalary": "ხელფასით",
+    "vip": "VIP",
+    "new": "ახალი",
+    "remote": "დისტანციური",
+    "viewOriginal": "ორიგინალის ნახვა",
+    "savedJobs": "შენახული ვაკანსიები",
+    "noSavedJobs": "შენახული ვაკანსიები არ არის",
+    "found": "ნაპოვნია",
+    "jobs": "ვაკანსია",
+    "noJobs": "ვაკანსიები ვერ მოიძებნა",
+    "source": "წყარო",
+    "description": "აღწერა"
+  },
+  "nav": {
+    "home": "მთავარი",
+    "saved": "შენახული",
+    "telegram": "Telegram არხი",
+    "about": "ჩვენს შესახებ"
+  },
+  "share": {
+    "facebook": "Facebook",
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "linkedin": "LinkedIn",
+    "copyLink": "ლინკის კოპირება",
+    "copied": "კოპირებულია!",
+    "shareJob": "ვაკანსიის გაზიარება",
+    "shareFailed": "გაზიარება ვერ მოხერხდა"
+  },
+  "pagination": {
+    "previous": "წინა",
+    "next": "შემდეგი",
+    "page": "გვერდი",
+    "of": "-დან",
+    "showing": "ნაჩვენებია",
+    "results": "შედეგი"
+  },
+  "theme": {
+    "dark": "მუქი თემა",
+    "light": "ნათელი თემა",
+    "system": "სისტემის თემა"
+  },
+  "language": {
+    "select": "ენის არჩევა",
+    "ge": "ქართული",
+    "en": "English"
+  },
+  "errors": {
+    "loadFailed": "მონაცემების ჩატვირთვა ვერ მოხერხდა",
+    "networkError": "ქსელის შეცდომა",
+    "notFound": "გვერდი ვერ მოიძებნა",
+    "serverError": "სერვერის შეცდომა",
+    "tryAgain": "სცადეთ თავიდან"
+  },
+  "search": {
+    "placeholder": "ძიება ვაკანსიებში...",
+    "searchJobs": "ვაკანსიების ძიება",
+    "noResults": "შედეგი ვერ მოიძებნა",
+    "suggestions": "სცადეთ სხვა საძიებო სიტყვა"
+  },
+  "footer": {
+    "copyright": "ყველა უფლება დაცულია",
+    "poweredBy": "იმუშავა:"
+  }
+}
