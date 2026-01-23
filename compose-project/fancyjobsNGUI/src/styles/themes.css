@@ -658,3 +658,110 @@ a:hover {
 .scale-in {
   animation: scale-in 0.3s ease forwards;
 }
+
+/* ═══════════════════════════════════════════
+   SPARK / PARTICLE ANIMATIONS
+   ═══════════════════════════════════════════ */
+
+/* Spark up animation for copy success */
+@keyframes spark-up {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -20px) scale(0.5);
+  }
+}
+
+/* Spark right animation */
+@keyframes spark-right {
+  0% {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(20px, -50%) scale(0.5);
+  }
+}
+
+/* Spark down animation */
+@keyframes spark-down {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.5);
+  }
+}
+
+/* Spark left animation */
+@keyframes spark-left {
+  0% {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-20px, -50%) scale(0.5);
+  }
+}
+
+/* Electricity crackle effect */
+@keyframes electric-crackle {
+  0%, 100% {
+    opacity: 0.8;
+    filter: blur(0px);
+  }
+  25% {
+    opacity: 1;
+    filter: blur(1px);
+  }
+  50% {
+    opacity: 0.6;
+    filter: blur(0px);
+  }
+  75% {
+    opacity: 1;
+    filter: blur(2px);
+  }
+}
+
+/* Holographic shimmer for special badges */
+@keyframes holo-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.holo-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: holo-shimmer 3s ease-in-out infinite;
+}
+
+/* Neon pulse for important elements */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 15px currentColor, 0 0 30px currentColor, 0 0 45px currentColor;
+  }
+}
+
+.neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
