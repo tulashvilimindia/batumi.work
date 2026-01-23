@@ -1,193 +1,254 @@
 /* ============================================================
-   jobsNGUI Theme System - Light & Dark Themes
-   Based on DESIGN_SYSTEM.md color specifications
+   FANCY JOBS - CYBERPUNK NEON THEME SYSTEM
+   A futuristic, neon-lit design with glassmorphism effects
    ============================================================ */
 
-:root,
-[data-theme='light'] {
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
   /* ═══════════════════════════════════════════
-     PRIMARY BRAND COLORS
+     NEON COLOR PALETTE
      ═══════════════════════════════════════════ */
-  --color-primary: #4ecdc4; /* Turquoise - Main brand */
-  --color-primary-hover: #3ab5ad; /* Darker on hover */
-  --color-primary-light: #e6f7f6; /* Light background tint */
+  --neon-pink: #FF006E;
+  --neon-pink-glow: rgba(255, 0, 110, 0.6);
+  --neon-cyan: #00F5FF;
+  --neon-cyan-glow: rgba(0, 245, 255, 0.6);
+  --neon-purple: #8B5CF6;
+  --neon-purple-glow: rgba(139, 92, 246, 0.6);
+  --neon-green: #39FF14;
+  --neon-green-glow: rgba(57, 255, 20, 0.6);
+  --neon-orange: #FF6B35;
+  --neon-orange-glow: rgba(255, 107, 53, 0.6);
+  --neon-yellow: #FFE600;
+  --neon-yellow-glow: rgba(255, 230, 0, 0.6);
+  --neon-blue: #00D4FF;
+  --neon-blue-glow: rgba(0, 212, 255, 0.6);
 
   /* ═══════════════════════════════════════════
-     SECONDARY / HEADER / FOOTER
+     PRIMARY BRAND COLORS (Neon)
      ═══════════════════════════════════════════ */
-  --color-secondary: #1a1a2e; /* Dark navy - Header/Footer */
+  --color-primary: var(--neon-cyan);
+  --color-primary-hover: #33F7FF;
+  --color-primary-light: rgba(0, 245, 255, 0.15);
+  --color-primary-glow: var(--neon-cyan-glow);
 
   /* ═══════════════════════════════════════════
-     BACKGROUND COLORS
+     SECONDARY (Neon Pink Accent)
      ═══════════════════════════════════════════ */
-  --color-background: #f5f5f5; /* Page background (light gray) */
-  --color-surface: #ffffff; /* Table/Card background (white) */
-  --color-surface-hover: #fafafa; /* Table row hover */
-  --color-surface-alt: #f8f8f8; /* Table header, metadata bg */
+  --color-secondary: #0a0a0f;
+  --color-accent: var(--neon-pink);
+  --color-accent-glow: var(--neon-pink-glow);
+
+  /* ═══════════════════════════════════════════
+     BACKGROUND COLORS (Deep Dark)
+     ═══════════════════════════════════════════ */
+  --color-background: #050508;
+  --color-background-gradient: radial-gradient(ellipse at top, #0f0f1a 0%, #050508 50%, #020203 100%);
+  --color-surface: rgba(15, 15, 25, 0.8);
+  --color-surface-solid: #0f0f19;
+  --color-surface-hover: rgba(25, 25, 40, 0.9);
+  --color-surface-alt: rgba(20, 20, 35, 0.6);
+  --color-glass: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
 
   /* ═══════════════════════════════════════════
      TEXT COLORS
      ═══════════════════════════════════════════ */
-  --color-text-primary: #333333; /* Main text (dark gray) */
-  --color-text-secondary: #666666; /* Secondary text */
-  --color-text-tertiary: #999999; /* Muted/caption text */
-  --color-text-inverse: #ffffff; /* Text on dark backgrounds */
+  --color-text-primary: #F0F0F5;
+  --color-text-secondary: #A0A0B0;
+  --color-text-tertiary: #606070;
+  --color-text-inverse: #050508;
+  --color-text-neon: var(--neon-cyan);
 
   /* ═══════════════════════════════════════════
      BORDER COLORS
      ═══════════════════════════════════════════ */
-  --color-border: #dddddd; /* Main borders */
-  --color-border-light: #eeeeee; /* Table row borders */
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-light: rgba(255, 255, 255, 0.05);
+  --color-border-neon: var(--neon-cyan);
+  --color-border-accent: var(--neon-pink);
 
   /* ═══════════════════════════════════════════
      LINK COLORS
      ═══════════════════════════════════════════ */
-  --color-link: #0066cc; /* Default link blue */
-  --color-link-hover: #004499; /* Link hover state */
+  --color-link: var(--neon-cyan);
+  --color-link-hover: var(--neon-pink);
 
   /* ═══════════════════════════════════════════
-     STATUS / SEMANTIC COLORS
+     STATUS / SEMANTIC COLORS (Neon variants)
      ═══════════════════════════════════════════ */
-  --color-success: #28a745; /* Green - Salary, positive */
-  --color-warning: #ffc107; /* Yellow - VIP badge bg */
-  --color-error: #dc3545; /* Red - Errors */
-  --color-info: #17a2b8; /* Cyan - Info */
+  --color-success: var(--neon-green);
+  --color-success-glow: var(--neon-green-glow);
+  --color-warning: var(--neon-yellow);
+  --color-warning-glow: var(--neon-yellow-glow);
+  --color-error: var(--neon-pink);
+  --color-error-glow: var(--neon-pink-glow);
+  --color-info: var(--neon-blue);
+  --color-info-glow: var(--neon-blue-glow);
 
   /* ═══════════════════════════════════════════
      JOB-SPECIFIC COLORS
      ═══════════════════════════════════════════ */
-  --color-vip: #cc6600; /* VIP text (orange) */
-  --color-vip-bg: #ffc107; /* VIP badge background */
-  --color-new-badge: #ff6b6b; /* NEW badge (coral red) */
-  --color-new-badge-text: #ffffff; /* NEW badge text */
-  --color-salary: #28a745; /* Salary badge (green) */
-  --color-salary-text: #ffffff; /* Salary badge text */
-  --color-remote: #4ecdc4; /* Remote badge */
+  --color-vip: var(--neon-yellow);
+  --color-vip-bg: rgba(255, 230, 0, 0.15);
+  --color-vip-glow: var(--neon-yellow-glow);
+  --color-new-badge: var(--neon-pink);
+  --color-new-badge-text: #ffffff;
+  --color-new-badge-glow: var(--neon-pink-glow);
+  --color-salary: var(--neon-green);
+  --color-salary-text: #000000;
+  --color-salary-glow: var(--neon-green-glow);
+  --color-remote: var(--neon-purple);
+  --color-remote-glow: var(--neon-purple-glow);
 
   /* ═══════════════════════════════════════════
      SOCIAL PLATFORM COLORS
      ═══════════════════════════════════════════ */
   --color-facebook: #1877f2;
-  --color-telegram: #0088cc;
-  --color-whatsapp: #25d366;
+  --color-telegram: var(--neon-cyan);
+  --color-whatsapp: var(--neon-green);
   --color-linkedin: #0077b5;
-  --color-copy: #666666;
+  --color-copy: var(--neon-purple);
 
   /* ═══════════════════════════════════════════
      TABLE-SPECIFIC COLORS
      ═══════════════════════════════════════════ */
-  --color-table-bg: #ffffff; /* Table background */
-  --color-table-header-bg: #f8f8f8; /* Table header row */
-  --color-table-row-hover: #fafafa; /* Row hover state */
-  --color-table-border: #eeeeee; /* Row separators */
-  --color-table-border-outer: #dddddd; /* Table outer border */
+  --color-table-bg: rgba(10, 10, 20, 0.6);
+  --color-table-header-bg: rgba(15, 15, 30, 0.8);
+  --color-table-row-hover: rgba(0, 245, 255, 0.08);
+  --color-table-border: rgba(255, 255, 255, 0.06);
+  --color-table-border-outer: rgba(0, 245, 255, 0.2);
 
   /* ═══════════════════════════════════════════
-     SHADOWS
+     GRADIENTS
      ═══════════════════════════════════════════ */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --gradient-neon: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan), var(--neon-purple));
+  --gradient-cyber: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+  --gradient-aurora: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+  --gradient-sunset: linear-gradient(135deg, var(--neon-orange), var(--neon-pink), var(--neon-purple));
+  --gradient-matrix: linear-gradient(180deg, rgba(57, 255, 20, 0.1) 0%, transparent 100%);
+
+  /* ═══════════════════════════════════════════
+     SHADOWS & GLOWS
+     ═══════════════════════════════════════════ */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-neon-cyan: 0 0 20px var(--neon-cyan-glow), 0 0 40px rgba(0, 245, 255, 0.3);
+  --shadow-neon-pink: 0 0 20px var(--neon-pink-glow), 0 0 40px rgba(255, 0, 110, 0.3);
+  --shadow-neon-purple: 0 0 20px var(--neon-purple-glow), 0 0 40px rgba(139, 92, 246, 0.3);
+  --glow-text: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+
+  /* ═══════════════════════════════════════════
+     BLUR & GLASS EFFECTS
+     ═══════════════════════════════════════════ */
+  --blur-glass: blur(20px);
+  --blur-heavy: blur(40px);
 
   /* ═══════════════════════════════════════════
      TRANSITIONS
      ═══════════════════════════════════════════ */
-  --transition-colors: color 0.2s ease, background-color 0.2s ease,
-    border-color 0.2s ease;
+  --transition-fast: all 0.15s ease;
+  --transition-normal: all 0.3s ease;
+  --transition-slow: all 0.5s ease;
+  --transition-colors: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+
+  /* ═══════════════════════════════════════════
+     TYPOGRAPHY
+     ═══════════════════════════════════════════ */
+  --font-display: 'Orbitron', 'Rajdhani', sans-serif;
+  --font-heading: 'Rajdhani', 'Orbitron', sans-serif;
+  --font-body: 'Inter', 'Noto Sans Georgian', system-ui, sans-serif;
 }
 
 /* ============================================================
-   DARK THEME
+   ANIMATIONS
    ============================================================ */
-[data-theme='dark'] {
-  /* ═══════════════════════════════════════════
-     PRIMARY BRAND COLORS
-     ═══════════════════════════════════════════ */
-  --color-primary: #5eead4; /* Lighter turquoise */
-  --color-primary-hover: #4ed4be; /* Hover state */
-  --color-primary-light: rgba(94, 234, 212, 0.1);
 
-  /* ═══════════════════════════════════════════
-     SECONDARY / HEADER / FOOTER
-     ═══════════════════════════════════════════ */
-  --color-secondary: #0f172a; /* Darker navy */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--neon-cyan-glow);
+  }
+  50% {
+    box-shadow: 0 0 40px var(--neon-cyan-glow), 0 0 60px rgba(0, 245, 255, 0.4);
+  }
+}
 
-  /* ═══════════════════════════════════════════
-     BACKGROUND COLORS
-     ═══════════════════════════════════════════ */
-  --color-background: #0f172a; /* Page background (dark navy) */
-  --color-surface: #1e293b; /* Table/Card background */
-  --color-surface-hover: #334155; /* Table row hover */
-  --color-surface-alt: #1e293b; /* Table header */
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow:
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 20px var(--neon-cyan),
+      0 0 40px var(--neon-cyan);
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
 
-  /* ═══════════════════════════════════════════
-     TEXT COLORS
-     ═══════════════════════════════════════════ */
-  --color-text-primary: #f1f5f9; /* Main text (light) */
-  --color-text-secondary: #cbd5e1; /* Secondary text */
-  --color-text-tertiary: #94a3b8; /* Muted text */
-  --color-text-inverse: #0f172a; /* Text on light backgrounds */
+@keyframes border-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 
-  /* ═══════════════════════════════════════════
-     BORDER COLORS
-     ═══════════════════════════════════════════ */
-  --color-border: #334155; /* Main borders */
-  --color-border-light: #475569; /* Lighter borders */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
 
-  /* ═══════════════════════════════════════════
-     LINK COLORS
-     ═══════════════════════════════════════════ */
-  --color-link: #60a5fa; /* Light blue */
-  --color-link-hover: #93c5fd; /* Lighter on hover */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
 
-  /* ═══════════════════════════════════════════
-     STATUS / SEMANTIC COLORS
-     ═══════════════════════════════════════════ */
-  --color-success: #34d399; /* Brighter green */
-  --color-warning: #fbbf24; /* Brighter yellow */
-  --color-error: #f87171; /* Brighter red */
-  --color-info: #38bdf8; /* Brighter cyan */
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
 
-  /* ═══════════════════════════════════════════
-     JOB-SPECIFIC COLORS
-     ═══════════════════════════════════════════ */
-  --color-vip: #fb923c; /* VIP text (brighter orange) */
-  --color-vip-bg: #fbbf24; /* VIP badge background */
-  --color-new-badge: #fb7185; /* NEW badge (brighter) */
-  --color-new-badge-text: #ffffff; /* NEW badge text */
-  --color-salary: #34d399; /* Salary badge */
-  --color-salary-text: #000000; /* Salary badge text */
-  --color-remote: #5eead4; /* Remote badge */
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
 
-  /* ═══════════════════════════════════════════
-     SOCIAL PLATFORM COLORS (unchanged)
-     ═══════════════════════════════════════════ */
-  --color-facebook: #1877f2;
-  --color-telegram: #0088cc;
-  --color-whatsapp: #25d366;
-  --color-linkedin: #0077b5;
-  --color-copy: #94a3b8;
-
-  /* ═══════════════════════════════════════════
-     TABLE-SPECIFIC COLORS
-     ═══════════════════════════════════════════ */
-  --color-table-bg: #1e293b; /* Table background */
-  --color-table-header-bg: #1e293b; /* Table header */
-  --color-table-row-hover: #334155; /* Row hover */
-  --color-table-border: #334155; /* Row separators */
-  --color-table-border-outer: #334155; /* Table outer border */
-
-  /* ═══════════════════════════════════════════
-     SHADOWS
-     ═══════════════════════════════════════════ */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+@keyframes rotate-gradient {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================================
    GLOBAL STYLES
    ============================================================ */
+
 * {
   margin: 0;
   padding: 0;
@@ -196,56 +257,180 @@
 
 html {
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: Arial, 'Noto Sans Georgian', system-ui, sans-serif;
-  background-color: var(--color-background);
+  font-family: var(--font-body);
+  background: var(--color-background);
+  background-image: var(--color-background-gradient);
+  background-attachment: fixed;
   color: var(--color-text-primary);
-  transition: var(--transition-colors);
   min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
 }
 
-/* Smooth theme transitions */
-*,
-*::before,
-*::after {
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+/* Animated background grid */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Scan line effect */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  opacity: 0.1;
+  animation: scan-line 8s linear infinite;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 /* Links */
 a {
   color: var(--color-link);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: var(--transition-colors);
+  position: relative;
 }
 
 a:hover {
   color: var(--color-link-hover);
+  text-shadow: 0 0 10px currentColor;
 }
 
-/* Focus styles for accessibility */
+/* Focus styles */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--neon-cyan);
   outline-offset: 2px;
+  box-shadow: var(--shadow-neon-cyan);
 }
 
-/* Custom scrollbar for dark mode */
-[data-theme='dark'] ::-webkit-scrollbar {
+/* Selection */
+::selection {
+  background: var(--neon-pink);
+  color: white;
+  text-shadow: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-[data-theme='dark'] ::-webkit-scrollbar-track {
-  background: var(--color-surface);
+::-webkit-scrollbar-track {
+  background: var(--color-background);
 }
 
-[data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
   border-radius: 4px;
 }
 
-[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-light);
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--neon-pink), var(--neon-cyan));
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+
+/* Neon text effects */
+.neon-text {
+  text-shadow: var(--glow-text);
+}
+
+.neon-text-cyan {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan-glow), 0 0 20px var(--neon-cyan-glow);
+}
+
+.neon-text-pink {
+  color: var(--neon-pink);
+  text-shadow: 0 0 10px var(--neon-pink-glow), 0 0 20px var(--neon-pink-glow);
+}
+
+.neon-text-purple {
+  color: var(--neon-purple);
+  text-shadow: 0 0 10px var(--neon-purple-glow), 0 0 20px var(--neon-purple-glow);
+}
+
+/* Glass effect */
+.glass {
+  background: var(--color-glass);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: 1px solid var(--color-glass-border);
+}
+
+/* Neon border */
+.neon-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--gradient-neon) border-box;
+  background-size: 200% 200%;
+  animation: border-flow 4s ease infinite;
+}
+
+/* Glow effects */
+.glow-cyan {
+  box-shadow: var(--shadow-neon-cyan);
+}
+
+.glow-pink {
+  box-shadow: var(--shadow-neon-pink);
+}
+
+.glow-purple {
+  box-shadow: var(--shadow-neon-purple);
+}
+
+/* Pulse animation */
+.pulse {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Float animation */
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: var(--gradient-neon);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
