@@ -27,6 +27,7 @@ const FILTER_DEFAULTS = {
   page_size: 30,
   sort: '-published_at',
   status: 'active',
+  region: 'adjara', // Default to Adjara region
 } as const;
 
 /**
@@ -106,6 +107,7 @@ export function useFilters(): UseFiltersReturn {
       ...parsed,
       page: parsed.page ?? FILTER_DEFAULTS.page,
       page_size: parsed.page_size ?? FILTER_DEFAULTS.page_size,
+      region: parsed.region ?? FILTER_DEFAULTS.region, // Default to Adjara
     };
   }, [searchParams]);
 
@@ -139,6 +141,7 @@ export function useFilters(): UseFiltersReturn {
             if (key === 'page_size' && value === FILTER_DEFAULTS.page_size) return;
             if (key === 'sort' && value === FILTER_DEFAULTS.sort) return;
             if (key === 'status' && value === FILTER_DEFAULTS.status) return;
+            if (key === 'region' && value === FILTER_DEFAULTS.region) return;
             if (key === 'has_salary' && value === false) return;
 
             newParams.set(key, String(value));
@@ -170,19 +173,19 @@ export function useFilters(): UseFiltersReturn {
     return !!(
       filters.q ||
       filters.category ||
-      filters.region ||
+      (filters.region && filters.region !== FILTER_DEFAULTS.region) ||
       filters.lid ||
       filters.cid ||
       filters.has_salary
     );
   }, [filters]);
 
-  // Count active filters
+  // Count active filters (excluding default region)
   const activeFilterCount = useMemo(() => {
     return [
       filters.q,
       filters.category,
-      filters.region,
+      filters.region !== FILTER_DEFAULTS.region ? filters.region : null,
       filters.lid,
       filters.cid,
       filters.has_salary,
