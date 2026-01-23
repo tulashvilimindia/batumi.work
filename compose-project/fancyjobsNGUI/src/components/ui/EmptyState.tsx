@@ -1,11 +1,18 @@
+/**
+ * EmptyState Component - Cyberpunk Neon Edition
+ * Empty state display with neon effects
+ */
+
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, Inbox, FileQuestion } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from './Button';
 
 export interface EmptyStateProps {
-  /** Icon to display (defaults to Search icon) */
+  /** Icon to display */
   icon?: React.ReactNode;
+  /** Icon variant for default icons */
+  iconVariant?: 'search' | 'inbox' | 'file';
   /** Main title text */
   title: string;
   /** Optional description text */
@@ -24,49 +31,82 @@ export interface EmptyStateProps {
   className?: string;
 }
 
+const defaultIcons = {
+  search: Search,
+  inbox: Inbox,
+  file: FileQuestion,
+};
+
 /**
- * Empty state component for displaying when no content is available
- * Used for empty search results, empty lists, etc.
+ * Cyberpunk EmptyState component with neon glow effects
  */
 export function EmptyState({
   icon,
+  iconVariant = 'search',
   title,
   description,
   action,
   secondaryAction,
   className,
 }: EmptyStateProps) {
+  const IconComponent = defaultIcons[iconVariant];
+
   return (
     <div
       className={cn(
         'flex flex-col items-center justify-center',
         'text-center',
-        'py-12 px-4',
+        'py-16 px-6',
+        'relative',
         className
       )}
       role="status"
     >
-      {/* Icon */}
+      {/* Background glow effect */}
       <div
-        className={cn(
-          'flex items-center justify-center',
-          'w-16 h-16 mb-4',
-          'rounded-full',
-          'bg-[var(--color-surface-alt)]',
-          'text-[var(--color-text-tertiary)]'
-        )}
-        aria-hidden="true"
+        className="absolute inset-0 opacity-30 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(0, 245, 255, 0.1), transparent 60%)',
+        }}
+      />
+
+      {/* Icon Container */}
+      <div
+        className="relative flex items-center justify-center w-24 h-24 mb-6 rounded-2xl"
+        style={{
+          background: 'rgba(10, 10, 20, 0.6)',
+          border: '1px solid rgba(0, 245, 255, 0.2)',
+          boxShadow: '0 0 30px rgba(0, 245, 255, 0.1), inset 0 0 30px rgba(0, 245, 255, 0.05)',
+        }}
       >
-        {icon || <Search size={32} />}
+        {/* Corner accents */}
+        <div className="absolute top-0 left-0 w-4 h-[1px] bg-neon-cyan" />
+        <div className="absolute top-0 left-0 w-[1px] h-4 bg-neon-cyan" />
+        <div className="absolute bottom-0 right-0 w-4 h-[1px] bg-neon-pink" />
+        <div className="absolute bottom-0 right-0 w-[1px] h-4 bg-neon-pink" />
+
+        {/* Icon */}
+        <div
+          className="text-neon-cyan"
+          style={{
+            filter: 'drop-shadow(0 0 10px rgba(0, 245, 255, 0.6))',
+          }}
+          aria-hidden="true"
+        >
+          {icon || <IconComponent size={40} />}
+        </div>
       </div>
 
       {/* Title */}
       <h3
-        className={cn(
-          'text-lg font-medium',
-          'text-[var(--color-text-primary)]',
-          'mb-2'
-        )}
+        className="text-xl font-bold mb-3"
+        style={{
+          fontFamily: 'Orbitron, sans-serif',
+          background: 'linear-gradient(135deg, #00F5FF, #8B5CF6)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}
       >
         {title}
       </h3>
@@ -74,11 +114,11 @@ export function EmptyState({
       {/* Description */}
       {description && (
         <p
-          className={cn(
-            'text-sm',
-            'text-[var(--color-text-secondary)]',
-            'max-w-md mb-6'
-          )}
+          className="text-sm max-w-md mb-8 tracking-wider"
+          style={{
+            fontFamily: 'Rajdhani, sans-serif',
+            color: '#A0A0B0',
+          }}
         >
           {description}
         </p>
@@ -99,6 +139,14 @@ export function EmptyState({
           )}
         </div>
       )}
+
+      {/* Decorative scan line */}
+      <div
+        className="absolute bottom-0 left-1/4 right-1/4 h-[1px]"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.3), transparent)',
+        }}
+      />
     </div>
   );
 }

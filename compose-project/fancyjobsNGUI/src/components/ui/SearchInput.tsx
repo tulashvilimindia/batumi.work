@@ -1,28 +1,23 @@
-import React, { forwardRef, useEffect, useRef, useCallback } from 'react';
+/**
+ * SearchInput Component - Cyberpunk Neon Edition
+ * Glowing search input with animated border effects
+ */
+
+import React, { forwardRef, useEffect, useRef, useCallback, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface SearchInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type'> {
-  /** Current search value */
   value: string;
-  /** Change handler - receives the new value string */
   onChange: (value: string) => void;
-  /** Callback when search is submitted (Enter key or button click) */
   onSearch?: () => void;
-  /** Debounce delay in milliseconds (0 to disable) */
   debounceMs?: number;
-  /** Show clear button when has value */
   showClearButton?: boolean;
-  /** Show search button */
   showSearchButton?: boolean;
-  /** Container className */
   containerClassName?: string;
 }
 
-/**
- * Debounce hook for delayed value updates
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useDebouncedCallback<T extends (...args: any[]) => void>(
   callback: T,
@@ -56,10 +51,6 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(
   );
 }
 
-/**
- * Search input component with icon, clear button, and optional debouncing
- * Designed for job search functionality
- */
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   (
     {
@@ -78,9 +69,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     },
     ref
   ) => {
+    const [isFocused, setIsFocused] = useState(false);
     const hasValue = value && value.length > 0;
 
-    // Create debounced onChange handler
     const debouncedOnChange = useDebouncedCallback(
       (newValue: string) => onChange(newValue),
       debounceMs
@@ -117,14 +108,37 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           containerClassName
         )}
       >
-        <div className="relative flex-1">
+        <div
+          className="relative flex-1"
+          style={{
+            borderRadius: '12px',
+          }}
+        >
+          {/* Animated neon border */}
+          <div
+            className="absolute -inset-[1px] rounded-xl transition-all duration-300 pointer-events-none"
+            style={{
+              background: isFocused
+                ? 'linear-gradient(135deg, #00F5FF, #FF006E, #8B5CF6, #00F5FF)'
+                : 'linear-gradient(135deg, rgba(0, 245, 255, 0.3), rgba(255, 0, 110, 0.2))',
+              backgroundSize: '300% 300%',
+              animation: isFocused ? 'border-flow 3s ease infinite' : 'none',
+              boxShadow: isFocused
+                ? '0 0 20px rgba(0, 245, 255, 0.4), 0 0 40px rgba(255, 0, 110, 0.2)'
+                : '0 0 10px rgba(0, 245, 255, 0.1)',
+            }}
+          />
+
           {/* Search icon */}
           <span
             className={cn(
-              'absolute left-3 top-1/2 -translate-y-1/2',
-              'text-[var(--color-text-tertiary)]',
-              'pointer-events-none'
+              'absolute left-4 top-1/2 -translate-y-1/2 z-10',
+              'pointer-events-none transition-all duration-300',
+              isFocused ? 'text-neon-cyan' : 'text-text-tertiary'
             )}
+            style={{
+              textShadow: isFocused ? '0 0 10px rgba(0, 245, 255, 0.8)' : 'none',
+            }}
             aria-hidden="true"
           >
             <Search size={18} />
@@ -137,29 +151,29 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
             disabled={disabled}
             aria-label={ariaLabel}
             className={cn(
-              // Base styles
-              'w-full h-10 pl-10 pr-10 py-2',
-              'text-[var(--color-text-primary)]',
-              'bg-[var(--color-surface)]',
-              'border border-[var(--color-border)]',
-              'rounded',
-              'placeholder:text-[var(--color-text-tertiary)]',
-              'transition-colors duration-200',
-              // Focus state
-              'focus:outline-none focus:border-[var(--color-primary)]',
-              'focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-opacity-20',
-              // Disabled state
+              'relative w-full h-12 pl-12 pr-12 py-3',
+              'text-text-primary',
+              'rounded-xl',
+              'placeholder:text-text-tertiary',
+              'transition-all duration-300',
+              'focus:outline-none',
               'disabled:opacity-50 disabled:cursor-not-allowed',
-              'disabled:bg-[var(--color-surface-alt)]',
-              // Hide browser's default clear button
               '[&::-webkit-search-cancel-button]:hidden',
               '[&::-webkit-search-decoration]:hidden',
               className
             )}
+            style={{
+              background: 'rgba(10, 10, 20, 0.8)',
+              backdropFilter: 'blur(20px)',
+              border: 'none',
+              fontFamily: 'Inter, sans-serif',
+            }}
             {...props}
           />
 
@@ -169,15 +183,21 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               type="button"
               onClick={handleClear}
               className={cn(
-                'absolute right-3 top-1/2 -translate-y-1/2',
-                'p-0.5 rounded',
-                'text-[var(--color-text-tertiary)]',
-                'hover:text-[var(--color-text-primary)]',
-                'hover:bg-[var(--color-surface-hover)]',
-                'focus:outline-none focus-visible:ring-2',
-                'focus-visible:ring-[var(--color-primary)]',
-                'transition-colors'
+                'absolute right-4 top-1/2 -translate-y-1/2 z-10',
+                'p-1 rounded-lg',
+                'text-text-tertiary',
+                'hover:text-neon-pink',
+                'transition-all duration-300'
               )}
+              style={{
+                background: 'rgba(255, 0, 110, 0.1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 0, 110, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+              }}
               aria-label="Clear search"
             >
               <X size={16} aria-hidden="true" />
@@ -193,17 +213,25 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             disabled={disabled}
             className={cn(
               'flex items-center justify-center',
-              'h-10 px-4',
-              'bg-[var(--color-primary)]',
-              'text-white font-medium',
-              'rounded',
-              'transition-colors duration-200',
-              'hover:bg-[var(--color-primary-hover)]',
-              'focus:outline-none focus-visible:ring-2',
-              'focus-visible:ring-[var(--color-primary)]',
-              'focus-visible:ring-offset-2',
+              'h-12 px-6',
+              'text-white font-semibold tracking-wider uppercase',
+              'rounded-xl',
+              'transition-all duration-300',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
+            style={{
+              background: 'linear-gradient(135deg, #00F5FF, #FF006E)',
+              boxShadow: '0 0 20px rgba(0, 245, 255, 0.4)',
+              fontFamily: 'Rajdhani, sans-serif',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 245, 255, 0.6), 0 0 50px rgba(255, 0, 110, 0.4)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 245, 255, 0.4)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
             aria-label="Search"
           >
             <Search size={18} aria-hidden="true" />

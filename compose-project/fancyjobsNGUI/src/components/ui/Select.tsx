@@ -1,3 +1,8 @@
+/**
+ * Select Component - Cyberpunk Neon Edition
+ * Glowing dropdown with animated border and neon effects
+ */
+
 import React, {
   forwardRef,
   useId,
@@ -41,7 +46,7 @@ export interface SelectProps {
 }
 
 /**
- * Custom Select component with dropdown, keyboard navigation, and accessibility
+ * Custom Select component with cyberpunk neon styling
  */
 export const Select = forwardRef<HTMLButtonElement, SelectProps>(
   (
@@ -67,11 +72,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
 
     const [isOpen, setIsOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
+    const [isHovered, setIsHovered] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const listboxRef = useRef<HTMLUListElement>(null);
 
     const selectedOption = options.find((opt) => opt.value === value);
-    const enabledOptions = options.filter((opt) => !opt.disabled);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -212,76 +217,101 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         {label && (
           <label
             id={`${selectId}-label`}
-            className="text-sm font-medium text-[var(--color-text-primary)]"
+            className="text-sm font-medium text-neon-cyan tracking-wider uppercase"
+            style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              textShadow: '0 0 10px rgba(0, 245, 255, 0.5)',
+            }}
           >
             {label}
           </label>
         )}
-        <button
-          ref={ref}
-          type="button"
-          id={selectId}
-          role="combobox"
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-          aria-controls={listboxId}
-          aria-labelledby={label ? `${selectId}-label` : undefined}
-          aria-label={!label ? ariaLabel : undefined}
-          aria-invalid={!!error}
-          aria-describedby={error ? errorId : undefined}
-          aria-activedescendant={
-            isOpen && activeIndex >= 0
-              ? `${selectId}-option-${activeIndex}`
-              : undefined
-          }
-          disabled={disabled}
-          onClick={handleToggle}
-          onKeyDown={handleKeyDown}
-          className={cn(
-            // Base styles
-            'w-full h-10 px-3 py-2',
-            'flex items-center justify-between gap-2',
-            'text-left',
-            'bg-[var(--color-surface)]',
-            'border border-[var(--color-border)]',
-            'rounded',
-            'transition-colors duration-200',
-            // Focus state
-            'focus:outline-none focus:border-[var(--color-primary)]',
-            'focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-opacity-20',
-            // Error state
-            error && [
-              'border-[var(--color-error)]',
-              'focus:border-[var(--color-error)]',
-              'focus:ring-[var(--color-error)]',
-            ],
-            // Disabled state
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'disabled:bg-[var(--color-surface-alt)]',
-            className
-          )}
-        >
-          <span
-            className={cn(
-              'truncate',
-              selectedOption
-                ? 'text-[var(--color-text-primary)]'
-                : 'text-[var(--color-text-tertiary)]'
-            )}
-          >
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
-          <ChevronDown
-            size={18}
-            className={cn(
-              'shrink-0 text-[var(--color-text-tertiary)]',
-              'transition-transform duration-200',
-              isOpen && 'rotate-180'
-            )}
-            aria-hidden="true"
-          />
-        </button>
 
+        {/* Select Button with Neon Border */}
+        <div className="relative">
+          {/* Animated neon border */}
+          <div
+            className="absolute -inset-[1px] rounded-lg transition-all duration-300 pointer-events-none"
+            style={{
+              background: isOpen
+                ? 'linear-gradient(135deg, #00F5FF, #FF006E, #8B5CF6, #00F5FF)'
+                : isHovered && !disabled
+                ? 'linear-gradient(135deg, rgba(0, 245, 255, 0.5), rgba(139, 92, 246, 0.5))'
+                : 'linear-gradient(135deg, rgba(0, 245, 255, 0.2), rgba(139, 92, 246, 0.2))',
+              backgroundSize: '300% 300%',
+              animation: isOpen ? 'border-flow 3s ease infinite' : 'none',
+              boxShadow: isOpen
+                ? '0 0 20px rgba(0, 245, 255, 0.4), 0 0 40px rgba(139, 92, 246, 0.2)'
+                : isHovered && !disabled
+                ? '0 0 15px rgba(0, 245, 255, 0.3)'
+                : '0 0 10px rgba(0, 245, 255, 0.1)',
+            }}
+          />
+
+          <button
+            ref={ref}
+            type="button"
+            id={selectId}
+            role="combobox"
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-controls={listboxId}
+            aria-labelledby={label ? `${selectId}-label` : undefined}
+            aria-label={!label ? ariaLabel : undefined}
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : undefined}
+            aria-activedescendant={
+              isOpen && activeIndex >= 0
+                ? `${selectId}-option-${activeIndex}`
+                : undefined
+            }
+            disabled={disabled}
+            onClick={handleToggle}
+            onKeyDown={handleKeyDown}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className={cn(
+              'relative w-full h-10 px-4 py-2',
+              'flex items-center justify-between gap-2',
+              'text-left',
+              'rounded-lg',
+              'transition-all duration-300',
+              'focus:outline-none',
+              'disabled:opacity-40 disabled:cursor-not-allowed',
+              className
+            )}
+            style={{
+              background: 'rgba(10, 10, 20, 0.8)',
+              backdropFilter: 'blur(10px)',
+              fontFamily: 'Rajdhani, sans-serif',
+            }}
+          >
+            <span
+              className={cn(
+                'truncate text-sm tracking-wider',
+                selectedOption ? 'text-text-primary' : 'text-text-tertiary'
+              )}
+              style={{
+                textShadow: selectedOption && isHovered ? '0 0 10px currentColor' : 'none',
+              }}
+            >
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
+            <ChevronDown
+              size={18}
+              className={cn(
+                'shrink-0 transition-all duration-300',
+                isOpen ? 'rotate-180 text-neon-pink' : 'text-neon-cyan'
+              )}
+              style={{
+                filter: isOpen ? 'drop-shadow(0 0 5px #FF006E)' : 'drop-shadow(0 0 5px #00F5FF)',
+              }}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+
+        {/* Dropdown List */}
         {isOpen && (
           <ul
             ref={listboxRef}
@@ -291,53 +321,35 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             className={cn(
               'absolute z-50',
               'top-full left-0 right-0',
-              'mt-1',
+              'mt-2',
               'max-h-60 overflow-auto',
-              'bg-[var(--color-surface)]',
-              'border border-[var(--color-border)]',
-              'rounded shadow-lg'
+              'rounded-lg',
+              'scrollbar-thin scrollbar-thumb-neon-purple scrollbar-track-transparent'
             )}
+            style={{
+              background: 'rgba(10, 10, 20, 0.95)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0, 245, 255, 0.3)',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 245, 255, 0.1), inset 0 0 30px rgba(0, 245, 255, 0.02)',
+            }}
           >
             {options.map((option, index) => (
-              <li
+              <SelectOption
                 key={option.value}
-                id={`${selectId}-option-${index}`}
-                role="option"
-                aria-selected={option.value === value}
-                aria-disabled={option.disabled}
-                onClick={() => handleSelect(option.value)}
-                onMouseEnter={() => !option.disabled && setActiveIndex(index)}
-                className={cn(
-                  'px-3 py-2',
-                  'flex items-center justify-between gap-2',
-                  'cursor-pointer',
-                  'transition-colors',
-                  // Active/hover state
-                  index === activeIndex &&
-                    !option.disabled &&
-                    'bg-[var(--color-surface-hover)]',
-                  // Selected state
-                  option.value === value && 'text-[var(--color-primary)]',
-                  // Disabled state
-                  option.disabled && [
-                    'opacity-50',
-                    'cursor-not-allowed',
-                    'bg-transparent',
-                  ]
-                )}
-              >
-                <span className="truncate">{option.label}</span>
-                {option.value === value && (
-                  <Check
-                    size={16}
-                    className="shrink-0 text-[var(--color-primary)]"
-                    aria-hidden="true"
-                  />
-                )}
-              </li>
+                option={option}
+                index={index}
+                selectId={selectId}
+                isActive={index === activeIndex}
+                isSelected={option.value === value}
+                onSelect={handleSelect}
+                onHover={() => !option.disabled && setActiveIndex(index)}
+              />
             ))}
             {options.length === 0 && (
-              <li className="px-3 py-2 text-[var(--color-text-tertiary)]">
+              <li
+                className="px-4 py-3 text-text-tertiary text-sm"
+                style={{ fontFamily: 'Rajdhani, sans-serif' }}
+              >
                 No options available
               </li>
             )}
@@ -348,7 +360,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
           <span
             id={errorId}
             role="alert"
-            className="text-sm text-[var(--color-error)]"
+            className="text-sm text-neon-pink"
+            style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              textShadow: '0 0 10px rgba(255, 0, 110, 0.5)',
+            }}
           >
             {error}
           </span>
@@ -359,5 +375,72 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
 );
 
 Select.displayName = 'Select';
+
+// Separate component for options to manage hover state
+interface SelectOptionProps {
+  option: SelectOption;
+  index: number;
+  selectId: string;
+  isActive: boolean;
+  isSelected: boolean;
+  onSelect: (value: string) => void;
+  onHover: () => void;
+}
+
+function SelectOption({
+  option,
+  index,
+  selectId,
+  isActive,
+  isSelected,
+  onSelect,
+  onHover,
+}: SelectOptionProps) {
+  return (
+    <li
+      id={`${selectId}-option-${index}`}
+      role="option"
+      aria-selected={isSelected}
+      aria-disabled={option.disabled}
+      onClick={() => onSelect(option.value)}
+      onMouseEnter={onHover}
+      className={cn(
+        'px-4 py-2.5',
+        'flex items-center justify-between gap-2',
+        'cursor-pointer',
+        'transition-all duration-200',
+        'text-sm tracking-wider',
+        option.disabled && 'opacity-40 cursor-not-allowed'
+      )}
+      style={{
+        fontFamily: 'Rajdhani, sans-serif',
+        background: isActive && !option.disabled
+          ? 'linear-gradient(90deg, rgba(0, 245, 255, 0.15), transparent)'
+          : 'transparent',
+        borderLeft: isActive && !option.disabled
+          ? '2px solid #00F5FF'
+          : '2px solid transparent',
+        color: isSelected
+          ? '#00F5FF'
+          : isActive && !option.disabled
+          ? '#ffffff'
+          : '#A0A0B0',
+        textShadow: isSelected || (isActive && !option.disabled)
+          ? '0 0 10px currentColor'
+          : 'none',
+      }}
+    >
+      <span className="truncate">{option.label}</span>
+      {isSelected && (
+        <Check
+          size={16}
+          className="shrink-0 text-neon-cyan"
+          style={{ filter: 'drop-shadow(0 0 5px #00F5FF)' }}
+          aria-hidden="true"
+        />
+      )}
+    </li>
+  );
+}
 
 export default Select;
