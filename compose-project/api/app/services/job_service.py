@@ -63,9 +63,33 @@ class JobService:
             filters.append(Job.jobsge_cid == params.cid)
 
         # Region filter (by slug)
+        # Maps region slugs to jobs.ge location IDs since jobs don't have region_id populated
+        REGION_SLUG_TO_LID = {
+            "tbilisi": 1,
+            "adjara": 14,
+            "batumi": 14,  # Batumi is in Adjara
+            "imereti": 3,
+            "kutaisi": 3,  # Kutaisi is in Imereti
+            "kakheti": 4,
+            "samegrelo": 5,
+            "kvemo-kartli": 6,
+            "rustavi": 6,  # Rustavi is in Kvemo Kartli
+            "shida-kartli": 7,
+            "gori": 7,  # Gori is in Shida Kartli
+            "samtskhe-javakheti": 8,
+            "mtskheta-mtianeti": 9,
+            "racha-lechkhumi": 10,
+            "guria": 11,
+            "georgia": None,  # All of Georgia - no filter
+        }
         if params.region:
-            region_subq = select(Region.id).where(Region.slug == params.region)
-            filters.append(Job.region_id.in_(region_subq))
+            lid_for_region = REGION_SLUG_TO_LID.get(params.region)
+            if lid_for_region is not None:
+                filters.append(Job.jobsge_lid == lid_for_region)
+            else:
+                # Fallback: try region_id if slug not in mapping
+                region_subq = select(Region.id).where(Region.slug == params.region)
+                filters.append(Job.region_id.in_(region_subq))
 
         # jobs.ge location/region ID filter (lid)
         if params.lid is not None:
