@@ -1,0 +1,152 @@
+/**
+ * Mock Data for Testing
+ * Provides consistent test data for Jobs, Categories, and Regions
+ */
+
+import type { Job, JobDetail, Category, Region } from '@/types';
+
+export const mockJobs: Job[] = [
+  {
+    id: 1,
+    title_ge: 'პროგრამისტი',
+    title_en: 'Software Developer',
+    company_name: 'TechCorp',
+    location: 'Batumi',
+    category_slug: 'it-programming',
+    category_name_ge: 'IT / პროგრამირება',
+    category_name_en: 'IT / Programming',
+    region_slug: 'adjara',
+    region_name_ge: 'აჭარა',
+    region_name_en: 'Adjara',
+    salary_min: 2000,
+    salary_max: 3500,
+    has_salary: true,
+    is_vip: false,
+    is_remote: false,
+    published_at: '2026-01-20T10:00:00Z',
+    deadline: '2026-02-15T23:59:59Z',
+    source_name: 'jobs.ge',
+    source_url: 'https://jobs.ge/job/1',
+    created_at: '2026-01-20T10:05:00Z',
+    updated_at: '2026-01-20T10:05:00Z',
+  },
+  {
+    id: 2,
+    title_ge: 'დიზაინერი',
+    title_en: 'UI Designer',
+    company_name: 'DesignHub',
+    location: 'Tbilisi',
+    category_slug: 'design',
+    category_name_ge: 'დიზაინი',
+    category_name_en: 'Design',
+    region_slug: 'tbilisi',
+    region_name_ge: 'თბილისი',
+    region_name_en: 'Tbilisi',
+    salary_min: null,
+    salary_max: null,
+    has_salary: false,
+    is_vip: true,
+    is_remote: true,
+    published_at: '2026-01-19T09:00:00Z',
+    deadline: null,
+    source_name: 'jobs.ge',
+    source_url: 'https://jobs.ge/job/2',
+    created_at: '2026-01-19T09:05:00Z',
+    updated_at: '2026-01-19T09:05:00Z',
+  },
+  {
+    id: 3,
+    title_ge: 'მარკეტოლოგი',
+    title_en: 'Marketing Manager',
+    company_name: 'MarketPro',
+    location: 'Batumi',
+    category_slug: 'marketing',
+    category_name_ge: 'მარკეტინგი',
+    category_name_en: 'Marketing',
+    region_slug: 'adjara',
+    region_name_ge: 'აჭარა',
+    region_name_en: 'Adjara',
+    salary_min: 1500,
+    salary_max: 2500,
+    has_salary: true,
+    is_vip: false,
+    is_remote: false,
+    published_at: '2026-01-21T14:00:00Z',
+    deadline: '2026-02-28T23:59:59Z',
+    source_name: 'jobs.ge',
+    source_url: 'https://jobs.ge/job/3',
+    created_at: '2026-01-21T14:05:00Z',
+    updated_at: '2026-01-21T14:05:00Z',
+  },
+];
+
+export const mockJobDetail: Record<number, JobDetail> = {
+  1: {
+    ...mockJobs[0],
+    body_ge: '<p>აღწერა ქართულად</p>',
+    body_en: '<p>Job description in English</p>',
+    external_id: 'ext-1',
+    views_count: 150,
+  },
+  2: {
+    ...mockJobs[1],
+    body_ge: '<p>დიზაინერის პოზიცია</p>',
+    body_en: '<p>Designer position description</p>',
+    external_id: 'ext-2',
+    views_count: 200,
+  },
+};
+
+export const mockCategories: Category[] = [
+  {
+    id: 1,
+    slug: 'it-programming',
+    name_ge: 'IT / პროგრამირება',
+    name_en: 'IT / Programming',
+    jobsge_cid: 6,
+    job_count: 128,
+  },
+  {
+    id: 2,
+    slug: 'design',
+    name_ge: 'დიზაინი',
+    name_en: 'Design',
+    jobsge_cid: 7,
+    job_count: 45,
+  },
+  {
+    id: 3,
+    slug: 'marketing',
+    name_ge: 'მარკეტინგი',
+    name_en: 'Marketing',
+    jobsge_cid: 8,
+    job_count: 67,
+  },
+];
+
+export const mockRegions: Region[] = [
+  {
+    id: 1,
+    slug: 'tbilisi',
+    name_ge: 'თბილისი',
+    name_en: 'Tbilisi',
+    jobsge_lid: 1,
+    job_count: 856,
+  },
+  {
+    id: 2,
+    slug: 'adjara',
+    name_ge: 'აჭარა',
+    name_en: 'Adjara',
+    jobsge_lid: 14,
+    job_count: 234,
+  },
+  {
+    id: 3,
+    slug: 'imereti',
+    name_ge: 'იმერეთი',
+    name_en: 'Imereti',
+    jobsge_lid: 3,
+    job_count: 123,
+  },
+];
