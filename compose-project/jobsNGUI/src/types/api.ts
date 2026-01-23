@@ -12,28 +12,45 @@
  * Job listing item (summary view)
  */
 export interface Job {
-  id: number;
+  id: string; // UUID
   title_ge: string;
   title_en: string;
   company_name: string;
   location: string;
-  category_slug: string;
-  category_name_ge: string;
-  category_name_en: string;
-  region_slug: string;
-  region_name_ge: string;
-  region_name_en: string;
+  category_slug?: string;
+  category_name_ge?: string;
+  category_name_en?: string;
+  category?: {
+    id: string;
+    name_ge: string;
+    name_en: string;
+    slug: string;
+    is_active: boolean;
+  };
+  region_slug?: string;
+  region_name_ge?: string;
+  region_name_en?: string;
+  region?: {
+    id: string;
+    name_ge: string;
+    name_en: string;
+    slug: string;
+  } | null;
   salary_min: number | null;
   salary_max: number | null;
+  salary_currency?: string;
   has_salary: boolean;
   is_vip: boolean;
-  is_remote: boolean;
+  is_remote?: boolean;
+  remote_type?: string;
   published_at: string; // ISO 8601 datetime
-  deadline: string | null; // ISO 8601 datetime
-  source_name: string;
+  deadline_at: string | null; // ISO 8601 datetime
+  source_name?: string;
   source_url: string;
-  created_at: string;
-  updated_at: string;
+  parsed_from?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -133,7 +150,7 @@ export interface AnalyticsEventData {
     title: string;
   };
   job_view: {
-    job_id: number;
+    job_id: string;
   };
   search: {
     query: string;
@@ -142,15 +159,15 @@ export interface AnalyticsEventData {
     results_count: number;
   };
   job_click: {
-    job_id: number;
+    job_id: string;
     position: number;
   };
   share: {
     platform: string;
-    job_id: number;
+    job_id: string;
   };
   save: {
-    job_id: number;
+    job_id: string;
   };
 }
 

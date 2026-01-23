@@ -34,7 +34,7 @@ export function JobRow({ job, onClick, className }: JobRowProps) {
 
   // Format dates
   const publishedDate = formatDateShort(job.published_at, locale);
-  const deadlineDate = job.deadline ? formatDateShort(job.deadline, locale) : '-';
+  const deadlineDate = job.deadline_at ? formatDateShort(job.deadline_at, locale) : '-';
 
   const handleClick = () => {
     onClick?.(job);

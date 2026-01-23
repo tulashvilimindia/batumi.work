@@ -14,7 +14,7 @@ export const queryKeys = {
     lists: () => [...queryKeys.jobs.all, 'list'] as const,
     list: (filters: JobFilters) => [...queryKeys.jobs.lists(), filters] as const,
     details: () => [...queryKeys.jobs.all, 'detail'] as const,
-    detail: (id: number) => [...queryKeys.jobs.details(), id] as const,
+    detail: (id: string) => [...queryKeys.jobs.details(), id] as const,
   },
 
   // Categories queries

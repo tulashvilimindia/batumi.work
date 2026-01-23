@@ -22,16 +22,16 @@ export interface UseJobReturn {
 /**
  * Fetch single job details by ID
  *
- * @param id - Job ID to fetch (pass undefined or null to disable)
+ * @param id - Job ID (UUID string) to fetch (pass undefined or null to disable)
  * @returns Query result with job data, loading, and error states
  *
  * @example
  * // Fetch job by ID
- * const { data, isLoading, isError } = useJob(12345);
+ * const { data, isLoading, isError } = useJob('94a8a69e-0435-4587-aa4d-7f655897c7a3');
  *
  * // Conditional fetch (only when ID is available)
  * const { id } = useParams();
- * const { data } = useJob(id ? parseInt(id) : undefined);
+ * const { data } = useJob(id);
  *
  * // Access job details
  * if (data) {
@@ -39,7 +39,7 @@ export interface UseJobReturn {
  *   console.log(data.body_ge); // Full description
  * }
  */
-export function useJob(id: number | undefined | null): UseJobReturn {
+export function useJob(id: string | undefined | null): UseJobReturn {
   const {
     data,
     isLoading,
@@ -47,9 +47,9 @@ export function useJob(id: number | undefined | null): UseJobReturn {
     error,
     isFetching,
   } = useQuery({
-    queryKey: queryKeys.jobs.detail(id ?? 0),
+    queryKey: queryKeys.jobs.detail(id ?? ''),
     queryFn: () => fetchJob(id!),
-    enabled: !!id && id > 0, // Only fetch when valid ID provided
+    enabled: !!id && id.length > 0, // Only fetch when valid ID provided
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     retry: (failureCount, error) => {

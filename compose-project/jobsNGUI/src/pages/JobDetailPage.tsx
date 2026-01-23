@@ -40,16 +40,13 @@ export function JobDetailPage() {
   const locale = lang === 'en' ? 'en' : 'ge';
   const t = translations[locale];
 
-  // Parse job ID from URL
-  const jobId = id ? parseInt(id, 10) : undefined;
-
-  // Fetch job data
+  // Fetch job data using UUID string directly
   const {
     data: job,
     isLoading,
     isError,
     isNotFound,
-  } = useJob(jobId);
+  } = useJob(id);
 
   // Saved jobs store
   const { isSaved, toggleSave } = useSavedJobsStore();

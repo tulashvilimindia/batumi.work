@@ -59,15 +59,15 @@ export async function fetchJobs(filters: JobFilters = {}): Promise<JobsResponse>
 /**
  * Fetch a single job by ID
  *
- * @param id - The job ID to fetch
+ * @param id - The job ID (UUID string) to fetch
  * @returns Promise resolving to job detail
  * @throws ApiError with status 404 if job not found
  *
  * @example
- * const job = await fetchJob(12345);
+ * const job = await fetchJob('94a8a69e-0435-4587-aa4d-7f655897c7a3');
  * console.log(job.title_ge, job.body_ge);
  */
-export async function fetchJob(id: number): Promise<JobDetail> {
+export async function fetchJob(id: string): Promise<JobDetail> {
   return get<JobDetail>(`/jobs/${id}`);
 }
 
