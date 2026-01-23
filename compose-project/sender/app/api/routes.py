@@ -1,5 +1,5 @@
 """Admin API routes for Channel Sender Service."""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID
 
@@ -36,7 +36,7 @@ async def health_check():
         status="healthy",
         service=settings.APP_NAME,
         version=settings.APP_VERSION,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
     )
 
 

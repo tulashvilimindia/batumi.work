@@ -1,5 +1,5 @@
 """Queue management service for channel messages."""
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -56,7 +56,7 @@ class QueueService:
         include_scheduled: bool = True,
     ) -> List[ChannelMessageQueue]:
         """Get pending queue items ready to be processed."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         conditions = [ChannelMessageQueue.status == "pending"]
 
@@ -171,7 +171,7 @@ class QueueService:
 
     async def cleanup_old_entries(self, days: int = 30) -> int:
         """Remove old cancelled and sent entries from queue."""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
         stmt = delete(ChannelMessageQueue).where(
             and_(

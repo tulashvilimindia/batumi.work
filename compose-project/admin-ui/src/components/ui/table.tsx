@@ -23,14 +23,13 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto" role="region" aria-label="Data table">
+  <section className="relative w-full overflow-auto" aria-label="Data table">
     <table
       ref={ref}
-      role="table"
       className={cn("w-full caption-bottom text-sm", className)}
       {...props}
     />
-  </div>
+  </section>
 ))
 Table.displayName = "Table"
 

@@ -2,7 +2,7 @@
 import asyncio
 import signal
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -83,7 +83,7 @@ class WorkerService:
             logger.error("runner_not_initialized")
             return
 
-        logger.info("parsing_run_started", timestamp=datetime.utcnow().isoformat())
+        logger.info("parsing_run_started", timestamp=datetime.now(timezone.utc).isoformat())
 
         try:
             results = await self.runner.run_all()

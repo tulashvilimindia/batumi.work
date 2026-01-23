@@ -1,6 +1,6 @@
 """Main sender service that orchestrates message sending."""
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from uuid import UUID
 
@@ -30,8 +30,8 @@ class SenderService:
         self._paused = False
         self._messages_sent_this_minute = 0
         self._messages_sent_this_hour = 0
-        self._minute_start = datetime.utcnow()
-        self._hour_start = datetime.utcnow()
+        self._minute_start = datetime.now(timezone.utc)
+        self._hour_start = datetime.now(timezone.utc)
 
     @property
     def is_paused(self) -> bool:
@@ -49,7 +49,7 @@ class SenderService:
 
     def _reset_rate_limits(self) -> None:
         """Reset rate limit counters if time windows have passed."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Reset minute counter
         if (now - self._minute_start).total_seconds() >= 60:
@@ -157,7 +157,7 @@ class SenderService:
             # Success
             history.status = "sent"
             history.telegram_message_id = result.get("message_id")
-            history.sent_at = datetime.utcnow()
+            history.sent_at = datetime.now(timezone.utc)
 
             await self.queue_service.mark_as_sent(queue_item.id)
             self._increment_counters()

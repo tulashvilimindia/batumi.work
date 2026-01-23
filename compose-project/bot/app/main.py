@@ -50,7 +50,8 @@ logger = structlog.get_logger()
 
 # Configuration
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-API_URL = os.getenv("API_URL", "http://api:8000")
+# HTTP is intentional - internal Docker network communication (no TLS needed)
+API_URL = os.getenv("API_URL", "http://api:8000")  # NOSONAR - internal Docker network
 WEB_URL = os.getenv("WEB_URL", "https://batumi.work")
 
 # Translations

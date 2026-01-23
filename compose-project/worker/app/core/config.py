@@ -29,9 +29,9 @@ class ParserConfig:
         )
     )
 
-    # API connection
+    # API connection - HTTP is intentional for internal Docker network (no TLS needed)
     api_url: str = field(
-        default_factory=lambda: os.getenv("API_URL", "http://api:8000")
+        default_factory=lambda: os.getenv("API_URL", "http://api:8000")  # NOSONAR
     )
     api_key: str = field(
         default_factory=lambda: os.getenv("ADMIN_API_KEY", "")

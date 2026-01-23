@@ -1,6 +1,6 @@
 """Scheduled analytics tasks for the worker."""
 import structlog
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 import os
@@ -80,7 +80,7 @@ async def cleanup_old_analytics(retention_days: int = 90):
     This helps keep the database size manageable and complies
     with data retention policies.
     """
-    cutoff = datetime.utcnow() - timedelta(days=retention_days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
 
     logger.info("analytics_cleanup_started", retention_days=retention_days, cutoff=cutoff.isoformat())
 
@@ -113,7 +113,7 @@ async def generate_daily_summary():
     """
     async with await get_db_session() as session:
         # Get yesterday's stats
-        yesterday = datetime.utcnow().date() - timedelta(days=1)
+        yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
 
         # Job stats
         result = await session.execute(text("""
@@ -169,7 +169,7 @@ async def generate_weekly_report():
     """
     async with await get_db_session() as session:
         # Calculate date range (last 7 days)
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=7)
         prev_week_start = start_date - timedelta(days=7)
         prev_week_end = start_date

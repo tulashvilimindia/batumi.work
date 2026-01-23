@@ -144,7 +144,7 @@ async def detailed_health_check():
     Returns comprehensive health information for monitoring systems.
     Used by UptimeRobot, BetterStack, or similar services.
     """
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     from pathlib import Path
     from app.core.database import async_session_maker
     from sqlalchemy import text
@@ -152,7 +152,7 @@ async def detailed_health_check():
     health = {
         "status": "healthy",
         "version": settings.APP_VERSION,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "checks": {}
     }
 
@@ -218,7 +218,9 @@ async def detailed_health_check():
             last_parsed = result.scalar()
 
             if last_parsed:
-                parser_age_hours = (datetime.utcnow() - last_parsed.replace(tzinfo=None)).total_seconds() / 3600
+                # Ensure both datetimes are timezone-aware for comparison
+                last_parsed_utc = last_parsed.replace(tzinfo=timezone.utc) if last_parsed.tzinfo is None else last_parsed
+                parser_age_hours = (datetime.now(timezone.utc) - last_parsed_utc).total_seconds() / 3600
                 parser_status = "healthy"
                 if parser_age_hours > 4:  # Parser should run hourly
                     parser_status = "warning"

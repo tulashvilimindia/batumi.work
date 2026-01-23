@@ -21,8 +21,9 @@ from app.database import get_db
 
 router = APIRouter()
 
-# Worker service URL
-WORKER_URL = "http://worker:8000"
+# Worker service URL - HTTP is intentional for internal Docker networking
+# Docker internal DNS does not support TLS; all traffic stays within the Docker network
+WORKER_URL = "http://worker:8000"  # NOSONAR - internal Docker network communication
 
 
 # ============================================================================

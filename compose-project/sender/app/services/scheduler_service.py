@@ -1,15 +1,15 @@
 """Business hours scheduling service."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
-import pytz
+from zoneinfo import ZoneInfo
 
 from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Georgian timezone
-GEORGIA_TZ = pytz.timezone("Asia/Tbilisi")
+# Georgian timezone (UTC+4)
+GEORGIA_TZ = ZoneInfo("Asia/Tbilisi")
 
 
 class SchedulerService:
@@ -29,7 +29,8 @@ class SchedulerService:
         if dt is None:
             dt = SchedulerService.get_georgia_time()
         elif dt.tzinfo is None:
-            dt = GEORGIA_TZ.localize(dt)
+            # Attach timezone info to naive datetime
+            dt = dt.replace(tzinfo=GEORGIA_TZ)
         else:
             dt = dt.astimezone(GEORGIA_TZ)
 

@@ -1,7 +1,7 @@
 """Job service for business logic."""
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import select, func, or_, desc, asc, cast, Integer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -142,8 +142,8 @@ class JobService:
         """Create a new job."""
         job = Job(
             **data.model_dump(),
-            first_seen_at=datetime.utcnow(),
-            last_seen_at=datetime.utcnow(),
+            first_seen_at=datetime.now(timezone.utc),
+            last_seen_at=datetime.now(timezone.utc),
         )
         self.db.add(job)
         await self.db.flush()
@@ -162,7 +162,7 @@ class JobService:
         for field, value in update_data.items():
             setattr(job, field, value)
 
-        job.last_seen_at = datetime.utcnow()
+        job.last_seen_at = datetime.now(timezone.utc)
         await self.db.flush()
         await self.db.refresh(job)
 

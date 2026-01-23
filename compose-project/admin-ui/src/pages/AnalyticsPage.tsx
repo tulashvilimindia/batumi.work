@@ -43,8 +43,8 @@ const DATE_PRESETS = [
 export function AnalyticsPage() {
   const [datePreset, setDatePreset] = useState<number>(30)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedRegions, _setSelectedRegions] = useState<string[]>([])
-  void _setSelectedRegions // Suppress unused warning - will be used for region filter chips
+  // Region filter - currently display-only, setter reserved for future filter chip implementation
+  const [selectedRegions] = useState<string[]>([])
 
   const filters: AnalyticsFilters = useMemo(() => {
     const f: AnalyticsFilters = {}

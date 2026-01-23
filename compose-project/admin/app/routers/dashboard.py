@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from app.database import get_db
@@ -88,5 +88,5 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             "count": backup_count,
             "last_backup": last_backup,
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

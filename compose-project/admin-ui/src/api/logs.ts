@@ -26,13 +26,15 @@ export async function getLogs(filters: LogFilters = {}): Promise<LogEntry[]> {
 
   const { data } = await apiClient.get(`/logs/${filters.service}?${params.toString()}`)
 
+  // Regex for parsing Docker log timestamp - compiled once for performance
+  // Pattern: ISO 8601 timestamp followed by whitespace and message
+  const LOG_TIMESTAMP_REGEX = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z?)\s+(.*)$/
+
   // Parse log lines into LogEntry format
   const entries: LogEntry[] = (data.lines || []).map((line: string) => {
     // Parse timestamp and message from Docker log format
-    // Format: 2026-01-22T14:30:00.000Z message here
-    // Fixed regex: More specific pattern to prevent ReDoS (catastrophic backtracking)
-    // Pattern breakdown: YYYY-MM-DDTHH:MM:SS(.mmm)?Z? followed by whitespace and message
-    const match = line.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z?)\s+(.*)$/)
+    // Using exec() instead of match() for better performance (SonarQube S6594)
+    const match = LOG_TIMESTAMP_REGEX.exec(line)
     if (match) {
       const message = match[2]
       // Try to detect log level from message

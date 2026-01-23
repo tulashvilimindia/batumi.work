@@ -722,11 +722,14 @@ class JobsGeAdapter(BaseAdapter):
         through region/category combinations.
 
         This is an async generator that yields nothing - kept for interface compatibility.
+
+        Yields:
+            str: Job URLs (never actually yields anything in this implementation)
         """
-        # Empty async generator pattern - yields nothing but maintains generator interface
-        # Using 'if False: yield' pattern to create valid empty async generator
-        if False:
-            yield ""  # Never executed, but makes this a valid async generator
+        # Empty async generator implementation
+        # Using a list that's always empty to avoid unreachable code warnings
+        for _ in []:  # Empty iteration - yields nothing but satisfies generator contract
+            yield ""
 
     async def parse_job(self, url: str) -> Optional[JobData]:
         """Legacy interface - parse a single job without context.

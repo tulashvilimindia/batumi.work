@@ -2,7 +2,7 @@
 import asyncio
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 # Add parent to path
@@ -392,7 +392,7 @@ async def seed_database():
         print(f"  Created {len(REGIONS)} regions")
 
         print("Seeding jobs...")
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         for i, job_data in enumerate(DEMO_JOBS):
             # Extract category and region slugs
             category_slug = job_data.pop("category_slug")

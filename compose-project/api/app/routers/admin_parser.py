@@ -1,5 +1,5 @@
 """Admin endpoints for parser management."""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -172,7 +172,7 @@ async def trigger_parser(
         regions=request.regions,
         status="pending",
         triggered_by="api",
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
     )
     db.add(run)
     await db.commit()
@@ -209,7 +209,7 @@ async def cancel_parser_run(
         )
 
     run.status = "cancelled"
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     if run.started_at:
         run.duration_seconds = int(
             (run.finished_at - run.started_at).total_seconds()
