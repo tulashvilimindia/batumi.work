@@ -1,11 +1,11 @@
 /**
- * SavedJobsPage
- * Page for displaying saved/bookmarked jobs
+ * SavedJobsPage - Cyberpunk Neon Edition
+ * Page for displaying saved/bookmarked jobs with neon styling
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Bookmark, Trash2 } from 'lucide-react';
+import { Bookmark, Trash2, Sparkles, Database } from 'lucide-react';
 import { cn } from '@/lib';
 import { Button, EmptyState } from '@/components/ui';
 import { JobTable } from '@/components/job';
@@ -41,11 +41,9 @@ export function SavedJobsPage() {
   const locale = lang === 'en' ? 'en' : 'ge';
   const t = translations[locale];
 
-  // Saved jobs store
   const { savedJobs, clearAll } = useSavedJobsStore();
-
-  // Confirm before clearing all
-  const [showConfirm, setShowConfirm] = React.useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
 
   const handleClearClick = () => {
     if (showConfirm) {
@@ -53,7 +51,6 @@ export function SavedJobsPage() {
       setShowConfirm(false);
     } else {
       setShowConfirm(true);
-      // Auto-reset confirm after 3 seconds
       setTimeout(() => setShowConfirm(false), 3000);
     }
   };
@@ -62,45 +59,143 @@ export function SavedJobsPage() {
 
   return (
     <div className={cn('space-y-6')}>
-      {/* Header */}
+      {/* Header Card */}
       <div
-        className={cn(
-          'bg-[var(--color-surface)]',
-          'border border-[var(--color-border)]',
-          'rounded-lg',
-          'p-4 md:p-6'
-        )}
+        className="relative rounded-2xl p-6 md:p-8 overflow-hidden"
+        onMouseEnter={() => setIsHeaderHovered(true)}
+        onMouseLeave={() => setIsHeaderHovered(false)}
+        style={{
+          background: 'rgba(15, 15, 25, 0.8)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(139, 92, 246, 0.3)',
+          boxShadow: isHeaderHovered
+            ? '0 0 40px rgba(139, 92, 246, 0.2), inset 0 0 40px rgba(139, 92, 246, 0.05)'
+            : '0 0 20px rgba(139, 92, 246, 0.1)',
+          transition: 'all 0.3s ease',
+        }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-              <Bookmark size={24} className="text-[var(--color-primary)]" aria-hidden="true" />
-              {t.title}
-            </h1>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-              {t.subtitle}
-            </p>
+        {/* Background gradient */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-30"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 50%, rgba(0, 245, 255, 0.05) 100%)',
+          }}
+        />
+
+        {/* Corner accents */}
+        <div className="absolute top-0 left-0 w-6 h-[2px]" style={{ background: '#8B5CF6', boxShadow: '0 0 10px rgba(139, 92, 246, 0.8)' }} />
+        <div className="absolute top-0 left-0 w-[2px] h-6" style={{ background: '#8B5CF6', boxShadow: '0 0 10px rgba(139, 92, 246, 0.8)' }} />
+        <div className="absolute top-0 right-0 w-6 h-[2px]" style={{ background: '#00F5FF', boxShadow: '0 0 10px rgba(0, 245, 255, 0.8)' }} />
+        <div className="absolute top-0 right-0 w-[2px] h-6" style={{ background: '#00F5FF', boxShadow: '0 0 10px rgba(0, 245, 255, 0.8)' }} />
+        <div className="absolute bottom-0 left-0 w-6 h-[2px]" style={{ background: '#FF006E', boxShadow: '0 0 10px rgba(255, 0, 110, 0.8)' }} />
+        <div className="absolute bottom-0 left-0 w-[2px] h-6" style={{ background: '#FF006E', boxShadow: '0 0 10px rgba(255, 0, 110, 0.8)' }} />
+        <div className="absolute bottom-0 right-0 w-6 h-[2px]" style={{ background: '#39FF14', boxShadow: '0 0 10px rgba(57, 255, 20, 0.8)' }} />
+        <div className="absolute bottom-0 right-0 w-[2px] h-6" style={{ background: '#39FF14', boxShadow: '0 0 10px rgba(57, 255, 20, 0.8)' }} />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-4">
+            {/* Icon */}
+            <div
+              className="p-3 rounded-xl"
+              style={{
+                background: 'rgba(139, 92, 246, 0.15)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)',
+              }}
+            >
+              <Bookmark
+                size={28}
+                style={{
+                  color: '#8B5CF6',
+                  filter: 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.6))',
+                }}
+              />
+            </div>
+
+            <div>
+              <h1
+                className="text-xl md:text-2xl font-bold flex items-center gap-2"
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  color: '#F0F0F5',
+                }}
+              >
+                {t.title}
+                <Sparkles
+                  size={18}
+                  style={{
+                    color: '#FFE600',
+                    filter: 'drop-shadow(0 0 5px rgba(255, 230, 0, 0.6))',
+                  }}
+                />
+              </h1>
+              <p
+                className="text-sm mt-1"
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  color: '#A0A0B0',
+                }}
+              >
+                {t.subtitle}
+              </p>
+            </div>
           </div>
 
           {/* Clear All Button */}
           {jobCount > 0 && (
-            <Button
-              variant={showConfirm ? 'danger' : 'outline'}
-              size="sm"
+            <button
               onClick={handleClearClick}
-              leftIcon={<Trash2 size={16} />}
+              className="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold tracking-wider uppercase transition-all duration-300"
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '12px',
+                background: showConfirm
+                  ? 'rgba(255, 0, 110, 0.2)'
+                  : 'rgba(255, 255, 255, 0.03)',
+                border: `1px solid ${showConfirm ? 'rgba(255, 0, 110, 0.6)' : 'rgba(255, 255, 255, 0.1)'}`,
+                color: showConfirm ? '#FF006E' : '#A0A0B0',
+                boxShadow: showConfirm ? '0 0 20px rgba(255, 0, 110, 0.3)' : 'none',
+              }}
             >
+              <Trash2 size={16} />
               {showConfirm ? t.confirmClear : t.clearAll}
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
       {/* Jobs Count */}
       {jobCount > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-[var(--color-text-secondary)]">
-            {jobCount} {t.jobsCount}
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{
+            background: 'rgba(15, 15, 25, 0.5)',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+          }}
+        >
+          <Database
+            size={16}
+            style={{
+              color: '#00F5FF',
+              filter: 'drop-shadow(0 0 5px rgba(0, 245, 255, 0.5))',
+            }}
+          />
+          <p
+            className="text-sm font-medium"
+            style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              color: '#A0A0B0',
+            }}
+          >
+            <span
+              style={{
+                color: '#00F5FF',
+                textShadow: '0 0 10px rgba(0, 245, 255, 0.5)',
+              }}
+            >
+              {jobCount}
+            </span>{' '}
+            {t.jobsCount}
           </p>
         </div>
       )}
@@ -109,36 +204,31 @@ export function SavedJobsPage() {
       {jobCount > 0 ? (
         <JobTable jobs={savedJobs} />
       ) : (
-        <EmptyState
-          icon={<Bookmark size={32} />}
-          title={t.emptyTitle}
-          description={t.emptyDescription}
-          action={{
-            label: t.browseJobs,
-            onClick: () => {},
-          }}
-          secondaryAction={undefined}
-        />
-      )}
+        <div className="relative">
+          <EmptyState
+            icon={<Bookmark size={32} />}
+            title={t.emptyTitle}
+            description={t.emptyDescription}
+          />
 
-      {/* Empty State Link - Replace EmptyState action with proper link */}
-      {jobCount === 0 && (
-        <div className="text-center -mt-4">
-          <Link
-            to={`/${lang}`}
-            className={cn(
-              'inline-flex items-center justify-center',
-              'px-4 py-2',
-              'text-sm font-medium',
-              'text-white',
-              'bg-[var(--color-primary)]',
-              'hover:bg-[var(--color-primary-hover)]',
-              'rounded',
-              'transition-colors duration-150'
-            )}
-          >
-            {t.browseJobs}
-          </Link>
+          {/* Custom styled browse link */}
+          <div className="text-center mt-6">
+            <Link
+              to={`/${lang}`}
+              className="relative inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold tracking-wider uppercase transition-all duration-300 hover:scale-105"
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '14px',
+                background: 'linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(139, 92, 246, 0.15))',
+                border: '1px solid rgba(0, 245, 255, 0.4)',
+                color: '#00F5FF',
+                boxShadow: '0 0 20px rgba(0, 245, 255, 0.2)',
+                textShadow: '0 0 10px rgba(0, 245, 255, 0.5)',
+              }}
+            >
+              {t.browseJobs}
+            </Link>
+          </div>
         </div>
       )}
     </div>

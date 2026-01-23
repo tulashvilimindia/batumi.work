@@ -1,10 +1,11 @@
 /**
- * HomePage
+ * HomePage - Cyberpunk Neon Edition
  * Main job listing page with filters, table, and pagination
  */
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import { Database, Zap } from 'lucide-react';
 import { cn } from '@/lib';
 import {
   ErrorState,
@@ -35,6 +36,7 @@ const translations = {
     errorTitle: 'შეცდომა',
     errorDescription: 'ვაკანსიების ჩატვირთვა ვერ მოხერხდა',
     retry: 'ხელახლა ცდა',
+    dataStream: 'მონაცემთა ნაკადი',
   },
   en: {
     jobsFound: 'jobs found',
@@ -45,16 +47,9 @@ const translations = {
     errorTitle: 'Error',
     errorDescription: 'Could not load jobs',
     retry: 'Try Again',
+    dataStream: 'DATA STREAM',
   },
 };
-
-/**
- * Format job count for display
- */
-function formatJobCount(count: number, locale: 'ge' | 'en'): string {
-  const label = translations[locale].jobsFound;
-  return `${count.toLocaleString()} ${label}`;
-}
 
 export function HomePage() {
   const { lang = 'ge' } = useParams<{ lang: Language }>();
@@ -69,7 +64,6 @@ export function HomePage() {
     data: jobsData,
     isLoading: isJobsLoading,
     isError: isJobsError,
-    error: jobsError,
   } = useJobs(filters);
 
   const { data: categories = [], isLoading: isCategoriesLoading } = useCategories();
@@ -78,13 +72,11 @@ export function HomePage() {
   // Handle page change
   const handlePageChange = (page: number) => {
     setFilters({ page });
-    // Scroll to top of page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Handle job click for analytics
   const handleJobClick = (job: { id: string }, index: number) => {
-    // Analytics tracking could be added here
     console.log('Job clicked:', job.id, 'at position:', index);
   };
 
@@ -104,12 +96,61 @@ export function HomePage() {
         hasActiveFilters={hasActiveFilters}
       />
 
-      {/* Results Count */}
+      {/* Results Count - Cyberpunk styled */}
       {jobsData && !isJobsLoading && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-[var(--color-text-secondary)]">
-            {formatJobCount(jobsData.total, locale)}
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{
+            background: 'rgba(15, 15, 25, 0.5)',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+          }}
+        >
+          <Database
+            size={16}
+            style={{
+              color: '#00F5FF',
+              filter: 'drop-shadow(0 0 5px rgba(0, 245, 255, 0.5))',
+            }}
+          />
+          <p
+            className="text-sm font-medium"
+            style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              color: '#A0A0B0',
+            }}
+          >
+            <span
+              style={{
+                color: '#00F5FF',
+                textShadow: '0 0 10px rgba(0, 245, 255, 0.5)',
+              }}
+            >
+              {jobsData.total.toLocaleString()}
+            </span>{' '}
+            {t.jobsFound}
           </p>
+
+          {/* Live indicator */}
+          <div className="ml-auto flex items-center gap-2">
+            <Zap
+              size={12}
+              className="animate-pulse"
+              style={{
+                color: '#39FF14',
+                filter: 'drop-shadow(0 0 3px rgba(57, 255, 20, 0.8))',
+              }}
+            />
+            <span
+              className="text-[10px] font-bold tracking-[0.2em] uppercase"
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                color: '#39FF14',
+                textShadow: '0 0 8px rgba(57, 255, 20, 0.5)',
+              }}
+            >
+              LIVE
+            </span>
+          </div>
         </div>
       )}
 
