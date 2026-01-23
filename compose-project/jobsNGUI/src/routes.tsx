@@ -13,34 +13,39 @@ import { HomePage, JobDetailPage, SavedJobsPage, NotFoundPage } from '@/pages';
  *   - /saved -> SavedJobsPage (bookmarked jobs)
  *   - * -> NotFoundPage
  */
-export const router = createBrowserRouter([
+export const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      element: <Navigate to="/ge" replace />,
+    },
+    {
+      path: '/:lang',
+      element: <Layout />,
+      children: [
+        {
+          index: true,
+          element: <HomePage />,
+        },
+        {
+          path: 'job/:id',
+          element: <JobDetailPage />,
+        },
+        {
+          path: 'saved',
+          element: <SavedJobsPage />,
+        },
+        {
+          path: '*',
+          element: <NotFoundPage />,
+        },
+      ],
+    },
+  ],
   {
-    path: '/',
-    element: <Navigate to="/ge" replace />,
-  },
-  {
-    path: '/:lang',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: <HomePage />,
-      },
-      {
-        path: 'job/:id',
-        element: <JobDetailPage />,
-      },
-      {
-        path: 'saved',
-        element: <SavedJobsPage />,
-      },
-      {
-        path: '*',
-        element: <NotFoundPage />,
-      },
-    ],
-  },
-]);
+    basename: '/v2',
+  }
+);
 
 /**
  * Supported languages
