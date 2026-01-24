@@ -26,6 +26,9 @@ export interface FilterBarProps {
   className?: string;
 }
 
+// Check if region selector should be hidden (for adjara.work)
+const hideRegionSelector = import.meta.env.VITE_HIDE_REGION_SELECTOR === 'true';
+
 // Translations
 const translations = {
   ge: {
@@ -157,7 +160,7 @@ export function FilterBar({
         {/* Category & Region - Full width on mobile, flex on larger screens */}
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 flex-1">
           {/* Category Filter */}
-          <div className="flex-1 min-w-0 sm:min-w-[140px] md:min-w-[160px]">
+          <div className={hideRegionSelector ? "flex-1 min-w-0 sm:min-w-[200px] md:min-w-[250px]" : "flex-1 min-w-0 sm:min-w-[140px] md:min-w-[160px]"}>
             <CategoryFilter
               categories={categories}
               value={filters.category || ''}
@@ -166,15 +169,17 @@ export function FilterBar({
             />
           </div>
 
-          {/* Region Filter */}
-          <div className="flex-1 min-w-0 sm:min-w-[120px] md:min-w-[140px]">
-            <RegionFilter
-              regions={regions}
-              value={filters.region || ''}
-              onChange={handleRegionChange}
-              isLoading={isLoading}
-            />
-          </div>
+          {/* Region Filter - Hidden on adjara.work */}
+          {!hideRegionSelector && (
+            <div className="flex-1 min-w-0 sm:min-w-[120px] md:min-w-[140px]">
+              <RegionFilter
+                regions={regions}
+                value={filters.region || ''}
+                onChange={handleRegionChange}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
         </div>
 
         {/* Salary Toggle & Clear - Row on mobile */}

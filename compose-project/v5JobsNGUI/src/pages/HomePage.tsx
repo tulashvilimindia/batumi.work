@@ -51,6 +51,9 @@ const translations = {
   },
 };
 
+// Check if region selector is hidden (for adjara.work - always filter by Adjara)
+const hideRegionSelector = import.meta.env.VITE_HIDE_REGION_SELECTOR === 'true';
+
 export function HomePage() {
   const { lang = 'ge' } = useParams<{ lang: Language }>();
   const locale = lang === 'en' ? 'en' : 'ge';
@@ -59,12 +62,17 @@ export function HomePage() {
   // Get filter state from URL
   const { filters, setFilters, clearFilters, hasActiveFilters } = useFilters();
 
+  // Force Adjara region when region selector is hidden
+  const effectiveFilters = hideRegionSelector
+    ? { ...filters, region: 'adjara' }
+    : filters;
+
   // Fetch data
   const {
     data: jobsData,
     isLoading: isJobsLoading,
     isError: isJobsError,
-  } = useJobs(filters);
+  } = useJobs(effectiveFilters);
 
   const { data: categories = [], isLoading: isCategoriesLoading } = useCategories();
   const { data: regions = [], isLoading: isRegionsLoading } = useRegions();
