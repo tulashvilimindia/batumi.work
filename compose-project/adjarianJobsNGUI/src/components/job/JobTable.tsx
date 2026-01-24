@@ -1,12 +1,11 @@
 /**
  * JobTable Component - Adjarian Folk Edition
- * Traditional styled table with warm wood-grain effects
+ * Mobile-first responsive table with warm styling
  */
 
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui';
 import { JobRow } from './JobRow';
 import type { Job } from '@/types';
 import type { Language } from '@/components/ui';
@@ -21,15 +20,15 @@ export interface JobTableProps {
 
 const translations = {
   ge: {
-    jobTitle: 'განცხადება',
+    jobTitle: 'ვაკანსია',
     company: 'კომპანია',
-    published: 'გამოქვეყნდა',
+    published: 'თარიღი',
     deadline: 'ბოლო ვადა',
   },
   en: {
     jobTitle: 'Position',
     company: 'Company',
-    published: 'Published',
+    published: 'Date',
     deadline: 'Deadline',
   },
 };
@@ -37,7 +36,33 @@ const translations = {
 function JobRowSkeleton() {
   return (
     <tr>
-      <td className="p-4" style={{ borderBottom: '1px solid rgba(196, 164, 132, 0.3)' }}>
+      {/* Mobile skeleton */}
+      <td className="p-3 md:p-4 md:hidden" style={{ borderBottom: '1px solid rgba(196, 164, 132, 0.3)' }}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <div
+              className="h-4 rounded-md w-4/5 mb-2"
+              style={{ background: 'rgba(212, 165, 116, 0.25)' }}
+            />
+            <div
+              className="h-3 rounded-md w-1/2"
+              style={{ background: 'rgba(107, 68, 35, 0.15)' }}
+            />
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <div
+              className="h-4 w-10 rounded"
+              style={{ background: 'rgba(139, 38, 53, 0.15)' }}
+            />
+            <div
+              className="h-3 w-12 rounded"
+              style={{ background: 'rgba(139, 107, 75, 0.1)' }}
+            />
+          </div>
+        </div>
+      </td>
+      {/* Desktop skeleton */}
+      <td className="p-4 hidden md:table-cell" style={{ borderBottom: '1px solid rgba(196, 164, 132, 0.3)' }}>
         <div
           className="h-4 rounded-md w-3/4 mb-2"
           style={{ background: 'rgba(212, 165, 116, 0.2)' }}
@@ -61,13 +86,13 @@ function JobRowSkeleton() {
       </td>
       <td className="p-4 hidden md:table-cell" style={{ borderBottom: '1px solid rgba(196, 164, 132, 0.3)' }}>
         <div
-          className="h-4 rounded-md w-20"
+          className="h-4 rounded-md w-16"
           style={{ background: 'rgba(139, 107, 75, 0.15)' }}
         />
       </td>
       <td className="p-4 hidden md:table-cell" style={{ borderBottom: '1px solid rgba(196, 164, 132, 0.3)' }}>
         <div
-          className="h-4 rounded-md w-20"
+          className="h-4 rounded-md w-16"
           style={{ background: 'rgba(139, 38, 53, 0.1)' }}
         />
       </td>
@@ -92,7 +117,7 @@ export function JobTable({
   return (
     <div
       className={cn(
-        'relative overflow-hidden',
+        'relative',
         'rounded-lg',
         className
       )}
@@ -102,22 +127,24 @@ export function JobTable({
         boxShadow: '4px 4px 0 #3D2914',
       }}
     >
-      {/* Decorative corners */}
-      <div className="absolute top-0 left-0 w-4 h-4">
-        <div className="absolute top-0 left-0 w-3 h-[2px] bg-[#8B2635]" />
-        <div className="absolute top-0 left-0 w-[2px] h-3 bg-[#8B2635]" />
-      </div>
-      <div className="absolute top-0 right-0 w-4 h-4">
-        <div className="absolute top-0 right-0 w-3 h-[2px] bg-[#2D5A3D]" />
-        <div className="absolute top-0 right-0 w-[2px] h-3 bg-[#2D5A3D]" />
-      </div>
-      <div className="absolute bottom-0 left-0 w-4 h-4">
-        <div className="absolute bottom-0 left-0 w-3 h-[2px] bg-[#2D5A3D]" />
-        <div className="absolute bottom-0 left-0 w-[2px] h-3 bg-[#2D5A3D]" />
-      </div>
-      <div className="absolute bottom-0 right-0 w-4 h-4">
-        <div className="absolute bottom-0 right-0 w-3 h-[2px] bg-[#8B2635]" />
-        <div className="absolute bottom-0 right-0 w-[2px] h-3 bg-[#8B2635]" />
+      {/* Decorative corners - hidden on mobile */}
+      <div className="hidden md:block">
+        <div className="absolute top-0 left-0 w-4 h-4">
+          <div className="absolute top-0 left-0 w-3 h-[2px] bg-[#8B2635]" />
+          <div className="absolute top-0 left-0 w-[2px] h-3 bg-[#8B2635]" />
+        </div>
+        <div className="absolute top-0 right-0 w-4 h-4">
+          <div className="absolute top-0 right-0 w-3 h-[2px] bg-[#2D5A3D]" />
+          <div className="absolute top-0 right-0 w-[2px] h-3 bg-[#2D5A3D]" />
+        </div>
+        <div className="absolute bottom-0 left-0 w-4 h-4">
+          <div className="absolute bottom-0 left-0 w-3 h-[2px] bg-[#2D5A3D]" />
+          <div className="absolute bottom-0 left-0 w-[2px] h-3 bg-[#2D5A3D]" />
+        </div>
+        <div className="absolute bottom-0 right-0 w-4 h-4">
+          <div className="absolute bottom-0 right-0 w-3 h-[2px] bg-[#8B2635]" />
+          <div className="absolute bottom-0 right-0 w-[2px] h-3 bg-[#8B2635]" />
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -128,21 +155,23 @@ export function JobTable({
                 background: 'linear-gradient(180deg, rgba(212, 165, 116, 0.15) 0%, transparent 100%)',
               }}
             >
+              {/* Mobile: Single column header */}
               <th
                 scope="col"
-                className="w-[45%] md:w-[45%] p-4 text-left"
+                className="w-full md:w-[45%] p-3 md:p-4 text-left"
                 style={{
                   fontFamily: 'Source Sans Pro, sans-serif',
                   borderBottom: '2px solid #D4A574',
                 }}
               >
-                <span className="text-sm font-semibold tracking-wide uppercase" style={{ color: '#8B2635' }}>
+                <span className="text-xs md:text-sm font-semibold tracking-wide uppercase" style={{ color: '#8B2635' }}>
                   {t.jobTitle}
                 </span>
               </th>
+              {/* Desktop only columns */}
               <th
                 scope="col"
-                className="w-[55%] md:w-[25%] p-4 text-left"
+                className="w-[25%] p-4 text-left hidden md:table-cell"
                 style={{
                   fontFamily: 'Source Sans Pro, sans-serif',
                   borderBottom: '2px solid #D4A574',
