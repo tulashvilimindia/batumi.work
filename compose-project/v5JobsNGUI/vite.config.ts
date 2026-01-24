@@ -3,8 +3,11 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // https://vitejs.dev/config/
+// BASE_PATH can be set via environment variable for different deployments
+// - /v5/ for batumi.work/v5
+// - / for adjara.work
 export default defineConfig({
-  base: '/v5/',
+  base: process.env.VITE_BASE_PATH || '/v5/',
   plugins: [react()],
   resolve: {
     alias: {

@@ -13,6 +13,9 @@ import { HomePage, JobDetailPage, SavedJobsPage, NotFoundPage } from '@/pages';
  *   - /saved -> SavedJobsPage (bookmarked jobs)
  *   - * -> NotFoundPage
  */
+// Get basename from Vite's base config (removes trailing slash)
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '';
+
 export const router = createBrowserRouter(
   [
     {
@@ -43,7 +46,7 @@ export const router = createBrowserRouter(
     },
   ],
   {
-    basename: '/v5',
+    basename,
   }
 );
 

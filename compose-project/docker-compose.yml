@@ -296,6 +296,24 @@ services:
       timeout: 3s
       retries: 3
 
+  # Adjara.work Frontend (V5 with root base path)
+  adjara-work-web:
+    build:
+      context: ./v5JobsNGUI
+      dockerfile: Dockerfile.adjara
+    container_name: adjara-work-web
+    restart: unless-stopped
+    ports:
+      - "${ADJARA_WORK_PORT:-8107}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
 volumes:
   postgres_data:
     name: jobboard_postgres_data
