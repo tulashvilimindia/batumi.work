@@ -278,6 +278,24 @@ services:
       timeout: 3s
       retries: 3
 
+  # V5 Enhanced Frontend (v5JobsNGUI) - V5
+  v5-jobboard-web-ng:
+    build:
+      context: ./v5JobsNGUI
+      dockerfile: Dockerfile
+    container_name: v5-jobboard-web-ng
+    restart: unless-stopped
+    ports:
+      - "${V5_NGUI_PORT:-8106}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
 volumes:
   postgres_data:
     name: jobboard_postgres_data

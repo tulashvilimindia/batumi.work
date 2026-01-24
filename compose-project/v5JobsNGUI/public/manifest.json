@@ -1,0 +1,53 @@
+{
+  "name": "Batumi Jobs - Batumi & Adjara Job Listings",
+  "short_name": "BatumiJobs",
+  "description": "Find jobs in Batumi and Adjara region. Browse vacancies, filter by category, and apply directly.",
+  "start_url": "/ge/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f5f5",
+  "theme_color": "#4ECDC4",
+  "lang": "ka",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Search Jobs",
+      "short_name": "Search",
+      "description": "Search for jobs in Batumi",
+      "url": "/ge/?focus=search",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Saved Jobs",
+      "short_name": "Saved",
+      "description": "View your saved jobs",
+      "url": "/ge/saved",
+      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

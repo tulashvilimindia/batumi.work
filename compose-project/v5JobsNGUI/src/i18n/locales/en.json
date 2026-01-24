@@ -1,0 +1,97 @@
+{
+  "common": {
+    "search": "Search",
+    "filter": "Filter",
+    "save": "Save",
+    "share": "Share",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "error": "Error",
+    "retry": "Retry",
+    "close": "Close",
+    "back": "Back",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "apply": "Apply",
+    "reset": "Reset"
+  },
+  "jobs": {
+    "title": "Job Listings",
+    "jobTitle": "Job Title",
+    "company": "Company",
+    "published": "Published",
+    "deadline": "Deadline",
+    "salary": "Salary",
+    "category": "Category",
+    "region": "Region",
+    "location": "Location",
+    "allCategories": "All Categories",
+    "allRegions": "All Regions",
+    "withSalary": "With Salary",
+    "vip": "VIP",
+    "new": "NEW",
+    "remote": "Remote",
+    "viewOriginal": "View Original",
+    "savedJobs": "Saved Jobs",
+    "noSavedJobs": "No saved jobs yet",
+    "found": "found",
+    "jobs": "jobs",
+    "noJobs": "No jobs found",
+    "source": "Source",
+    "description": "Description"
+  },
+  "nav": {
+    "home": "Home",
+    "saved": "Saved",
+    "telegram": "Telegram Channel",
+    "about": "About"
+  },
+  "share": {
+    "facebook": "Facebook",
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "linkedin": "LinkedIn",
+    "copyLink": "Copy Link",
+    "copied": "Copied!",
+    "shareJob": "Share Job",
+    "shareFailed": "Share failed"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing",
+    "results": "results"
+  },
+  "theme": {
+    "dark": "Dark Mode",
+    "light": "Light Mode",
+    "system": "System Theme"
+  },
+  "language": {
+    "select": "Select Language",
+    "ge": "Georgian",
+    "en": "English"
+  },
+  "errors": {
+    "loadFailed": "Failed to load data",
+    "networkError": "Network error",
+    "notFound": "Page not found",
+    "serverError": "Server error",
+    "tryAgain": "Please try again"
+  },
+  "search": {
+    "placeholder": "Search jobs...",
+    "searchJobs": "Search Jobs",
+    "noResults": "No results found",
+    "suggestions": "Try different search terms"
+  },
+  "footer": {
+    "copyright": "All rights reserved",
+    "poweredBy": "Powered by:"
+  }
+}
