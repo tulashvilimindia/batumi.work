@@ -245,7 +245,7 @@ export function JobDetail({
             )}
             style={{
               fontFamily: 'Source Sans Pro, sans-serif',
-              color: '#6B4423',
+              color: '#3D2914',
             }}
             dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
           />

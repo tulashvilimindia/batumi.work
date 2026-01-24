@@ -101,7 +101,7 @@ export function RecentlyViewedPanel({ className }: RecentlyViewedPanelProps) {
       {/* Dropdown Panel */}
       {isOpen && (
         <div
-          className="absolute top-full right-0 mt-2 w-72 md:w-80 rounded-lg shadow-xl z-50"
+          className="fixed md:absolute top-auto md:top-full left-4 right-4 md:left-auto md:right-0 mt-2 md:w-80 rounded-lg shadow-xl z-50"
           style={{
             background: '#FFFAF5',
             border: '2px solid #D4A574',
