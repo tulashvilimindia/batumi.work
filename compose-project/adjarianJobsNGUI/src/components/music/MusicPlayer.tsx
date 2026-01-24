@@ -26,58 +26,13 @@ export function MusicPlayer({ compact = false, className }: MusicPlayerProps) {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // Initialize audio and attempt autoplay
+  // Configure audio volume on mount
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Configure audio
-    audio.volume = 0;
-    audio.muted = true;
-    audio.preload = 'auto';
-
-    // Wait for audio to be ready before playing
-    const handleCanPlay = () => {
-      setIsLoading(false);
-      // Attempt muted autoplay
-      audio.play()
-        .then(() => {
-          setIsPlaying(true);
-        })
-        .catch((err) => {
-          console.log('Autoplay blocked:', err.message);
-          setIsPlaying(false);
-        });
-    };
-
-    const handleError = () => {
-      setIsLoading(false);
-      setIsPlaying(false);
-    };
-
-    const handlePlaying = () => {
-      setIsPlaying(true);
-      setIsLoading(false);
-    };
-
-    const handlePause = () => {
-      setIsPlaying(false);
-    };
-
-    audio.addEventListener('canplaythrough', handleCanPlay);
-    audio.addEventListener('error', handleError);
-    audio.addEventListener('playing', handlePlaying);
-    audio.addEventListener('pause', handlePause);
-
-    // Start loading
-    audio.load();
-
-    return () => {
-      audio.removeEventListener('canplaythrough', handleCanPlay);
-      audio.removeEventListener('error', handleError);
-      audio.removeEventListener('playing', handlePlaying);
-      audio.removeEventListener('pause', handlePause);
-    };
+    // Set initial volume (muted, so this is for when unmuted)
+    audio.volume = 0.5;
   }, []);
 
   // Handle first user interaction to unmute
@@ -176,13 +131,21 @@ export function MusicPlayer({ compact = false, className }: MusicPlayerProps) {
 
   return (
     <>
-      {/* Hidden audio element */}
+      {/* Hidden audio element - autoplay + muted required for browser policy compliance */}
       <audio
         ref={audioRef}
         src={MUSIC_URL}
         loop
         playsInline
         muted
+        autoPlay
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onCanPlayThrough={() => setIsLoading(false)}
+        onError={() => {
+          setIsLoading(false);
+          setIsPlaying(false);
+        }}
       />
 
       {/* Music player button */}
