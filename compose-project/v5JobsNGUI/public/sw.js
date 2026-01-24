@@ -6,9 +6,8 @@
 const CACHE_NAME = 'batumi-jobs-v1';
 const API_CACHE_NAME = 'batumi-jobs-api-v1';
 
-// Assets to cache on install
+// Assets to cache on install (excluding redirecting URLs)
 const STATIC_ASSETS = [
-  '/',
   '/ge/',
   '/en/',
   '/manifest.json',
@@ -160,7 +159,8 @@ async function handleStaticRequest(request) {
   }
 
   try {
-    const networkResponse = await fetch(request);
+    // Use redirect: 'follow' to handle server redirects properly
+    const networkResponse = await fetch(request, { redirect: 'follow' });
 
     // Cache successful responses
     if (networkResponse.ok) {
