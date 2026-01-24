@@ -1,30 +1,31 @@
 /**
  * MusicPlayer Component - Adjarian Folk Edition
- * Simple play/pause button with autoplay for Ajaruli Gandagana
+ * Autoplay with muted start, unmute on first user interaction
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
 
-// Ajaruli Gandagana - Traditional Adjarian folk dance music
-// Using a Georgian folk music radio stream
+// Georgian folk music radio stream
 const MUSIC_URL = 'https://stream.zeno.fm/0r0xa792kwzuv';
 
 export function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
   const [showVolume, setShowVolume] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
-  // Try autoplay on mount
+  // Autoplay muted on mount - browsers allow muted autoplay
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    audio.volume = volume;
+    audio.volume = 0; // Start muted
+    audio.muted = true;
 
-    // Attempt autoplay
+    // Attempt autoplay (will work because muted)
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise
@@ -32,11 +33,42 @@ export function MusicPlayer() {
           setIsPlaying(true);
         })
         .catch(() => {
-          // Autoplay blocked - user needs to click
           setIsPlaying(false);
         });
     }
   }, []);
+
+  // Listen for first user interaction anywhere on page to unmute
+  useEffect(() => {
+    if (hasUserInteracted) return;
+
+    const handleFirstInteraction = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      // Unmute and set volume
+      audio.muted = false;
+      audio.volume = volume;
+      setIsMuted(false);
+      setHasUserInteracted(true);
+
+      // If not playing, start playing
+      if (!isPlaying) {
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      }
+    };
+
+    // Listen for any click on the document
+    document.addEventListener('click', handleFirstInteraction, { once: true });
+    document.addEventListener('keydown', handleFirstInteraction, { once: true });
+    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, [hasUserInteracted, volume, isPlaying]);
 
   // Toggle play/pause
   const togglePlay = useCallback(() => {
@@ -47,11 +79,15 @@ export function MusicPlayer() {
       audio.pause();
       setIsPlaying(false);
     } else {
+      // Ensure unmuted when user clicks play
+      audio.muted = false;
+      audio.volume = volume;
+      setIsMuted(false);
       audio.play().then(() => {
         setIsPlaying(true);
       }).catch(console.error);
     }
-  }, [isPlaying]);
+  }, [isPlaying, volume]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -59,9 +95,11 @@ export function MusicPlayer() {
     if (!audio) return;
 
     if (isMuted) {
+      audio.muted = false;
       audio.volume = volume;
       setIsMuted(false);
     } else {
+      audio.muted = true;
       audio.volume = 0;
       setIsMuted(true);
     }
@@ -73,11 +111,12 @@ export function MusicPlayer() {
     setVolume(newVolume);
     if (audioRef.current) {
       audioRef.current.volume = newVolume;
+      audioRef.current.muted = false;
     }
-    if (newVolume > 0 && isMuted) {
+    if (newVolume > 0) {
       setIsMuted(false);
     }
-  }, [isMuted]);
+  }, []);
 
   return (
     <>
@@ -87,6 +126,7 @@ export function MusicPlayer() {
         src={MUSIC_URL}
         loop
         preload="auto"
+        muted
       />
 
       {/* Simple floating player */}
@@ -172,6 +212,22 @@ export function MusicPlayer() {
                   animation: 'pulse 1s ease-in-out infinite',
                 }}
               />
+            </span>
+          )}
+
+          {/* Muted indicator when playing but muted */}
+          {isPlaying && isMuted && (
+            <span
+              className="absolute -bottom-1 -right-1 flex items-center justify-center"
+              style={{
+                width: 18,
+                height: 18,
+                background: '#8B2635',
+                borderRadius: '50%',
+                border: '2px solid #3D2914',
+              }}
+            >
+              <VolumeX size={10} style={{ color: '#F5E6D3' }} />
             </span>
           )}
         </button>

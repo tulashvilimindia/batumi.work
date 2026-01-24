@@ -73,7 +73,7 @@ export function FilterBar({
   return (
     <div
       className={cn(
-        'relative overflow-hidden',
+        'relative',
         'rounded-lg',
         'p-6 md:p-8',
         className
