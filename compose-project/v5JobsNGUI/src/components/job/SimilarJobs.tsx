@@ -38,8 +38,8 @@ export function SimilarJobs({ currentJob, className }: SimilarJobsProps) {
 
   // Fetch similar jobs based on category
   const { data: jobsData, isLoading } = useJobs({
-    category: currentJob.category_id?.toString(),
-    limit: 6,
+    category: currentJob.category?.slug,
+    page_size: 6,
   });
 
   // Filter out current job and limit to 4
@@ -85,7 +85,7 @@ export function SimilarJobs({ currentJob, className }: SimilarJobsProps) {
           {t.title}
         </h3>
         <Link
-          to={`/${lang}?category=${currentJob.category_id}`}
+          to={`/${lang}?category=${currentJob.category?.slug || ''}`}
           className="flex items-center gap-1 text-xs font-medium transition-colors hover:underline"
           style={{ color: '#2D5A3D' }}
         >
