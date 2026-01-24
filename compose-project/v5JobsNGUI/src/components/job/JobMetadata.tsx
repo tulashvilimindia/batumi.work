@@ -1,6 +1,6 @@
 /**
- * JobMetadata Component - Cyberpunk Neon Edition
- * Grid display of job metadata with neon icons and glowing effects
+ * JobMetadata Component - Adjarian Folk Edition
+ * Grid display of job metadata with warm traditional styling
  */
 
 import React from 'react';
@@ -80,15 +80,15 @@ function formatSalary(min: number | null, max: number | null, locale: 'ge' | 'en
   return '-';
 }
 
-// Icon color configurations for cyberpunk theme
+// Icon color configurations for folk theme
 const iconColors = {
-  company: { color: '#00F5FF', glow: 'rgba(0, 245, 255, 0.5)' },
-  location: { color: '#FF006E', glow: 'rgba(255, 0, 110, 0.5)' },
-  category: { color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.5)' },
-  salary: { color: '#39FF14', glow: 'rgba(57, 255, 20, 0.5)' },
-  published: { color: '#00F5FF', glow: 'rgba(0, 245, 255, 0.5)' },
-  deadline: { color: '#FF6B35', glow: 'rgba(255, 107, 53, 0.5)' },
-  source: { color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.5)' },
+  company: { color: '#8B2635', bg: 'rgba(139, 38, 53, 0.1)' },
+  location: { color: '#2D5A3D', bg: 'rgba(45, 90, 61, 0.1)' },
+  category: { color: '#6B4423', bg: 'rgba(107, 68, 35, 0.1)' },
+  salary: { color: '#2D5A3D', bg: 'rgba(45, 90, 61, 0.1)' },
+  published: { color: '#D4A574', bg: 'rgba(212, 165, 116, 0.15)' },
+  deadline: { color: '#8B2635', bg: 'rgba(139, 38, 53, 0.1)' },
+  source: { color: '#6B4423', bg: 'rgba(107, 68, 35, 0.1)' },
 };
 
 interface MetadataItemProps {
@@ -100,7 +100,7 @@ interface MetadataItemProps {
 }
 
 /**
- * Single metadata item with cyberpunk styling
+ * Single metadata item with folk styling
  */
 function MetadataItem({ icon, label, value, colorKey, className }: MetadataItemProps) {
   const colors = iconColors[colorKey];
@@ -109,29 +109,24 @@ function MetadataItem({ icon, label, value, colorKey, className }: MetadataItemP
     <div
       className={cn(
         'flex items-start gap-3 p-3 rounded-lg transition-all duration-300',
-        'hover:bg-white/[0.02]',
+        'hover:bg-[rgba(212,165,116,0.1)]',
         className
       )}
       style={{
-        border: '1px solid rgba(255, 255, 255, 0.05)',
+        background: 'rgba(245, 230, 211, 0.3)',
+        border: '1px solid rgba(212, 165, 116, 0.3)',
       }}
     >
       {/* Icon container */}
       <div
         className="flex items-center justify-center w-10 h-10 rounded-lg"
         style={{
-          background: `${colors.color}10`,
+          background: colors.bg,
           border: `1px solid ${colors.color}30`,
-          boxShadow: `0 0 15px ${colors.glow}`,
         }}
         aria-hidden="true"
       >
-        <div
-          style={{
-            color: colors.color,
-            filter: `drop-shadow(0 0 5px ${colors.glow})`,
-          }}
-        >
+        <div style={{ color: colors.color }}>
           {icon}
         </div>
       </div>
@@ -139,19 +134,19 @@ function MetadataItem({ icon, label, value, colorKey, className }: MetadataItemP
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p
-          className="text-[10px] tracking-[0.2em] uppercase mb-1"
+          className="text-[10px] tracking-[0.15em] uppercase mb-1"
           style={{
-            fontFamily: 'Rajdhani, sans-serif',
-            color: '#A0A0B0',
+            fontFamily: 'Source Sans Pro, sans-serif',
+            color: '#8B6B4B',
           }}
         >
           {label}
         </p>
         <p
-          className="text-sm font-medium truncate"
+          className="text-sm font-semibold truncate"
           style={{
-            fontFamily: 'Rajdhani, sans-serif',
-            color: '#E0E0E8',
+            fontFamily: 'Source Sans Pro, sans-serif',
+            color: '#3D2914',
           }}
         >
           {value}
@@ -162,7 +157,7 @@ function MetadataItem({ icon, label, value, colorKey, className }: MetadataItemP
 }
 
 /**
- * JobMetadata - Cyberpunk styled metadata grid
+ * JobMetadata - Folk styled metadata grid
  */
 export function JobMetadata({
   job,
