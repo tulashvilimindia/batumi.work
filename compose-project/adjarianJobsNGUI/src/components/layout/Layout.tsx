@@ -1,12 +1,12 @@
 /**
  * Layout Component - Adjarian Folk Edition
  * Main layout wrapper with warm traditional background
+ * Mobile-first responsive design
  */
 
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
-import { MusicPlayer } from '../music';
 import { cn } from '@/lib';
 
 interface LayoutProps {
@@ -15,16 +15,22 @@ interface LayoutProps {
 
 export function Layout({ className }: LayoutProps) {
   return (
-    <div className={cn('min-h-screen flex flex-col relative', className)}>
+    <div
+      className={cn(
+        'min-h-screen flex flex-col relative',
+        'overflow-x-hidden max-w-[100vw]', // Prevent horizontal overflow
+        className
+      )}
+    >
       {/* Adjarian Folk Background */}
       <AdjarianBackground />
 
       {/* Content wrapper */}
-      <div className="relative z-10 flex flex-col min-h-screen">
+      <div className="relative z-10 flex flex-col min-h-screen w-full overflow-x-hidden">
         <Header />
 
-        <main className="flex-1">
-          <div className="max-w-[1100px] mx-auto px-4 py-6">
+        <main className="flex-1 w-full">
+          <div className="max-w-[1100px] mx-auto px-3 md:px-4 py-4 md:py-6">
             <Outlet />
           </div>
         </main>
@@ -32,8 +38,7 @@ export function Layout({ className }: LayoutProps) {
         <Footer />
       </div>
 
-      {/* Music Player */}
-      <MusicPlayer />
+      {/* Music Player is now integrated in Header - no separate floating player */}
     </div>
   );
 }
@@ -65,30 +70,32 @@ function AdjarianBackground() {
         }}
       />
 
-      {/* Warm sun glow from top */}
+      {/* Warm sun glow from top - smaller on mobile */}
       <div
-        className="absolute -top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-[120px] opacity-30"
+        className="absolute -top-10 md:-top-20 left-1/2 -translate-x-1/2 w-[400px] md:w-[800px] h-[200px] md:h-[400px] rounded-full blur-[80px] md:blur-[120px] opacity-30"
         style={{
           background: 'radial-gradient(circle, rgba(212, 165, 116, 0.6) 0%, transparent 70%)',
         }}
       />
 
-      {/* Soft mountain silhouette at bottom */}
+      {/* Soft mountain silhouette at bottom - hidden on mobile for cleaner look */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-32 opacity-5"
+        className="hidden md:block absolute bottom-0 left-0 right-0 h-32 opacity-5"
         style={{
           background: 'linear-gradient(180deg, transparent 0%, #2D5A3D 100%)',
           clipPath: 'polygon(0 100%, 10% 60%, 25% 80%, 40% 50%, 55% 70%, 70% 40%, 85% 65%, 100% 45%, 100% 100%)',
         }}
       />
 
-      {/* Decorative corner borders - traditional carpet style */}
-      <CornerDecoration position="top-left" />
-      <CornerDecoration position="top-right" />
-      <CornerDecoration position="bottom-left" />
-      <CornerDecoration position="bottom-right" />
+      {/* Decorative corner borders - hidden on mobile */}
+      <div className="hidden md:block">
+        <CornerDecoration position="top-left" />
+        <CornerDecoration position="top-right" />
+        <CornerDecoration position="bottom-left" />
+        <CornerDecoration position="bottom-right" />
+      </div>
 
-      {/* Floating folk particles */}
+      {/* Floating folk particles - fewer on mobile */}
       <FolkParticles />
     </div>
   );
@@ -106,28 +113,28 @@ function CornerDecoration({ position }: { position: 'top-left' | 'top-right' | '
   };
 
   return (
-    <div className={cn('absolute w-24 h-24 opacity-20', positionClasses[position])}>
+    <div className={cn('absolute w-20 h-20 opacity-20', positionClasses[position])}>
       {/* Outer border */}
       <div
-        className="absolute top-0 left-0 w-20 h-[3px]"
+        className="absolute top-0 left-0 w-16 h-[3px]"
         style={{ background: 'linear-gradient(90deg, #8B2635, transparent)' }}
       />
       <div
-        className="absolute top-0 left-0 w-[3px] h-20"
+        className="absolute top-0 left-0 w-[3px] h-16"
         style={{ background: 'linear-gradient(180deg, #8B2635, transparent)' }}
       />
       {/* Inner accent */}
       <div
-        className="absolute top-3 left-3 w-12 h-[2px]"
+        className="absolute top-3 left-3 w-10 h-[2px]"
         style={{ background: 'linear-gradient(90deg, #D4A574, transparent)' }}
       />
       <div
-        className="absolute top-3 left-3 w-[2px] h-12"
+        className="absolute top-3 left-3 w-[2px] h-10"
         style={{ background: 'linear-gradient(180deg, #D4A574, transparent)' }}
       />
       {/* Diamond accent */}
       <div
-        className="absolute top-6 left-6 w-3 h-3 rotate-45"
+        className="absolute top-5 left-5 w-2.5 h-2.5 rotate-45"
         style={{ background: '#2D5A3D' }}
       />
     </div>
@@ -135,11 +142,13 @@ function CornerDecoration({ position }: { position: 'top-left' | 'top-right' | '
 }
 
 /**
- * Floating particles with folk colors
+ * Floating particles with folk colors - responsive count
  */
 function FolkParticles() {
-  // Generate warm-colored particles
-  const particles = Array.from({ length: 15 }).map((_, i) => ({
+  // Fewer particles for better mobile performance
+  const particleCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 8 : 15;
+
+  const particles = Array.from({ length: particleCount }).map((_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     top: `${Math.random() * 100}%`,

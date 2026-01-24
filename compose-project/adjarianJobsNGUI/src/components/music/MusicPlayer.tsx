@@ -1,74 +1,114 @@
 /**
  * MusicPlayer Component - Adjarian Folk Edition
- * Autoplay with muted start, unmute on first user interaction
+ * Compact music player button for header integration
+ * Robust autoplay with muted start, unmute on interaction
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { Volume2, VolumeX, Music } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Georgian folk music radio stream
 const MUSIC_URL = 'https://stream.zeno.fm/0r0xa792kwzuv';
 
-export function MusicPlayer() {
+export interface MusicPlayerProps {
+  /** Compact mode for header */
+  compact?: boolean;
+  /** Additional className */
+  className?: string;
+}
+
+export function MusicPlayer({ compact = false, className }: MusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
-  const [showVolume, setShowVolume] = useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
 
-  // Autoplay muted on mount - browsers allow muted autoplay
+  // Initialize audio and attempt autoplay
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    audio.volume = 0; // Start muted
+    // Configure audio
+    audio.volume = 0;
     audio.muted = true;
+    audio.preload = 'auto';
 
-    // Attempt autoplay (will work because muted)
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise
+    // Wait for audio to be ready before playing
+    const handleCanPlay = () => {
+      setIsLoading(false);
+      // Attempt muted autoplay
+      audio.play()
         .then(() => {
           setIsPlaying(true);
         })
-        .catch(() => {
+        .catch((err) => {
+          console.log('Autoplay blocked:', err.message);
           setIsPlaying(false);
         });
-    }
+    };
+
+    const handleError = () => {
+      setIsLoading(false);
+      setIsPlaying(false);
+    };
+
+    const handlePlaying = () => {
+      setIsPlaying(true);
+      setIsLoading(false);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener('canplaythrough', handleCanPlay);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('playing', handlePlaying);
+    audio.addEventListener('pause', handlePause);
+
+    // Start loading
+    audio.load();
+
+    return () => {
+      audio.removeEventListener('canplaythrough', handleCanPlay);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('playing', handlePlaying);
+      audio.removeEventListener('pause', handlePause);
+    };
   }, []);
 
-  // Listen for first user interaction anywhere on page to unmute
+  // Handle first user interaction to unmute
   useEffect(() => {
-    if (hasUserInteracted) return;
+    if (hasInteracted) return;
 
-    const handleFirstInteraction = () => {
+    const handleInteraction = () => {
       const audio = audioRef.current;
       if (!audio) return;
 
-      // Unmute and set volume
-      audio.muted = false;
-      audio.volume = volume;
-      setIsMuted(false);
-      setHasUserInteracted(true);
+      setHasInteracted(true);
 
-      // If not playing, start playing
-      if (!isPlaying) {
-        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      // Unmute if playing
+      if (isPlaying) {
+        audio.muted = false;
+        audio.volume = 0.5;
+        setIsMuted(false);
       }
     };
 
-    // Listen for any click on the document
-    document.addEventListener('click', handleFirstInteraction, { once: true });
-    document.addEventListener('keydown', handleFirstInteraction, { once: true });
-    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    // Listen for any interaction
+    document.addEventListener('click', handleInteraction, { once: true });
+    document.addEventListener('touchstart', handleInteraction, { once: true });
+    document.addEventListener('keydown', handleInteraction, { once: true });
 
     return () => {
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
-      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
     };
-  }, [hasUserInteracted, volume, isPlaying]);
+  }, [hasInteracted, isPlaying]);
 
   // Toggle play/pause
   const togglePlay = useCallback(() => {
@@ -79,44 +119,60 @@ export function MusicPlayer() {
       audio.pause();
       setIsPlaying(false);
     } else {
-      // Ensure unmuted when user clicks play
+      // Unmute and play
       audio.muted = false;
-      audio.volume = volume;
+      audio.volume = 0.5;
       setIsMuted(false);
-      audio.play().then(() => {
-        setIsPlaying(true);
-      }).catch(console.error);
-    }
-  }, [isPlaying, volume]);
+      setHasInteracted(true);
 
-  // Toggle mute
+      audio.play()
+        .then(() => setIsPlaying(true))
+        .catch(console.error);
+    }
+  }, [isPlaying]);
+
+  // Toggle mute (for when hovering/clicking mute button)
   const toggleMute = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isMuted) {
       audio.muted = false;
-      audio.volume = volume;
+      audio.volume = 0.5;
       setIsMuted(false);
     } else {
       audio.muted = true;
-      audio.volume = 0;
       setIsMuted(true);
     }
-  }, [isMuted, volume]);
+  }, [isMuted]);
 
-  // Handle volume change
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-      audioRef.current.muted = false;
+  // Determine button color based on state
+  const getButtonStyle = () => {
+    if (isLoading) {
+      return {
+        background: 'linear-gradient(135deg, #6B4423, #8B5A2B)',
+        borderColor: '#D4A574',
+      };
     }
-    if (newVolume > 0) {
-      setIsMuted(false);
+    if (isPlaying && !isMuted) {
+      return {
+        background: 'linear-gradient(135deg, #2D5A3D, #3D7A5D)',
+        borderColor: '#D4A574',
+      };
     }
-  }, []);
+    if (isPlaying && isMuted) {
+      return {
+        background: 'linear-gradient(135deg, #D4A574, #E8C49A)',
+        borderColor: '#6B4423',
+      };
+    }
+    return {
+      background: 'linear-gradient(135deg, #8B2635, #A83C4B)',
+      borderColor: '#D4A574',
+    };
+  };
+
+  const buttonStyle = getButtonStyle();
 
   return (
     <>
@@ -125,119 +181,108 @@ export function MusicPlayer() {
         ref={audioRef}
         src={MUSIC_URL}
         loop
-        preload="auto"
+        playsInline
         muted
       />
 
-      {/* Simple floating player */}
+      {/* Music player button */}
       <div
-        className="fixed bottom-4 right-4 z-40 flex items-center gap-2"
-        onMouseEnter={() => setShowVolume(true)}
-        onMouseLeave={() => setShowVolume(false)}
+        className={cn('relative', className)}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
       >
-        {/* Volume control - shows on hover */}
-        <div
-          className="flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300"
-          style={{
-            background: 'rgba(61, 41, 20, 0.95)',
-            border: '2px solid #D4A574',
-            opacity: showVolume ? 1 : 0,
-            transform: showVolume ? 'translateX(0)' : 'translateX(20px)',
-            pointerEvents: showVolume ? 'auto' : 'none',
-          }}
-        >
-          <button
-            onClick={toggleMute}
-            className="p-1 rounded-full hover:bg-white/10 transition-colors"
-            style={{ color: '#D4A574' }}
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
-          >
-            {isMuted || volume === 0 ? (
-              <VolumeX size={18} />
-            ) : (
-              <Volume2 size={18} />
-            )}
-          </button>
-
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={isMuted ? 0 : volume}
-            onChange={handleVolumeChange}
-            className="w-20 h-1 rounded-full appearance-none cursor-pointer"
-            style={{
-              background: `linear-gradient(to right, #D4A574 0%, #D4A574 ${(isMuted ? 0 : volume) * 100}%, #6B4423 ${(isMuted ? 0 : volume) * 100}%, #6B4423 100%)`,
-            }}
-            aria-label="Volume"
-          />
-        </div>
-
-        {/* Main play/pause button */}
         <button
           onClick={togglePlay}
-          className="relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 hover:scale-110"
+          className={cn(
+            'relative flex items-center justify-center',
+            'rounded-lg transition-all duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-[#D4A574]',
+            compact ? 'w-9 h-9' : 'w-10 h-10',
+            'hover:scale-105'
+          )}
           style={{
-            background: isPlaying
-              ? 'linear-gradient(135deg, #2D5A3D, #3D7A5D)'
-              : 'linear-gradient(135deg, #8B2635, #A83C4B)',
-            border: '3px solid #D4A574',
-            boxShadow: '0 4px 20px rgba(61, 41, 20, 0.4), 3px 3px 0 #3D2914',
+            ...buttonStyle,
+            border: `2px solid ${buttonStyle.borderColor}`,
+            boxShadow: '2px 2px 0 #3D2914',
           }}
-          aria-label={isPlaying ? 'Pause Ajaruli Gandagana' : 'Play Ajaruli Gandagana'}
+          aria-label={isPlaying ? 'Pause music' : 'Play Adjarian folk music'}
         >
-          {isPlaying ? (
-            <Pause size={24} style={{ color: '#F5E6D3' }} />
+          {isLoading ? (
+            <Music
+              size={compact ? 16 : 18}
+              className="animate-pulse"
+              style={{ color: '#D4A574' }}
+            />
+          ) : isPlaying ? (
+            isMuted ? (
+              <VolumeX size={compact ? 16 : 18} style={{ color: '#3D2914' }} />
+            ) : (
+              <Volume2 size={compact ? 16 : 18} style={{ color: '#F5E6D3' }} />
+            )
           ) : (
-            <Play size={24} style={{ color: '#F5E6D3', marginLeft: 2 }} />
+            <Music size={compact ? 16 : 18} style={{ color: '#F5E6D3' }} />
           )}
 
-          {/* Playing indicator */}
-          {isPlaying && (
+          {/* Playing indicator dot */}
+          {isPlaying && !isMuted && (
             <span
-              className="absolute -top-1 -right-1 flex items-center justify-center"
+              className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
               style={{
-                width: 20,
-                height: 20,
                 background: '#D4A574',
-                borderRadius: '50%',
-                border: '2px solid #3D2914',
+                border: '1px solid #3D2914',
+                animation: 'pulse 1.5s ease-in-out infinite',
               }}
-            >
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{
-                  background: '#8B2635',
-                  animation: 'pulse 1s ease-in-out infinite',
-                }}
-              />
-            </span>
-          )}
-
-          {/* Muted indicator when playing but muted */}
-          {isPlaying && isMuted && (
-            <span
-              className="absolute -bottom-1 -right-1 flex items-center justify-center"
-              style={{
-                width: 18,
-                height: 18,
-                background: '#8B2635',
-                borderRadius: '50%',
-                border: '2px solid #3D2914',
-              }}
-            >
-              <VolumeX size={10} style={{ color: '#F5E6D3' }} />
-            </span>
+            />
           )}
         </button>
+
+        {/* Tooltip */}
+        {showTooltip && (
+          <div
+            className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 rounded text-xs whitespace-nowrap z-50"
+            style={{
+              background: '#3D2914',
+              color: '#F5E6D3',
+              fontFamily: 'Source Sans Pro, sans-serif',
+            }}
+          >
+            {isLoading
+              ? 'იტვირთება...'
+              : isPlaying
+                ? (isMuted ? 'ხმა ჩართე' : 'აჭარული მუსიკა')
+                : 'დაკვრა'
+            }
+          </div>
+        )}
+
+        {/* Mute toggle on hover - only show when playing */}
+        {isPlaying && showTooltip && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMute();
+            }}
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+            style={{
+              background: isMuted ? '#8B2635' : '#2D5A3D',
+              border: '1px solid #D4A574',
+            }}
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+          >
+            {isMuted ? (
+              <VolumeX size={10} style={{ color: '#F5E6D3' }} />
+            ) : (
+              <Volume2 size={10} style={{ color: '#F5E6D3' }} />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Pulse animation */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.8); }
+          50% { opacity: 0.6; transform: scale(0.9); }
         }
       `}</style>
     </>

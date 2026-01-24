@@ -1,6 +1,6 @@
 /**
- * LanguageSwitch Component - Cyberpunk Neon Edition
- * Toggle between Georgian and English with neon effects
+ * LanguageSwitch Component - Adjarian Folk Edition
+ * Toggle between Georgian and English with warm folk styling
  */
 
 import { useEffect, useState } from 'react';
@@ -13,6 +13,8 @@ export interface LanguageSwitchProps {
   value: Language;
   /** Change handler */
   onChange: (language: Language) => void;
+  /** Compact mode for mobile */
+  compact?: boolean;
   /** Additional className */
   className?: string;
 }
@@ -20,11 +22,12 @@ export interface LanguageSwitchProps {
 const LANGUAGE_STORAGE_KEY = 'jobsngui-language';
 
 /**
- * Cyberpunk language switch component with neon glow effects
+ * Folk-styled language switch component
  */
 export function LanguageSwitch({
   value,
   onChange,
+  compact = false,
   className,
 }: LanguageSwitchProps) {
   const [isHovered, setIsHovered] = useState<Language | null>(null);
@@ -51,25 +54,24 @@ export function LanguageSwitch({
     const isActive = value === lang;
     const isHoveredButton = isHovered === lang;
 
+    // Folk theme colors
     const colors = {
-      ge: { color: '#FF006E', glow: 'rgba(255, 0, 110, 0.5)' },
-      en: { color: '#00F5FF', glow: 'rgba(0, 245, 255, 0.5)' },
+      ge: { color: '#8B2635', bg: 'rgba(139, 38, 53, 0.15)' }, // Folk red
+      en: { color: '#2D5A3D', bg: 'rgba(45, 90, 61, 0.15)' },  // Folk green
     };
 
-    const { color, glow } = colors[lang];
+    const { color, bg } = colors[lang];
 
     return {
       background: isActive
-        ? `linear-gradient(135deg, ${color}40, ${color}20)`
+        ? `linear-gradient(135deg, ${color}, ${lang === 'ge' ? '#A83C4B' : '#3D7A5D'})`
         : isHoveredButton
-          ? 'rgba(255, 255, 255, 0.05)'
+          ? bg
           : 'transparent',
-      color: isActive ? color : isHoveredButton ? '#E0E0E8' : '#A0A0B0',
-      borderColor: isActive ? `${color}80` : 'rgba(255, 255, 255, 0.1)',
+      color: isActive ? '#F5E6D3' : isHoveredButton ? color : '#8B6B4B',
       boxShadow: isActive
-        ? `0 0 15px ${glow}, inset 0 0 10px ${glow}`
+        ? '1px 1px 0 #3D2914'
         : 'none',
-      textShadow: isActive ? `0 0 10px ${glow}` : 'none',
     };
   };
 
@@ -78,24 +80,15 @@ export function LanguageSwitch({
       role="radiogroup"
       aria-label="Select language"
       className={cn(
-        'inline-flex rounded-xl overflow-hidden relative',
+        'inline-flex rounded-lg overflow-hidden',
         className
       )}
       style={{
-        background: 'rgba(10, 10, 20, 0.8)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: 'rgba(61, 41, 20, 0.3)',
+        border: '1px solid rgba(212, 165, 116, 0.4)',
         padding: '2px',
       }}
     >
-      {/* Animated background glow */}
-      <div
-        className="absolute inset-0 opacity-20 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(139, 92, 246, 0.3), transparent 70%)',
-        }}
-      />
-
       <button
         type="button"
         role="radio"
@@ -104,34 +97,26 @@ export function LanguageSwitch({
         onMouseEnter={() => setIsHovered('ge')}
         onMouseLeave={() => setIsHovered(null)}
         className={cn(
-          'relative px-4 py-2',
-          'text-xs font-bold tracking-[0.15em] uppercase',
-          'transition-all duration-300',
-          'focus:outline-none',
-          'rounded-l-lg'
+          'relative',
+          compact ? 'px-2 py-1' : 'px-3 py-1.5',
+          'text-xs font-semibold tracking-wide uppercase',
+          'transition-all duration-200',
+          'focus:outline-none focus:ring-1 focus:ring-[#D4A574]',
+          'rounded-l-md'
         )}
         style={{
-          fontFamily: 'Rajdhani, sans-serif',
+          fontFamily: 'Source Sans Pro, sans-serif',
           ...getButtonStyle('ge'),
         }}
       >
         <span className="relative z-10">GE</span>
-        {value === 'ge' && (
-          <div
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px]"
-            style={{
-              background: '#FF006E',
-              boxShadow: '0 0 8px rgba(255, 0, 110, 0.8)',
-            }}
-          />
-        )}
       </button>
 
       {/* Divider */}
       <div
         className="w-[1px] my-1"
         style={{
-          background: 'linear-gradient(to bottom, transparent, rgba(139, 92, 246, 0.5), transparent)',
+          background: 'rgba(212, 165, 116, 0.3)',
         }}
       />
 
@@ -143,27 +128,19 @@ export function LanguageSwitch({
         onMouseEnter={() => setIsHovered('en')}
         onMouseLeave={() => setIsHovered(null)}
         className={cn(
-          'relative px-4 py-2',
-          'text-xs font-bold tracking-[0.15em] uppercase',
-          'transition-all duration-300',
-          'focus:outline-none',
-          'rounded-r-lg'
+          'relative',
+          compact ? 'px-2 py-1' : 'px-3 py-1.5',
+          'text-xs font-semibold tracking-wide uppercase',
+          'transition-all duration-200',
+          'focus:outline-none focus:ring-1 focus:ring-[#D4A574]',
+          'rounded-r-md'
         )}
         style={{
-          fontFamily: 'Rajdhani, sans-serif',
+          fontFamily: 'Source Sans Pro, sans-serif',
           ...getButtonStyle('en'),
         }}
       >
         <span className="relative z-10">EN</span>
-        {value === 'en' && (
-          <div
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px]"
-            style={{
-              background: '#00F5FF',
-              boxShadow: '0 0 8px rgba(0, 245, 255, 0.8)',
-            }}
-          />
-        )}
       </button>
     </div>
   );

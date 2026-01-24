@@ -41,7 +41,7 @@ export function Footer({ className }: FooterProps) {
         <div className="absolute bottom-0 right-0 w-[2px] h-6 bg-[#2D5A3D]" />
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4">
+      <div className="max-w-[1200px] mx-auto px-3 md:px-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Left side - Logo & Copyright */}
           <div className="flex items-center gap-4">

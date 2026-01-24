@@ -174,11 +174,28 @@
    BASE STYLES
    ═══════════════════════════════════════════════════ */
 
+/* Prevent horizontal overflow - Mobile First */
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--color-background);
   color: var(--color-text-primary);
   line-height: 1.6;
+  overflow-x: hidden;
+  max-width: 100vw;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure all elements respect container width */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 /* Warm Background Pattern */
